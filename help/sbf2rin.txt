@@ -1,0 +1,138 @@
+Unknown option -h.
+
+sbf2rin -f input_file [-o output_file][-l][-O CCC][-R3][-R210][-n type][-MET]
+                      [-i interval][-b startepoch][-e endepoch][-s][-D][-X][-c]
+                      [-C commentstr][-x systems][-I siglist][-E siglist]
+                      [-a antenna][-ma][-mf][-noevent][-S][-v][-V]
+
+  -f input_file   (mandatory) Name of the SBF file(s) to be converted. To convert
+                  multiple files, use a whitespace as delimiter between the different
+                  file names.  Each SBF file is converted into a different RINEX file.
+  -o output_file  Name of the output RINEX file, bypassing the standard naming convention.
+                  See file naming convention below.
+                  Note: do not use a forced output file name when converting multiple files.
+  -l              Use long file naming convention (introduced in RINEX v3.02).
+                  Default is short file name.  See below.
+  -O CCC          Force using the specified 3-letter country code in
+                  the long file name.  This option is ignored if the -l
+                  option is not used.
+  -R[3|210]       By default, sbf2rin converts to RINEX v2.11.  Use -R3 to
+                  convert to the last revision (currently v3.03), and -R210
+                  to convert to v2.10.
+  -n type         Type of files to be generated.  type is a combination of the
+                  following characters:
+                    O for an observation file (this is the default),
+                    N for a GPS-only navigation file,
+                    G for a GLONASS-only navigation file,
+                    E for a Galileo-only navigation file (always RINEX v3.xx),
+                    H for a SBAS-only navigation file,
+                    I for a BeiDou-only navigation file (always RINEX v3.xx),
+                    P for a mixed GNSS navigation file (always RINEX v3.xx),
+                    B for a broadcast SBAS file (all L1 and L5 messages),
+                    Bvalidonly for a broadcast SBAS file (valid CRC only),
+                    M for a meteo file.
+                  Note that QZSS navigation data is only available in mixed
+                  files.
+                  If multiple characters are combined, all the requested
+                  RINEX files are generated at once. For example -nPOM generates obs,
+                  mixed nav and meteo files.
+  -MET            Generate a RINEX meteo file (same as -nM).
+  -i interval     Interval in the RINEX obs and meteo file, in seconds
+                  (by default, the interval is the same as in the SBF file).
+  -b startepoch   Time of first epoch to insert in the RINEX file.
+                  Format: yyyy-mm-dd_hh:mm:ss or hh:mm:ss.
+  -e endepoch     Last epoch to insert in the RINEX file
+                  Format: yyyy-mm-dd_hh:mm:ss or hh:mm:ss.
+  -s              Include the Sx obs types in the observation file.
+  -D              Include the Dx obs types in the observation file.
+  -X              Include the X1 obs types (channel number) in the observation file.
+                  (option only available when generating RINEX v3.xx files).
+  -c              Allow comments in the RINEX file (from the Comment SBF
+                  block)
+  -C commentstr   Add the specified comment string to the RINEX obs header.
+                  The comment string must not be longer than 240 characters.
+                  Enclose the string between quotes if it contains
+                  whitespaces.
+  -x systems      Exclude one or more satellite systems from the obs file or
+                  from the mixed navigation file.
+                  systems may be G (GPS), R (Glonass), E (Galileo), S (SBAS),
+                  C (Compass/Beidou), J (QZSS), I (IRNSS) or any combination
+                  thereof.  For instance, -xERSCJI produces a GPS-only file.
+  -I siglist      Include only the observables from the specified signal types.
+                  By default all observables in the SBF file are converted to RINEX.
+                  siglist is a list of signal types separated by "+" and without
+                  whitespaces.  The available signal types are:
+                  GPSL1CA, GPSL1P, GPSL2P, GPSL2C, GPSL5, GPSL1C,
+                  GLOL1CA, GLOL1P, GLOL2P, GLOL2CA, GLOL3,
+                  GALE1, GALE5a, GALE5b, GALE5, GALE6,
+                  BDSB1I, BDSB2I, BDSB3I,
+                  QZSL1CA, QZSL2C, QZSL5, QZSL1C, QZSL1S,
+                  SBSL1, SBSL5,
+                  IRNL5.
+                  For example: -I GPSL1CA+GLOL1CA
+  -E siglist      Exclude the observables from the specified signal types.
+                  See the -I argument for a definition of siglist.
+  -a antenna      Convert data from the specified antenna (antenna is 1, 2
+                  or 3). The default is 1, corresponding to the main antenna.
+  -ma             Insert a "start moving" event right after the header if
+                  the RINEX file contains kinematic data.
+  -mf             Force inserting a "start moving" event right after the
+                  header.
+  -noevent        Do not report external events in RINEX.  Default is to
+                  report external events in comment strings.
+  -S              Automatically increase the file sequence character in
+                  the output file name when converting multiple files from
+                  the same marker and the same day.   This option is ignored
+                  if the -l or the -o option is also selected.
+  -v              Run in verbose mode.
+  -V              Display the sbf2rin version.
+
+
+Note on the L2 observables in RINEX v2.11
+----------------------------------------
+
+ For GPS satellites, sbf2rin by default encodes L2P carrier phases as L2 observables.
+ If the SBF file does not contain any L2P carrier phase, or if L2P is disabled
+ with the -I or -E options, L2C carrier phases are encoded instead.
+
+ For GLONASS satellites, sbf2rin by default encodes L2CA carrier phases as L2 observables.
+ If the SBF file does not contain any L2CA carrier phase, or if L2CA is disabled
+ with the -I or -E options, L2P carrier phases are encoded instead.
+
+ Note that this is only applicable to RINEX v2.11.  RINEX v2.10 only contains L2P
+ carrier phases, and RINEX v3 can contain both.
+
+
+RINEX file naming convention
+----------------------------
+
+ By default, the RINEX 2.x naming convention is applied and the output file name
+ is of the form SSSSDDDF.YYT, where SSSS is the station designator taken from
+ the StationCode field of the ReceiverSetup SBF block, DDD is the day of
+ year, F is the file sequence character, YY is the year and T is the
+ file type.  F is always 0 except when the -S option is used.  T can
+ be one of the following:
+    O: Observation file (default)
+    N: GPS navigation file (option -nN)
+    G: GLONASS navigation file (option -nG)
+    L: Galileo navigation file (option -nE)
+    H: SBAS navigation file (option -nH)
+    I: Beidou navigation file (option -nI) (Note that this extension is
+       non-standard)
+    P: Mixed-constellation navigation file (option -nP)
+    B: SBAS broadcast data file (option -nB)
+    M: Meteorological data file (option -MET)
+ 
+ With the "-o copy" option, the name of the RINEX file is a copy of the
+ name of the SBF file, with only the last character being changed to the file
+ type character as defined above.
+ 
+ With the "-o copybase" option, the name of the RINEX file is a copy of
+ the name of the SBF file, with the last 3 characters being set to "YYT".
+ 
+ With the -l option, the file name conforms to the long file name convention
+ introduced with RINEX v3.02.  The station designator and the country code
+ are taken from the ReceiverSetup SBF block.  The country code can be
+ overwritten with the -O argument.
+
+ The RINEX files are put in the current directory.

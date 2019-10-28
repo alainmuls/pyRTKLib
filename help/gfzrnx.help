@@ -1,0 +1,195 @@
+
+***** USAGE: /home/amuls/bin/gfzrnx
+
+     file only or common options
+     -----------------------------------------------------------------------------------------
+     [-h]                      - show this usage message
+     [-help]
+
+     [-finp <file list>]       - input  rinex file(s) (std. STDIN).
+                                 STDIN is only valid for a single file input.
+
+                                 the following file name types are supported to derive the
+                                 nominal epoch/duration information.
+
+                                 RINEX-2 file naming
+
+                                 ssssDDD0.YYx       - daily      file
+                                 ssssDDD[a-x].YYx   - hourly     file
+                                 ssssDDD[a-x]mm.YYx - sub-hourly file
+
+                                 RINEX-3 file naming
+
+                                 SSSSMRCCC_S_YYYYDDDHHMM_NNN_FRQ_TT.FMT
+                                 SSSSMRCCC_S_YYYYDDDHHMM_NNN_TT.FMT
+
+                                 see Documentation for details
+
+                                 splice mode:
+                                 ------------
+                                 * list of input files
+
+     [-fout <file>]            - output rinex or statistics file (std. STDOUT)
+                                 automatic file_name if filename given is "::RX2::" or "::RX3::".
+
+     [-4to9 <file>]            - renaming information for rinex-3 type (re)naming
+                                 ( NNNN -> NNNNMRCCC / POTS -> POTS00DEU )
+
+     [-f]                      - force overwrite of output file if it already exists
+                                 (std. no overwrite)
+
+     [-sifl]                   - perform an operation on a single file if a file list is
+     [-single_file]              provided via "-finp"
+
+  [-nomren23 <[s,][mr,][iso]>] - fast nominal output file name for RINEX-2 to RINEX-3 file renaming.
+                                 RINEX-3 output file name is written to STDOUT.
+
+                                    s   - data source (S|R)        (default R)
+                                    mr  - marker receiver number   (default 00)
+                                    iso - 3 char. iso country code (default XXX)
+
+                                 the input parameters can be given in any order.
+                                 supported input file names nnnnddde.yyt[.cmp] or nnnndddedd.yyt[.cmp]
+
+                                 if providing a compressed file all information which is usually taken
+                                 from file header (sat. system(s), data frequency) has to be given via the
+                                 command line parameter (see documion for details).
+
+     [-vo <2|3>]               - output RINEX version (std. 3)
+     [--version_out <2|3>]
+
+     [-pr3rx2 <list>]          - komma separated list of list of signal priorities used for rinex 3 -> 2 conversion
+                                 to overwrite the standard settings, see documentation for details.
+
+                                 S:n[n...]:STRING
+
+                                 S      - satellite System [CEGJRSI]
+                                 n      - frequency number(s)
+                                 STRING - prority STRING
+
+                                 G:12:PWCSLXYN,G:5:QXI,R:12:CP
+
+     [-errlog <file>]          - store (append) error logs to a file (std. print to STDERR)
+
+     [-smp <num>]              - sampling rate in sec. (std. no sampling / resolution 1 ms)
+
+     [-stk_obs]                - output data statistics information (std. STDOUT)
+     [-stk_only]
+
+     [-crux <file>]            - rinex header manipulations definitions for input files
+
+     [-show_crux]              - show crux structure adopted and used by the program
+
+     [-hded]                   - perform the header edit ONLY mode (with -crux)
+
+     [-stk_epo <n[:list]>]     - ASCII timeplot of data availability (std. STDOUT)
+                                 n    - time resolution in seconds
+                                 list - comma separated list (prn,otp) (std. prn)
+
+     [-ot <list>]              - obs. types list to be used (pattern matching). the list can be given
+     [--obs_types <list>]        globaly or sat. system dependent. the sat. system dependent record
+                                 replaces fully a global one.
+
+                                 list can be: [S:]OT1,OT2,...[+S:OT3,OT4,...][+...]
+
+                                 S  - satellite system [CEGJRSI]
+                                 OT - observation type identifier
+
+                                 L1,L2,C1,C2,P1,P2
+                                 L1,L2,C1,C2,P1,P2+C:L1,L7,C1,C7+G:L1C,L2W,C1,C2
+
+     [-ots <string>[:<attr>]]  - obs. types output sorting
+[--obs_types_sort <string>[:<attr>]]
+                                 the "string" consists of the 1st obs. type id. characters ( e.g. CPLDS ),
+                                 the "attr" can be [frqasc|frqdsc|frqi,j,...] (frequ. numbers (i,j,...) = 1,...,n),
+                                 which means a preferred sorting by frequency (ascending,descending or
+                                 a list of distinct frequency numbers)
+
+     [-prn <prn-list>]         - komma separated list of PRNs to be used
+                                 range notations are possible G1-32,C01-5,R01-10,E14,E18
+
+     [-no_prn <prn-list>]      - komma separated list of PRNs to be skipped
+                                 range notations are possible G1-32,C01-5,R01-10,E14,E18
+
+     [-kaot]                   - keep all obs. types (including fully empty ones)
+
+     [-rsot <n>]               - remove sparse obs. types.
+[--remove_sparse_obs_types <n>]  n - defines the % limit of the median number of observations
+                                     per observation type used to delete an observation type fully.
+
+     [-satsys <letters>]       - satellite system(s) to be used (CEGIJRS) (std. CEGIJRS)
+                                 C - Beidou
+                                 E - Galileo
+                                 G - GPS
+                                 I - IRNSS
+                                 J - QZSS
+                                 R - Glonass
+                                 S - SBAS
+
+     [-ns <type>]              - output order of navigation records.   type = [time|prn] (std. prn)
+     [--nav_sort <type>]         time - sort by time,prn
+                                 prn  - sort by prn,time
+
+     [-split n]                - split input file in <n seconds> pieces
+                                 - valid only with -fout ::RX2:: or ::RX3::
+                                 - valid if n is a multiple of 60 seconds.
+                                 - only supported for single input file
+
+     [-chk]                    - extended formal checks on input file (slower)
+
+     [-meta <type[:format]>]   - extract file meta data. the type can be (basic|full).
+                                 supported formats are json|xml|txt|dump
+
+     [-fdiff]                  - compare two rinex files of the same format (major version id.)
+                                 the two input files have to be given via -finp
+
+     [-site <sitename>]        - use the 4- or 9-char sitename for output filename via automatic file naming
+                                 or for header editing settings extractions (crux)
+                                 or for "MARKER NAME" in case it is missing.
+
+     [-kv]                     - keep major output version number (2|3) same as in input
+
+     [-q]                      - quiet mode
+
+     [-d <sec>]                - file duration (seconds) (std. ignored on input
+     [--duration <sec>]                                   std. 86400   on output )
+
+     [-epo_beg <EPOCH>]        - first output epoch (<EPOCH> see below)
+
+     [-sei <in|out>]
+[--strict_epoch_interval <in|out>] - output epoch interval according to in/output file name
+                                     (only valid in case of RINEX conform file names)
+
+     [-enb <n>]                - extend the nav. epoch interval by -n and +n seconds
+                                 (when using strict epoch interval)
+
+     [-use_obs_map <file>]     - use modified obs. types mapping
+     [-out_obs_map]            - output std.  obs. types mapping
+
+
+     epoch <EPOCH> parameter
+     -----------------------------------------------------------------------------------------
+     mjd             56753   or        56753_123000
+     wwwwd           17870   or        17870_12:30:00
+     yyyyddd       2014096   or      2014096_123000
+     yyyymmdd     20140406   or     20140406_12:30:00
+     yyyy-mm-dd 2014-04-06   or   2014-04-06_123000
+
+     all these date types can be combined via '_' with a time string of type:
+     hhmmss
+     hh:mm:ss
+
+
+----------------------------------------------------------------------------------------------
+© Helmholtz-Centre Potsdam - GFZ German Research Centre for Geosciences
+  Section 1.1 Space Geodetic Techniques
+
+  see http://semisys.gfz-potsdam.de/semisys  [Download -> GFZ Software -> gfzrnx]
+
+  for the manual with license details
+
+  Thomas Nischan, nisn@gfz-potsdam.de
+----------------------------------------------------------------------------------------------
+
+  VERSION: gfzrnx-1.10-7329
+

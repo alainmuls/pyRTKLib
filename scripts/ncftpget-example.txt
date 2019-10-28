@@ -1,0 +1,1 @@
+ncftpget -u ftp -p alain.muls@gmail.com ftp://cddis.gsfc.nasa.gov/pub/gps/data/daily/2019/100/19p/BRDC00IGS_R_20191000000_01D_MN.rnx.gz /tmp/
