@@ -1,0 +1,1104 @@
+<h1 id="pyrtklib-repository"><code>pyRTKLib</code> repository</h1>
+<h2 id="introduction">Introduction</h2>
+<p>The <code>pyRTKLib</code> repository processes <code>RINEX</code> observation / navigation files for Galileo, GPS or a combination of both, using the open source <a href="http://www.rtklib.com/"><code>RTKLib</code></a> library. It generates plots for:</p>
+<ul class="incremental">
+<li><code>UTM</code> and height coordinates versus time,</li>
+<li><code>UTM</code> scatter plot,</li>
+<li>pseudo-range residuals plot,</li>
+<li>Carrier-to-Noise <code>CN0</code> plot,</li>
+<li>satellite elevation plot, and</li>
+<li>receiver clock plot.</li>
+</ul>
+<p>The repository is based on the following directory structure<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a> for the binary receiver data:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash"><span class="va">${HOME}</span><span class="ex">/RxTURP</span>
+    <span class="ex">BEGPIOS</span>
+        <span class="ex">ASTX</span>
+            <span class="ex">...</span>
+            <span class="ex">19133</span>
+            <span class="ex">19134</span>
+            <span class="ex">19135</span>
+            <span class="ex">...</span>
+        <span class="ex">BEGP</span>
+            <span class="ex">...</span>
+            <span class="ex">19133</span>
+            <span class="ex">19134</span>
+            <span class="ex">19135</span>
+            <span class="ex">...</span>
+        <span class="ex">uBlox</span>
+            <span class="ex">...</span>
+            <span class="ex">19133</span>
+            <span class="ex">19134</span>
+            <span class="ex">19135</span>
+            <span class="ex">...</span></code></pre></div>
+<p>where <code>YYDDD</code> represents 2 digits for the year and 3 digits for the day of year.</p>
+<p>During processing, in each receiver type directory (<code>ASTX</code>, <code>BEGP</code>, ...) a <code>rinex</code> directory is created with sub-directories with the same <code>YYDDD</code> as the original raw binary data sub-directories.</p>
+<h2 id="processing-steps">Processing steps</h2>
+<p>Processing is split up in 5 steps:</p>
+<ul class="incremental">
+<li><strong><code>pySBFDaily.py</code></strong>
+<ul class="incremental">
+<li>receivers from Septentrio log data in the binary <code>SBF</code> format. These data are logged in (six-)hourly files and are first combined to a daily <code>SBF</code> file. The naming follows the IGS convention for <code>RINEX</code> v2.x files. The (daily) combined file is stored in the raw binary data directory.</li>
+</ul></li>
+<li><strong><code>pyconvbin.py</code></strong>
+<ul class="incremental">
+<li>converts the binary (daily) <code>SBF</code> or <code>u-Blox</code> file to <code>RINEX</code> observation and navigation files.</li>
+</ul></li>
+<li><strong><code>pyftposnav.py</code></strong>
+<ul class="incremental">
+<li>downloads the globally collected navigation file for all GNSS systems for a specific date. This creates a directory <code>igs</code> on the same level as the <code>rinex</code> directory.</li>
+</ul></li>
+<li><strong><code>pyrtkproc.py</code></strong>
+<ul class="incremental">
+<li>based on a common template, ensuring similar processing for all GNSSs, the <code>RINEX</code> observation and navigation files are processed using <code>rnx2rtkp</code> program from the <code>RTKLib</code> library. Two output files are created in a <code>rtkp</code>/<code>GNSS</code> subdirectory:
+<ul class="incremental">
+<li><code>&lt;file-name&gt;.pos</code> containing date-time, position and (co-)variance information. The processing mode and number of satellites used are also reported,</li>
+<li><code>&lt;file-name&gt;.pos.stat</code> containing various information about the satellites, the pseudo-range residuals, receiver clock and velocity.</li>
+</ul></li>
+</ul></li>
+<li><strong><code>pyrtkplot.sh</code></strong>
+<ul class="incremental">
+<li>using the <code>&lt;file-name&gt;.pos</code> and <code>&lt;file-name&gt;.pos.stat</code> files, plots are created.</li>
+</ul></li>
+</ul>
+<p>Each script uses pythons logging facility and creates in the directory from which it is called a <code>&lt;script-name&gt;.log</code> file which can be used for later inspection. The default logging levels are:</p>
+<ul class="incremental">
+<li>for the console: <code>LOGGING.INFO</code></li>
+<li>for the log-file: <code>LOGGING.DEBUG</code></li>
+</ul>
+<h2 id="pysbfdaily.py"><strong><code>pySBFDaily.py</code></strong></h2>
+<h3 id="getting-help">Getting help</h3>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="ex">pySBFDaily.py</span> --help
+<span class="ex">usage</span>: pySBFDaily.py [-h] [-d DIR] [-o]
+                     [<span class="ex">-l</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span>]
+
+<span class="ex">pySBFDaily.py</span> creates a daily SBF file based on (six) <span class="ex">hourly</span> SBF files found
+<span class="kw">in</span> <span class="ex">given</span> directory
+
+<span class="ex">optional</span> arguments:
+  <span class="ex">-h</span>, --help            show this help message and exit
+  <span class="ex">-d</span> DIR, --dir DIR     Directory of SBF file (defaults to .)
+  <span class="ex">-o</span>, --overwrite       overwrite daily SBF file (default False)
+  <span class="ex">-l</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span>, --logging <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span>
+                        <span class="ex">specify</span> logging level console/file (default INFO
+                        <span class="ex">DEBUG</span>)</code></pre></div>
+<h3 id="processing-example">Processing example</h3>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="ex">pySBFDaily.py</span> --dir ~/RxTURP/BEGPIOS/ASTX/19134 -o -l INFO DEBUG
+<span class="ex">INFO</span>: pySBFDaily.py - main: working diretory is /home/amuls/RxTURP/BEGPIOS/ASTX/19134
+<span class="ex">INFO</span>: pySBFDaily.py - main: changed to directory /home/amuls/RxTURP/BEGPIOS/ASTX/19134
+<span class="ex">INFO</span>: pySBFDaily.py - main: combine SBF (six-)<span class="ex">hourly</span> files to daily SBF file
+<span class="ex">INFO</span>: pySBFDaily.py - main: creating daily SBF file SEPT1340.19_</code></pre></div>
+<p>yields the following raw binary data directory:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="ex">ll</span> /home/amuls/RxTURP/BEGPIOS/ASTX/19134 -rt
+<span class="ex">total</span> 853200
+<span class="ex">-rw-rw-r--</span> 1 amuls amuls 100144280 May 14 08:02 SEPT1341.19_
+<span class="ex">-rw-rw-r--</span> 1 amuls amuls  11580873 May 14 08:02 SEPT1341.191
+<span class="ex">-rw-rw-r--</span> 1 amuls amuls 102000168 May 14 14:02 SEPT1342.19_
+<span class="ex">-rw-rw-r--</span> 1 amuls amuls  11645676 May 14 14:02 SEPT1342.191
+<span class="ex">-rw-rw-r--</span> 1 amuls amuls 101275596 May 14 20:02 SEPT1343.19_
+<span class="ex">-rw-rw-r--</span> 1 amuls amuls  11705476 May 14 20:02 SEPT1343.191
+<span class="ex">-rw-rw-r--</span> 1 amuls amuls  12423431 May 15 02:02 SEPT1344.191
+<span class="ex">-rw-rw-r--</span> 1 amuls amuls 109727776 May 15 02:02 SEPT1344.19_
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 413147820 Oct 28 14:53 SEPT1340.19_</code></pre></div>
+<h2 id="pyconvbin.py"><strong><code>pyconvbin.py</code></strong></h2>
+<h3 id="getting-help-1">Getting help</h3>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="ex">pyconvbin.py</span> --help
+<span class="ex">usage</span>: pyconvbin.py [-h] [-d DIR] -f FILE [-b <span class="dt">{SBF,UBlox}</span>] [-r RINEXDIR]
+                    [<span class="ex">-v</span> <span class="dt">{R3,R2}</span>] [-g <span class="dt">{gal,gps,com}</span>] -n NAMING NAMING NAMING
+                    [<span class="ex">-e</span> EXPERIMENT] [-o]
+                    [<span class="ex">-l</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span>]
+
+<span class="ex">pyconvbin.py</span> convert binary raw data from SBF or UBlox to RINEX Obs <span class="kw">&amp;</span> <span class="ex">Nav</span>
+<span class="ex">files</span>
+
+<span class="ex">optional</span> arguments:
+  <span class="ex">-h</span>, --help            show this help message and exit
+  <span class="ex">-d</span> DIR, --dir DIR     Root directory (default .)
+  <span class="ex">-f</span> FILE, --file FILE  Binary SBF or UBlox file
+  <span class="ex">-b</span> <span class="dt">{SBF,UBlox}</span>, --binary <span class="dt">{SBF,UBlox}</span>
+                        <span class="ex">Select</span> binary format (default SBF)
+  <span class="ex">-r</span> RINEXDIR, --rinexdir RINEXDIR
+                        <span class="ex">Directory</span> for RINEX output (default .)
+  <span class="ex">-v</span> <span class="dt">{R3,R2}</span>, --rinexver <span class="dt">{R3,R2}</span>
+                        <span class="ex">Select</span> RINEX version (default R3)
+  <span class="ex">-g</span> <span class="dt">{gal,gps,com}</span>, --gnss <span class="dt">{gal,gps,com}</span>
+                        <span class="ex">GNSS</span> systems to process (default=gal)
+  <span class="ex">-n</span> NAMING NAMING NAMING, --naming NAMING NAMING NAMING
+                        <span class="ex">Enter</span> MARKER DOY YY for naming RINEX output files
+  <span class="ex">-e</span> EXPERIMENT, --experiment EXPERIMENT
+                        <span class="ex">description</span> of experiment (added to naming of RINEX
+                        <span class="fu">file</span>)
+  <span class="ex">-o</span>, --overwrite       overwrite intermediate files (default False)
+  <span class="ex">-l</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span>, --logging <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span>
+                        <span class="ex">specify</span> logging level console/file (default INFO
+                        <span class="ex">DEBUG</span>)</code></pre></div>
+<h3 id="processing-example-1">Processing example</h3>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="ex">19134-gal-conv.sh</span> 
+<span class="ex">INFO</span>: pyconvbin.py - main: arguments processed: amc.dRTK = {<span class="st">&#39;rootDir&#39;</span>: <span class="st">&#39;/home/amuls/RxTURP/BEGPIOS/ASTX/19134/&#39;</span>, <span class="st">&#39;binFile&#39;</span>: <span class="st">&#39;SEPT1340.19_&#39;</span>, <span class="st">&#39;binType&#39;</span>: <span class="st">&#39;SBF&#39;</span>, <span class="st">&#39;rinexDir&#39;</span>: <span class="st">&#39;/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/&#39;</span>, <span class="st">&#39;rinexVersion&#39;</span>: <span class="st">&#39;R3&#39;</span>, <span class="st">&#39;gnssSyst&#39;</span>: <span class="st">&#39;gal&#39;</span>, <span class="st">&#39;rinexNaming&#39;</span>: [<span class="st">&#39;GALI&#39;</span>, <span class="st">&#39;134&#39;</span>, <span class="st">&#39;19&#39;</span>], <span class="st">&#39;experiment&#39;</span>: <span class="st">&#39;&#39;</span>}
+<span class="ex">INFO</span>: pyconvbin.py - checkValidityArgs: check existence of rootDir /home/amuls/RxTURP/BEGPIOS/ASTX/19134/
+<span class="ex">INFO</span>: pyconvbin.py - checkValidityArgs: check existence of binary file /home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_ to convert
+<span class="ex">INFO</span>: pyconvbin.py - checkValidityArgs: check existence of rinexdir /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/ and create if needed
+<span class="ex">INFO</span>: location.py - locateProg: locate programs convbin
+<span class="ex">INFO</span>: location.py - locateProg: convbin is /home/amuls/bin/convbin
+<span class="ex">INFO</span>: location.py - locateProg: locate programs sbf2rin
+<span class="ex">INFO</span>: location.py - locateProg: sbf2rin is /home/amuls/bin/sbf2rin
+<span class="ex">INFO</span>: pyconvbin.py - main: convert binary file to rinex
+<span class="ex">INFO</span>: pyconvbin.py - sbf2rinex: RINEX conversion for gal
+<span class="ex">INFO</span>: pyconvbin.py - sbf2rinex: excluding GNSS systems [<span class="st">&#39;G&#39;</span>, <span class="st">&#39;R&#39;</span>, <span class="st">&#39;S&#39;</span>, <span class="st">&#39;C&#39;</span>, <span class="st">&#39;J&#39;</span>, <span class="st">&#39;I&#39;</span>]
+<span class="ex">INFO</span>: pyconvbin.py - sbf2rinex: creating RINEX observation file
+<span class="ex">/home/amuls/bin/sbf2rin</span> -f /home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_ -x GRSCJI -s -D -v -R3 -o /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19O
+
+<span class="ex">Creating</span> RINEX file: done                                                       
+<span class="ex">INFO</span>: pyconvbin.py - sbf2rinex: creating RINEX navigation file
+<span class="ex">/home/amuls/bin/sbf2rin</span> -f /home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_ -x GRSCJI -s -D -v -n E -R3 -o /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19E
+
+<span class="ex">Creating</span> RINEX file: done                                                       
+<span class="ex">INFO</span>: pyconvbin.py - main: amc.dRTK =
+<span class="kw">{</span>
+    <span class="st">&quot;rootDir&quot;</span>: <span class="st">&quot;/home/amuls/RxTURP/BEGPIOS/ASTX/19134/&quot;</span>,
+    <span class="st">&quot;binFile&quot;</span>: <span class="st">&quot;/home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_&quot;</span>,
+    <span class="st">&quot;binType&quot;</span>: <span class="st">&quot;SBF&quot;</span>,
+    <span class="st">&quot;rinexDir&quot;</span>: <span class="st">&quot;/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/&quot;</span>,
+    <span class="st">&quot;rinexVersion&quot;</span>: <span class="st">&quot;R3&quot;</span>,
+    <span class="st">&quot;gnssSyst&quot;</span>: <span class="st">&quot;gal&quot;</span>,
+    <span class="st">&quot;rinexNaming&quot;</span>:<span class="bu"> [</span>
+        <span class="st">&quot;GALI&quot;</span>,
+        <span class="st">&quot;134&quot;</span>,
+        <span class="st">&quot;19&quot;</span>
+    ],
+    <span class="st">&quot;experiment&quot;</span>: <span class="st">&quot;&quot;</span>,
+    <span class="st">&quot;marker&quot;</span>: <span class="st">&quot;GALI&quot;</span>,
+    <span class="st">&quot;doy&quot;</span>: <span class="st">&quot;134&quot;</span>,
+    <span class="st">&quot;yy&quot;</span>: <span class="st">&quot;19&quot;</span>,
+    <span class="st">&quot;bin2rnx&quot;</span>: {
+        <span class="st">&quot;CONVBIN&quot;</span>: <span class="st">&quot;/home/amuls/bin/convbin&quot;</span>,
+        <span class="st">&quot;SBF2RIN&quot;</span>: <span class="st">&quot;/home/amuls/bin/sbf2rin&quot;</span>
+    },
+    <span class="st">&quot;obs&quot;</span>: <span class="st">&quot;/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19O&quot;</span>,
+    <span class="st">&quot;nav&quot;</span>: <span class="st">&quot;/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19E&quot;</span>
+}</code></pre></div>
+<p>creates the following directories and files:<a href="#fn2" class="footnoteRef" id="fnref2"><sup>2</sup></a></p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="ex">ll</span> /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/ -R
+<span class="ex">/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134</span>/:
+<span class="ex">total</span> 95808
+<span class="ex">-rw-r--r--</span> 1 amuls amuls   565703 Oct 28 15:04 GALI1340.19E
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 97537766 Oct 28 15:04 GALI1340.19O</code></pre></div>
+<h3 id="remark">Remark</h3>
+<p>The conversion for <code>u-Blox</code> receivers is still to be done.</p>
+<h2 id="pyrtkproc.py"><strong><code>pyrtkproc.py</code></strong></h2>
+<h3 id="getting-help-2">Getting help</h3>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="ex">pyrtkproc.py</span> --help
+<span class="ex">usage</span>: pyrtkproc.py [-h] [-d DIR] -r ROVEROBS
+                    [<span class="ex">-m</span> <span class="dt">{single,dgps,kinematic,static,moving-base,fixed,ppp-kinematic,ppp-static}</span>]
+                    [<span class="ex">-f</span> <span class="dt">{1,2,3,4,5}</span>] [-c <span class="dt">{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14}</span>]
+                    [<span class="ex">-b</span> BASEOBS] -e EPHEM [EPHEM ...]
+                    [<span class="ex">-g</span> <span class="dt">{gps,sbas,glo,gal,com,qzs,comp}</span>]
+                    [<span class="ex">-s</span> <span class="dt">{brdc,precise,brdc+sbas,brdc+ssrapc,brdc+ssrcom}</span>]
+                    [<span class="ex">-a</span> ATMTROPO]
+                    [<span class="ex">-i</span> <span class="dt">{off,brdc,sbas,dual-freq,est-stec,ionex-tec,qzs-brdc,qzs-lex,vtec_sf,vtec_ef,gtec}</span>]
+                    [<span class="ex">-t</span> TEMPLATE] [-o]
+                    [<span class="ex">-l</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span>]
+
+<span class="ex">pyrtkproc.py</span> processes GNSS Observations with RTKLib
+
+<span class="ex">optional</span> arguments:
+  <span class="ex">-h</span>, --help            show this help message and exit
+  <span class="ex">-d</span> DIR, --dir DIR     project root directory (default ./)
+  <span class="ex">-r</span> ROVEROBS, --roverobs ROVEROBS
+                        <span class="ex">rover</span> observation file
+  <span class="ex">-m</span> <span class="dt">{single,dgps,kinematic,static,moving-base,fixed,ppp-kinematic,ppp-static}</span>, --mode <span class="dt">{single,dgps,kinematic,static,moving-base,fixed,ppp-kinematic,ppp-static}</span>
+                        <span class="ex">rnx2rtkp</span> positioning mode (default single)
+  <span class="ex">-f</span> <span class="dt">{1,2,3,4,5}</span>, --freq <span class="dt">{1,2,3,4,5}</span>
+                        <span class="ex">Select</span> frequencies for relative mode (default
+                        <span class="ex">1</span>, choices are 1:l1, 2:l1+l2, 3:l1+l2+l5,
+                        <span class="ex">4</span>:l1+l2+l5+l6, 5:l1+l2+l5+l6+l7)
+  <span class="ex">-c</span> <span class="dt">{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14}</span>, --cutoff <span class="dt">{0,1,2,3,4,5,6,7,8,9,10,11,12,13,14}</span>
+                        <span class="ex">cutoff</span> angle [degrees] (default 5)
+  <span class="ex">-b</span> BASEOBS, --baseobs BASEOBS
+                        <span class="ex">base</span> station observation file
+  <span class="ex">-e</span> EPHEM [EPHEM ...], --ephem EPHEM [EPHEM ...]
+                        <span class="kw">(</span><span class="ex">list</span> of<span class="kw">)</span> <span class="ex">ephemeris</span> files
+  <span class="ex">-g</span> <span class="dt">{gps,sbas,glo,gal,com,qzs,comp}</span>, --gnss <span class="dt">{gps,sbas,glo,gal,com,qzs,comp}</span>
+                        <span class="ex">GNSS</span> systems to process (default=gal)
+  <span class="ex">-s</span> <span class="dt">{brdc,precise,brdc+sbas,brdc+ssrapc,brdc+ssrcom}</span>, --sateph <span class="dt">{brdc,precise,brdc+sbas,brdc+ssrapc,brdc+ssrcom}</span>
+                        <span class="bu">type</span> of ephemerides used (default brdc)
+  <span class="ex">-a</span> ATMTROPO, --atmtropo ATMTROPO
+                        <span class="kw">select</span> <span class="ex">troposheric</span> correction (default saas
+  <span class="ex">-i</span> <span class="dt">{off,brdc,sbas,dual-freq,est-stec,ionex-tec,qzs-brdc,qzs-lex,vtec_sf,vtec_ef,gtec}</span>, --iono <span class="dt">{off,brdc,sbas,dual-freq,est-stec,ionex-tec,qzs-brdc,qzs-lex,vtec_sf,vtec_ef,gtec}</span>
+                        <span class="kw">select</span> <span class="ex">ionospheric</span> correction (default brdc)
+  <span class="ex">-t</span> TEMPLATE, --template TEMPLATE
+                        <span class="ex">rnx2rtkp</span> template file (dafult rnx2rtkp.tmpl)
+  <span class="ex">-o</span>, --overwrite       overwrite intermediate files (default False)
+  <span class="ex">-l</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span>, --logging <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span>
+                        <span class="ex">specify</span> logging level console/file (default INFO
+                        <span class="ex">DEBUG</span>)</code></pre></div>
+<h3 id="processing-example-2">Processing example</h3>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="ex">pyrtkproc.py</span> -d ~/RxTURP/BEGPIOS/ASTX/rinex/19134/ -r GALI1340.19O -f 4 -m single -c 5 -e GALI1340.19E -g gal  -t ~/amPython/pyRTKLib/rnx2rtkp.tmpl -i brdc -a saas -s brdc -o -l INFO DEBUG 
+<span class="ex">INFO</span>: pyrtkproc.py - checkValidityArgs: changed to directory /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/
+<span class="ex">INFO</span>: pyrtkproc.py - main: Creating gal configuration file /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/GALI1340-GAL.conf
+<span class="ex">INFO</span>: template_rnx2rtkp.py - create_rnx2rtkp_settings: creates settings dictionary for filling the rnx2rtkp template
+<span class="ex">INFO</span>: template_rnx2rtkp.py - create_rnx2rtkp_settings: created dSettings =
+<span class="kw">{</span>
+    <span class="st">&quot;navFiles&quot;</span>: <span class="st">&quot;GALI1340.19E&quot;</span>,
+    <span class="st">&quot;GNSSnum&quot;</span>: <span class="ex">8</span>,
+    <span class="st">&quot;freq&quot;</span>: <span class="ex">4</span>,
+    <span class="st">&quot;GNSS&quot;</span>: <span class="st">&quot;gal&quot;</span>,
+    <span class="st">&quot;rootDir&quot;</span>: <span class="st">&quot;/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/&quot;</span>,
+    <span class="st">&quot;roverObs&quot;</span>: <span class="st">&quot;GALI1340.19O&quot;</span>,
+    <span class="st">&quot;cutOff&quot;</span>: <span class="ex">5</span>,
+    <span class="st">&quot;posMode&quot;</span>: <span class="st">&quot;single&quot;</span>,
+    <span class="st">&quot;typeEphem&quot;</span>: <span class="st">&quot;brdc&quot;</span>,
+    <span class="st">&quot;baseObs&quot;</span>: <span class="st">&quot;&quot;</span>,
+    <span class="st">&quot;Tropo&quot;</span>: <span class="st">&quot;saas&quot;</span>,
+    <span class="st">&quot;Iono&quot;</span>: <span class="st">&quot;brdc&quot;</span>,
+    <span class="st">&quot;filePos&quot;</span>: <span class="st">&quot;rtkp/gal/GALI1340-19O.pos&quot;</span>,
+    <span class="st">&quot;fileStat&quot;</span>: <span class="st">&quot;rtkp/gal/GALI1340-19O.pos.stat&quot;</span>,
+    <span class="st">&quot;rtkDir&quot;</span>: <span class="st">&quot;/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal&quot;</span>,
+    <span class="st">&quot;description&quot;</span>: <span class="st">&quot;GAL: Processing station GALI1340.19O&quot;</span>
+<span class="kw">}</span>
+<span class="ex">INFO</span>: template_rnx2rtkp.py - create_rnx2rtkp_template: creates rnx2rtkp configuration file based on settings dictionary dSettings
+<span class="ex">INFO</span>: template_rnx2rtkp.py - create_rnx2rtkp_template: using rnx2rtkp template file /home/amuls/amPython/pyRTKLib/rnx2rtkp.tmpl
+<span class="ex">INFO</span>: template_rnx2rtkp.py - create_rnx2rtkp_template: storing rnx2rtkp configuration file in /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/GALI1340-GAL.conf
+<span class="ex">INFO</span>: pyrtkproc.py - main: amc.dRTK = 
+<span class="kw">{</span>
+    <span class="st">&quot;rootDir&quot;</span>: <span class="st">&quot;/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/&quot;</span>,
+    <span class="st">&quot;roverObs&quot;</span>: <span class="st">&quot;GALI1340.19O&quot;</span>,
+    <span class="st">&quot;posMode&quot;</span>: <span class="st">&quot;single&quot;</span>,
+    <span class="st">&quot;freq&quot;</span>: <span class="st">&quot;l1+l2+l5+l6&quot;</span>,
+    <span class="st">&quot;cutOff&quot;</span>: <span class="ex">5</span>,
+    <span class="st">&quot;baseObs&quot;</span>: <span class="st">&quot;&quot;</span>,
+    <span class="st">&quot;ephems&quot;</span>:<span class="bu"> [</span>
+        <span class="st">&quot;GALI1340.19E&quot;</span>
+    ],
+    <span class="st">&quot;GNSS&quot;</span>: <span class="st">&quot;gal&quot;</span>,
+    <span class="st">&quot;typeEphem&quot;</span>: <span class="st">&quot;brdc&quot;</span>,
+    <span class="st">&quot;Tropo&quot;</span>: <span class="st">&quot;saas&quot;</span>,
+    <span class="st">&quot;Iono&quot;</span>: <span class="st">&quot;brdc&quot;</span>,
+    <span class="st">&quot;template&quot;</span>: <span class="st">&quot;/home/amuls/amPython/pyRTKLib/rnx2rtkp.tmpl&quot;</span>,
+    <span class="st">&quot;rtkDir&quot;</span>: <span class="st">&quot;/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal&quot;</span>,
+    <span class="st">&quot;filePos&quot;</span>: <span class="st">&quot;rtkp/gal/GALI1340-19O.pos&quot;</span>,
+    <span class="st">&quot;fileStat&quot;</span>: <span class="st">&quot;rtkp/gal/GALI1340-19O.pos.stat&quot;</span>,
+    <span class="st">&quot;config&quot;</span>: <span class="st">&quot;/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/GALI1340-GAL.conf&quot;</span>
+}
+INFO: location.py - locateProg: locate programs rnx2rtkp
+INFO: location.py - locateProg: rnx2rtkp is /home/amuls/bin/rnx2rtkp
+INFO: pyrtkproc.py - main: Running:
+/home/amuls/bin/rnx2rtkp <span class="ot">-k</span> /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/GALI1340-GAL.conf <span class="ot">-o</span> rtkp/gal/GALI1340-19O.pos GALI1340.19O  GALI1340.19E
+invalid option value pos1-frequency (/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/GALI1340-GAL.conf:9)
+                                       
+INFO: pyrtkproc.py - main: Created position file: rtkp/gal/GALI1340-19O.pos
+INFO: pyrtkproc.py - main: Created statistics file: rtkp/gal/GALI1340-19O.pos.stat</code></pre></div>
+<p>creates the following directories and files:<a href="#fn3" class="footnoteRef" id="fnref3"><sup>3</sup></a></p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="ex">ll</span> /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/ -R
+<span class="ex">/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134</span>/:
+<span class="ex">total</span> 95812
+<span class="ex">-rw-r--r--</span> 1 amuls amuls   565703 Oct 28 15:04 GALI1340.19E
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 97537766 Oct 28 15:04 GALI1340.19O
+<span class="ex">drwxr-xr-x</span> 3 amuls amuls     4096 Oct 28 15:15 rtkp
+
+<span class="ex">/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134</span>/rtkp:
+<span class="ex">total</span> 4
+<span class="ex">drwxr-xr-x</span> 2 amuls amuls 4096 Oct 28 15:15 gal
+
+<span class="ex">/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp</span>/gal:
+<span class="ex">total</span> 68404
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 11190734 Oct 28 15:15 GALI1340-19O.pos
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 58842324 Oct 28 15:15 GALI1340-19O.pos.stat
+<span class="ex">-rw-r--r--</span> 1 amuls amuls     5548 Oct 28 15:15 GALI1340-GAL.conf</code></pre></div>
+<h2 id="pyrtkplot.py"><strong><code>pyrtkplot.py</code></strong></h2>
+<h3 id="getting-help-3">Getting help</h3>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="ex">pyrtkplot.py</span> --help
+<span class="ex">usage</span>: pyrtkplot.py [-h] -f FILE [-d DIR] [-m MARKER MARKER MARKER] [-p] [-o]
+                    [<span class="ex">-l</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span>]
+
+<span class="ex">pyrtkplot.py</span> make plots from RTKLib processed files (position and/or
+<span class="ex">residuals</span>)
+
+<span class="ex">optional</span> arguments:
+  <span class="ex">-h</span>, --help            show this help message and exit
+  <span class="ex">-f</span> FILE, --file FILE  RTKLib processed position file
+  <span class="ex">-d</span> DIR, --dir DIR     Root directory for RTKLib processed files (default .)
+  <span class="ex">-m</span> MARKER MARKER MARKER, --marker MARKER MARKER MARKER
+                        <span class="ex">Geodetic</span> coordinates (lat,lon,ellH) <span class="ex">of</span> reference point
+                        <span class="kw">in</span> <span class="ex">degrees</span>: [<span class="st">&quot;50.8440152778&quot;</span> <span class="st">&quot;4.3929283333&quot;</span>
+                        <span class="st">&quot;151.39179&quot;</span>] <span class="kw">for</span> <span class="ex">RMA</span>, [<span class="st">&quot;50.93277777&quot;</span>, <span class="st">&quot;4.46258333&quot;</span>,
+                        <span class="st">&quot;123&quot;</span>] <span class="kw">for</span> <span class="ex">Peutie</span>, default [<span class="st">&quot;0&quot;</span>, <span class="st">&quot;0&quot;</span>, <span class="st">&quot;0&quot;</span>] means use
+                        <span class="ex">mean</span> position
+  <span class="ex">-p</span>, --plots           displays interactive plots (default True)
+  <span class="ex">-o</span>, --overwrite       overwrite intermediate files (default False)
+  <span class="ex">-l</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span>, --logging <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span> <span class="dt">{CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}</span>
+                        <span class="ex">specify</span> logging level console/file (default INFO
+                        <span class="ex">DEBUG</span>)</code></pre></div>
+<h3 id="processing-example-3">Processing example</h3>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="ex">pyrtkplot.py</span> -d /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/ -f GALI1340-19O.pos -p -o -l INFO DEBUG 
+<span class="ex">INFO</span>: pyrtkplot.py - main: changed to dir /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/
+<span class="ex">INFO</span>: pyrtkplot.py - main: marker coordinates = {<span class="st">&#39;lat&#39;</span>: nan, <span class="st">&#39;lon&#39;</span>: nan, <span class="st">&#39;ellH&#39;</span>: nan, <span class="st">&#39;UTM.E&#39;</span>: nan, <span class="st">&#39;UTM.N&#39;</span>: nan, <span class="st">&#39;UTM.Z&#39;</span>: <span class="st">&#39;&#39;</span>, <span class="st">&#39;UTM.L&#39;</span>: <span class="st">&#39;&#39;</span>}
+<span class="ex">INFO</span>: parse_rtk_files.py - parseRTKLibPositionFile: parsing RTKLib position file GALI1340-19O.pos
+<span class="ex">INFO</span>: parse_rtk_files.py - parseRTKLibPositionFile: added UTM coordiantes
+<span class="ex">INFO</span>: parse_rtk_files.py - parseRTKLibPositionFile: dTime = {<span class="st">&#39;epochs&#39;</span>: 85421, <span class="st">&#39;date&#39;</span>: <span class="st">&#39;14 May 2019&#39;</span>, <span class="st">&#39;start&#39;</span>: <span class="st">&#39;00:00:00&#39;</span>, <span class="st">&#39;end&#39;</span>: <span class="st">&#39;23:59:59&#39;</span>}
+<span class="ex">INFO</span>: parse_rtk_files.py - parseRTKLibPositionFile: head of dataframe GALI1340-19O.pos (#85421)
+    <span class="ex">WNC</span>       TOW        lat       lon      ellH  Q  ns     sdn     sde     sdu    sdne    sdeu    sdun  age  ratio                  DT          UTM.E         UTM.N  UTM.Z UTM.L
+<span class="ex">0</span>  2053  172800.0  50.844019  4.392917  146.6432  5  6   1.8845  1.3714  5.2488 -0.5992  2.2669  0.8309  0.0  0.0   2019-05-14 00:00:00  598065.815812  5.633404e+06  31     U   
+<span class="ex">1</span>  2053  172801.0  50.844020  4.392918  146.9082  5  6   1.8846  1.3717  5.2499 -0.5988  2.2677  0.8323  0.0  0.0   2019-05-14 00:00:01  598065.898877  5.633404e+06  31     U   
+<span class="ex">2</span>  2053  172802.0  50.844020  4.392919  147.1355  5  6   1.8847  1.3720  5.2509 -0.5984  2.2684  0.8337  0.0  0.0   2019-05-14 00:00:02  598065.959996  5.633404e+06  31     U   
+<span class="ex">3</span>  2053  172803.0  50.844019  4.392919  147.1995  5  6   1.8849  1.3723  5.2520 -0.5979  2.2692  0.8350  0.0  0.0   2019-05-14 00:00:03  598065.953250  5.633404e+06  31     U   
+<span class="ex">4</span>  2053  172804.0  50.844020  4.392919  147.1374  5  6   1.8850  1.3726  5.2531 -0.5975  2.2699  0.8364  0.0  0.0   2019-05-14 00:00:04  598065.932000  5.633404e+06  31     U   
+<span class="ex">5</span>  2053  172805.0  50.844021  4.392918  147.3099  5  6   1.8851  1.3729  5.2542 -0.5971  2.2707  0.8378  0.0  0.0   2019-05-14 00:00:05  598065.915054  5.633404e+06  31     U   
+<span class="ex">6</span>  2053  172806.0  50.844021  4.392918  147.3998  5  6   1.8852  1.3732  5.2552 -0.5967  2.2715  0.8392  0.0  0.0   2019-05-14 00:00:06  598065.923971  5.633404e+06  31     U   
+<span class="ex">7</span>  2053  172807.0  50.844020  4.392918  147.2709  5  6   1.8854  1.3735  5.2563 -0.5963  2.2722  0.8406  0.0  0.0   2019-05-14 00:00:07  598065.873890  5.633404e+06  31     U   
+<span class="ex">8</span>  2053  172808.0  50.844020  4.392918  147.0595  5  6   1.8855  1.3738  5.2574 -0.5959  2.2730  0.8419  0.0  0.0   2019-05-14 00:00:08  598065.922871  5.633404e+06  31     U   
+<span class="ex">9</span>  2053  172809.0  50.844021  4.392919  147.1810  5  6   1.8856  1.3741  5.2585 -0.5955  2.2737  0.8433  0.0  0.0   2019-05-14 00:00:09  598065.955608  5.633404e+06  31     U   
+<span class="ex">INFO</span>: parse_rtk_files.py - parseRTKLibPositionFile: tail of dataframe GALI1340-19O.pos (#85421)
+        <span class="ex">WNC</span>       TOW        lat       lon      ellH  Q  ns     sdn     sde     sdu    sdne    sdeu    sdun  age  ratio                  DT          UTM.E         UTM.N  UTM.Z UTM.L
+<span class="ex">85411</span>  2053  259190.0  50.844018  4.392921  151.5498  5  8   1.2685  0.9658  2.0549 -0.5951  0.5095  0.4781  0.0  0.0   2019-05-14 23:59:50  598066.101385  5.633404e+06  31     U   
+<span class="ex">85412</span>  2053  259191.0  50.844018  4.392921  151.4892  5  8   1.2685  0.9658  2.0549 -0.5951  0.5095  0.4780  0.0  0.0   2019-05-14 23:59:51  598066.112510  5.633404e+06  31     U   
+<span class="ex">85413</span>  2053  259192.0  50.844018  4.392922  151.4381  5  8   1.2685  0.9658  2.0549 -0.5952  0.5095  0.4780  0.0  0.0   2019-05-14 23:59:52  598066.157555  5.633404e+06  31     U   
+<span class="ex">85414</span>  2053  259193.0  50.844018  4.392922  151.4488  5  8   1.2685  0.9658  2.0550 -0.5952  0.5095  0.4779  0.0  0.0   2019-05-14 23:59:53  598066.152262  5.633404e+06  31     U   
+<span class="ex">85415</span>  2053  259194.0  50.844019  4.392922  151.4692  5  8   1.2685  0.9657  2.0550 -0.5952  0.5095  0.4778  0.0  0.0   2019-05-14 23:59:54  598066.188238  5.633404e+06  31     U   
+<span class="ex">85416</span>  2053  259195.0  50.844019  4.392922  151.3103  5  8   1.2686  0.9657  2.0550 -0.5952  0.5096  0.4778  0.0  0.0   2019-05-14 23:59:55  598066.149512  5.633404e+06  31     U   
+<span class="ex">85417</span>  2053  259196.0  50.844019  4.392921  151.0772  5  8   1.2686  0.9657  2.0550 -0.5953  0.5096  0.4777  0.0  0.0   2019-05-14 23:59:56  598066.136361  5.633404e+06  31     U   
+<span class="ex">85418</span>  2053  259197.0  50.844019  4.392922  150.9399  5  8   1.2686  0.9657  2.0551 -0.5953  0.5096  0.4777  0.0  0.0   2019-05-14 23:59:57  598066.201582  5.633404e+06  31     U   
+<span class="ex">85419</span>  2053  259198.0  50.844019  4.392922  150.8246  5  8   1.2686  0.9656  2.0551 -0.5953  0.5096  0.4776  0.0  0.0   2019-05-14 23:59:58  598066.165987  5.633404e+06  31     U   
+<span class="ex">85420</span>  2053  259199.0  50.844018  4.392921  150.8220  5  8   1.2686  0.9656  2.0551 -0.5953  0.5096  0.4775  0.0  0.0   2019-05-14 23:59:59  598066.137343  5.633404e+06  31     U   
+<span class="ex">INFO</span>: pyrtkplot.py - main: created csv file GALI1340-19O.pos.posn
+<span class="ex">INFO</span>: parse_rtk_files.py - weightedAverage: calculating weighted averages
+<span class="ex">INFO</span>: parse_rtk_files.py - weightedAverage: weighted averages are {<span class="st">&#39;lat&#39;</span>: 50.84402201057825, <span class="st">&#39;lon&#39;</span>: 4.392926240912683, <span class="st">&#39;ellH&#39;</span>: 149.24603542745334, <span class="st">&#39;UTM.N&#39;</span>: 5633404.218276535, <span class="st">&#39;UTM.E&#39;</span>: 598066.4723520176, <span class="st">&#39;sdn&#39;</span>: 1.619212210243509, <span class="st">&#39;sde&#39;</span>: 1.3262323574841384, <span class="st">&#39;sdu&#39;</span>: 2.972683279366318}
+<span class="ex">INFO</span>: parse_rtk_files.py - parseSatelliteStatistics: Parsing RTKLib satellites file /tmp/GALI1340-19O.pos.stat.sat (be patient)
+<span class="ex">INFO</span>: parse_rtk_files.py - parseSatelliteStatistics: head of dataframe dfSat (#537704)
+    <span class="ex">WNC</span>       TOW   SV  Freq   Azim  Elev   PRres  CFres  Valid  CN0                  DT
+<span class="ex">0</span>  2053  172800.0  E02  1     19.0   8.7   0.5245  0.0    0      38  2019-05-14 00:00:00
+<span class="ex">1</span>  2053  172800.0  E07  1     67.6   33.3  0.0823  0.0    0      44  2019-05-14 00:00:00
+<span class="ex">2</span>  2053  172800.0  E12  1     300.1  41.4 -0.3751  0.0    0      42  2019-05-14 00:00:00
+<span class="ex">3</span>  2053  172800.0  E19  1     249.2  41.5  0.3119  0.0    0      41  2019-05-14 00:00:00
+<span class="ex">4</span>  2053  172800.0  E27  1     116.3  8.0  -0.6924  0.0    0      38  2019-05-14 00:00:00
+<span class="ex">5</span>  2053  172800.0  E30  1     68.0   17.5  0.0799  0.0    0      42  2019-05-14 00:00:00
+<span class="ex">6</span>  2053  172801.0  E02  1     19.0   8.7   0.4695  0.0    0      38  2019-05-14 00:00:01
+<span class="ex">7</span>  2053  172801.0  E07  1     67.6   33.3  0.0577  0.0    0      44  2019-05-14 00:00:01
+<span class="ex">8</span>  2053  172801.0  E12  1     300.1  41.4 -0.3597  0.0    0      42  2019-05-14 00:00:01
+<span class="ex">9</span>  2053  172801.0  E19  1     249.2  41.5  0.3031  0.0    0      41  2019-05-14 00:00:01
+<span class="ex">INFO</span>: parse_rtk_files.py - parseSatelliteStatistics: tail of dataframe dfSat (#537704)
+         <span class="ex">WNC</span>       TOW   SV  Freq   Azim  Elev   PRres  CFres  Valid  CN0                  DT
+<span class="ex">537694</span>  2053  259198.0  E25  1     86.7   17.0 -0.1166  0.0    0      40  2019-05-14 23:59:58
+<span class="ex">537695</span>  2053  259198.0  E26  1     315.9  26.2 -0.1960  0.0    0      43  2019-05-14 23:59:58
+<span class="ex">537696</span>  2053  259199.0  E03  1     67.6   53.1  0.0093  0.0    0      47  2019-05-14 23:59:59
+<span class="ex">537697</span>  2053  259199.0  E07  1     249.4  17.7  0.1793  0.0    0      41  2019-05-14 23:59:59
+<span class="ex">537698</span>  2053  259199.0  E08  1     253.4  70.1  0.0079  0.0    0      45  2019-05-14 23:59:59
+<span class="ex">537699</span>  2053  259199.0  E13  1     253.8  54.8  0.0177  0.0    0      48  2019-05-14 23:59:59
+<span class="ex">537700</span>  2053  259199.0  E15  1     187.0  29.1 -0.0800  0.0    0      46  2019-05-14 23:59:59
+<span class="ex">537701</span>  2053  259199.0  E24  1     36.4   14.2  0.1812  0.0    0      41  2019-05-14 23:59:59
+<span class="ex">537702</span>  2053  259199.0  E25  1     86.7   17.0 -0.0763  0.0    0      40  2019-05-14 23:59:59
+<span class="ex">537703</span>  2053  259199.0  E26  1     315.9  26.2 -0.1725  0.0    0      43  2019-05-14 23:59:59
+<span class="ex">INFO</span>: pyrtkplot.py - main: created csv file GALI1340-19O.pos.sats
+<span class="ex">INFO</span>: parse_rtk_files.py - parseResiduals: parses observed resiudals of satellites
+<span class="ex">INFO</span>: parse_rtk_files.py - parseResiduals: observed SVs (#19)<span class="bu">:</span>
+[<span class="st">&#39;E01&#39;</span> <span class="st">&#39;E02&#39;</span> <span class="st">&#39;E03&#39;</span> <span class="st">&#39;E04&#39;</span> <span class="st">&#39;E05&#39;</span> <span class="st">&#39;E07&#39;</span> <span class="st">&#39;E08&#39;</span> <span class="st">&#39;E09&#39;</span> <span class="st">&#39;E11&#39;</span> <span class="st">&#39;E12&#39;</span> <span class="st">&#39;E13&#39;</span> <span class="st">&#39;E15&#39;</span>
+ <span class="st">&#39;E19&#39;</span> <span class="st">&#39;E21&#39;</span> <span class="st">&#39;E24&#39;</span> <span class="st">&#39;E25&#39;</span> <span class="st">&#39;E26&#39;</span> <span class="st">&#39;E27&#39;</span> <span class="st">&#39;E30&#39;</span>]
+<span class="ex">INFO</span>:    E01: <span class="co">#Obs =  28519  PRres = -0.101 +-  0.705,  95.82 (#27327) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E02: <span class="co">#Obs =  24444  PRres = +0.264 +-  0.979,  92.18 (#22533) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E03: <span class="co">#Obs =  30939  PRres = +0.024 +-  0.629,  98.17 (#30372) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E04: <span class="co">#Obs =  41129  PRres = +0.078 +-  0.370,  99.96 (#41111) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E05: <span class="co">#Obs =  22879  PRres = -0.021 +-  0.540,  98.56 (#22549) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E07: <span class="co">#Obs =   8366  PRres = -0.047 +-  0.565,  99.03 (# 8285) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E08: <span class="co">#Obs =  17814  PRres = -0.237 +-  0.803,  96.49 (#17189) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E09: <span class="co">#Obs =  42567  PRres = +0.068 +-  0.562,  98.62 (#41978) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E11: <span class="co">#Obs =  41242  PRres = -0.178 +-  0.479,  99.77 (#41148) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E12: <span class="co">#Obs =  34926  PRres = -0.184 +-  0.629,  99.39 (#34713) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E13: <span class="co">#Obs =  20126  PRres = -0.107 +-  0.810,  99.22 (#19969) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E15: <span class="co">#Obs =  24242  PRres = -0.503 +-  0.950,  92.87 (#22513) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E19: <span class="co">#Obs =  30461  PRres = -0.046 +-  0.458,  99.83 (#30410) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E21: <span class="co">#Obs =  30054  PRres = +0.004 +-  0.518,  99.62 (#29939) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E24: <span class="co">#Obs =  34841  PRres = +0.371 +-  0.572,  99.72 (#34742) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E25: <span class="co">#Obs =  29781  PRres = -0.184 +-  0.432,  99.69 (#29689) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E26: <span class="co">#Obs =  17568  PRres = +0.122 +-  0.545,  99.50 (#17481) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E27: <span class="co">#Obs =  30216  PRres = +0.020 +-  0.401,  99.88 (#30180) within [-2, +2]</span>
+<span class="ex">INFO</span>:    E30: <span class="co">#Obs =  27436  PRres = +0.054 +-  0.556,  99.27 (#27235) within [-2, +2]</span>
+<span class="ex">INFO</span>: parse_rtk_files.py - calcDOPs: calculating number of SVs in PVT and DOP values
+<span class="ex">INFO</span>: parse_rtk_files.py - calcDOPs: calculating xDOP values for 252 epochs
+<span class="ex">/home/amuls/venvmint/pyRTKLib/lib/python3.6/site-packages/pandas/core</span>/indexing.py:<span class="ex">190</span>: SettingWithCopyWarning: 
+<span class="ex">A</span> value is trying to be set on a copy of a slice from a DataFrame
+
+<span class="ex">See</span> the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-view-versus-copy
+  <span class="ex">self._setitem_with_indexer</span>(indexer, value)
+ <span class="co">############################################################ [  99.6%]</span>
+<span class="ex">INFO</span>: parse_rtk_files.py - calcDOPs: head of dataframe dfDOPs (#252)
+                   <span class="ex">DT</span>  #SVs      HDOP       VDOP       PDOP       GDOP
+<span class="ex">0</span> 2019-05-14 00:00:00  6     1.114315  7.054628   7.142091   7.380099 
+<span class="ex">1</span> 2019-05-14 00:14:44  6     1.443815  9.092905   9.206820   9.609841 
+<span class="ex">2</span> 2019-05-14 00:14:45  7     1.240377  4.968667   5.121151   5.333054 
+<span class="ex">3</span> 2019-05-14 00:25:45  7     1.776297  7.069871   7.289603   7.649188 
+<span class="ex">4</span> 2019-05-14 00:25:46  6     1.956447  7.376043   7.631101   7.996951 
+<span class="ex">5</span> 2019-05-14 00:57:20  6     3.717579  14.330374  14.804730  15.807405
+<span class="ex">6</span> 2019-05-14 00:57:21  7     1.199014  2.472390   2.747790   2.832587 
+<span class="ex">7</span> 2019-05-14 00:58:23  7     1.209807  2.491909   2.770062   2.856499 
+<span class="ex">8</span> 2019-05-14 00:58:24  8     0.618002  2.046985   2.138241   2.181598 
+<span class="ex">9</span> 2019-05-14 01:20:00  8     0.648255  2.285739   2.375887   2.436742 
+<span class="ex">INFO</span>: parse_rtk_files.py - calcDOPs: tail of dataframe dfDOPs (#252)
+                     <span class="ex">DT</span>  #SVs      HDOP      VDOP      PDOP      GDOP
+<span class="ex">242</span> 2019-05-14 22:51:22  6     1.882085  4.512130  4.888922  5.428932
+<span class="ex">243</span> 2019-05-14 22:51:23  7     1.696683  3.341403  3.747494  4.061784
+<span class="ex">244</span> 2019-05-14 22:56:19  7     1.705641  3.577976  3.963726  4.303613
+<span class="ex">245</span> 2019-05-14 23:15:22  7     1.476990  3.853409  4.126774  4.486236
+<span class="ex">246</span> 2019-05-14 23:15:23  8     0.980210  2.429163  2.619474  2.797341
+<span class="ex">247</span> 2019-05-14 23:17:06  8     0.982146  2.485239  2.672269  2.854907
+<span class="ex">248</span> 2019-05-14 23:17:07  9     0.639971  1.141858  1.308970  1.361070
+<span class="ex">249</span> 2019-05-14 23:52:58  9     0.659960  1.633230  1.761530  1.837842
+<span class="ex">250</span> 2019-05-14 23:52:59  8     0.678254  1.903896  2.021101  2.130197
+<span class="ex">251</span> 2019-05-14 23:59:59  8     0.674788  2.054010  2.162012  2.280484
+<span class="ex">INFO</span>: pyrtkplot.py - main: created csv file GALI1340-19O.pos.dops
+<span class="ex">INFO</span>: parse_rtk_files.py - addPDOPStatistics: add the statistics for PDOP bins for E, N and U coordinates
+<span class="ex">INFO</span>: parse_rtk_files.py - parseClockBias: parsing RTKLib clock statistics /tmp/GALI1340-19O.pos.stat.clk
+<span class="ex">INFO</span>: parse_rtk_files.py - parseClockBias: head of dataframe dfCLKs (#85421)
+    <span class="ex">WNC</span>       TOW  mode  rcv  GPS  GLO         GAL  OTH                  DT
+<span class="ex">0</span>  2053  172800.0  5     1   NaN  NaN  -87841.732  NaN  2019-05-14 00:00:00
+<span class="ex">1</span>  2053  172801.0  5     1   NaN  NaN  -90163.197  NaN  2019-05-14 00:00:01
+<span class="ex">2</span>  2053  172802.0  5     1   NaN  NaN  -92484.789  NaN  2019-05-14 00:00:02
+<span class="ex">3</span>  2053  172803.0  5     1   NaN  NaN  -94806.871  NaN  2019-05-14 00:00:03
+<span class="ex">4</span>  2053  172804.0  5     1   NaN  NaN  -97129.121  NaN  2019-05-14 00:00:04
+<span class="ex">5</span>  2053  172805.0  5     1   NaN  NaN  -99450.921  NaN  2019-05-14 00:00:05
+<span class="ex">6</span>  2053  172806.0  5     1   NaN  NaN  -101773.068 NaN  2019-05-14 00:00:06
+<span class="ex">7</span>  2053  172807.0  5     1   NaN  NaN  -104095.759 NaN  2019-05-14 00:00:07
+<span class="ex">8</span>  2053  172808.0  5     1   NaN  NaN  -106418.221 NaN  2019-05-14 00:00:08
+<span class="ex">9</span>  2053  172809.0  5     1   NaN  NaN  -108740.478 NaN  2019-05-14 00:00:09
+<span class="ex">INFO</span>: parse_rtk_files.py - parseClockBias: tail of dataframe dfCLKs (#85421)
+        <span class="ex">WNC</span>       TOW  mode  rcv  GPS  GLO         GAL  OTH                  DT
+<span class="ex">85411</span>  2053  259190.0  5     1   NaN  NaN   304448.775 NaN  2019-05-14 23:59:50
+<span class="ex">85412</span>  2053  259191.0  5     1   NaN  NaN   302124.978 NaN  2019-05-14 23:59:51
+<span class="ex">85413</span>  2053  259192.0  5     1   NaN  NaN   299801.512 NaN  2019-05-14 23:59:52
+<span class="ex">85414</span>  2053  259193.0  5     1   NaN  NaN   297478.431 NaN  2019-05-14 23:59:53
+<span class="ex">85415</span>  2053  259194.0  5     1   NaN  NaN   295155.364 NaN  2019-05-14 23:59:54
+<span class="ex">85416</span>  2053  259195.0  5     1   NaN  NaN   292831.599 NaN  2019-05-14 23:59:55
+<span class="ex">85417</span>  2053  259196.0  5     1   NaN  NaN   290507.389 NaN  2019-05-14 23:59:56
+<span class="ex">85418</span>  2053  259197.0  5     1   NaN  NaN   288183.471 NaN  2019-05-14 23:59:57
+<span class="ex">85419</span>  2053  259198.0  5     1   NaN  NaN   285859.830 NaN  2019-05-14 23:59:58
+<span class="ex">85420</span>  2053  259199.0  5     1   NaN  NaN   283536.143 NaN  2019-05-14 23:59:59
+<span class="ex">INFO</span>: pyrtkplot.py - main: created csv file GALI1340-19O.pos.clks
+<span class="ex">INFO</span>: pyrtkplot.py - main: calculating coordinate difference with reference/mean position
+<span class="ex">INFO</span>: plot_position.py - crdDiff: head of dataframe dfCrd (#85421)
+      <span class="ex">UTM.E</span>     UTM.N      ellH
+<span class="ex">0</span> -0.656540 -0.332108 -2.602835
+<span class="ex">1</span> -0.573475 -0.236772 -2.337835
+<span class="ex">2</span> -0.512356 -0.284785 -2.110535
+<span class="ex">3</span> -0.519102 -0.311719 -2.046535
+<span class="ex">4</span> -0.540352 -0.181976 -2.108635
+<span class="ex">5</span> -0.557298 -0.108659 -1.936135
+<span class="ex">6</span> -0.548382 -0.129626 -1.846235
+<span class="ex">7</span> -0.598462 -0.248700 -1.975135
+<span class="ex">8</span> -0.549481 -0.280479 -2.186535
+<span class="ex">9</span> -0.516744 -0.160397 -2.065035
+<span class="ex">INFO</span>: plot_position.py - crdDiff: tail of dataframe dfCrd (#85421)
+          <span class="ex">UTM.E</span>     UTM.N      ellH
+<span class="ex">85411</span> -0.370967 -0.458980  2.303765
+<span class="ex">85412</span> -0.359842 -0.503709  2.243165
+<span class="ex">85413</span> -0.314797 -0.453694  2.192065
+<span class="ex">85414</span> -0.320090 -0.453127  2.202765
+<span class="ex">85415</span> -0.284114 -0.385263  2.223165
+<span class="ex">85416</span> -0.322840 -0.363302  2.064265
+<span class="ex">85417</span> -0.335991 -0.330625  1.831165
+<span class="ex">85418</span> -0.270770 -0.364656  1.693865
+<span class="ex">85419</span> -0.306365 -0.385460  1.578565
+<span class="ex">85420</span> -0.335009 -0.416367  1.575965
+<span class="ex">INFO</span>: pyrtkplot.py - main: creating Position coordinates plot
+<span class="ex">INFO</span>: plot_position.py - plotUTMOffset: created plot /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/png/GALI1340-19O-ENU.png
+<span class="ex">INFO</span>: pyrtkplot.py - main: creating position scatter plots
+<span class="ex">INFO</span>: plot_scatter.py - plotUTMScatter: created plot /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/png/GALI1340-19O-scatter.png
+<span class="ex">ax</span> = [[<span class="op">&lt;</span>matplotlib.axes._subplots.AxesSubplot object at 0x7f071792e438<span class="op">&gt;</span>
+  <span class="op">&lt;</span><span class="ex">matplotlib.axes._subplots.AxesSubplot</span> object at 0x7f07180f5748<span class="op">&gt;</span>
+  <span class="op">&lt;</span><span class="ex">matplotlib.axes._subplots.AxesSubplot</span> object at 0x7f07180fe9b0<span class="op">&gt;</span>]
+ [<span class="op">&lt;</span><span class="ex">matplotlib.axes._subplots.AxesSubplot</span> object at 0x7f0717974f28<span class="op">&gt;</span>
+  <span class="op">&lt;</span><span class="ex">matplotlib.axes._subplots.AxesSubplot</span> object at 0x7f07179a14e0<span class="op">&gt;</span>
+  <span class="op">&lt;</span><span class="ex">matplotlib.axes._subplots.AxesSubplot</span> object at 0x7f0720ad8a58<span class="op">&gt;</span>]]
+<span class="ex">index4Bin</span> = 5387
+<span class="ex">INFO</span>: plot_scatter.py - plotUTMScatterBin: 0 $\leq$ PDOP $<span class="op">&lt;</span>$ 2 (6.3%, <span class="co">#5387)</span>
+<span class="ex">index4Bin</span> = 16487
+<span class="ex">INFO</span>: plot_scatter.py - plotUTMScatterBin: 2 $\leq$ PDOP $<span class="op">&lt;</span>$ 3 (19.3%, <span class="co">#16487)</span>
+<span class="ex">index4Bin</span> = 15872
+<span class="ex">INFO</span>: plot_scatter.py - plotUTMScatterBin: 3 $\leq$ PDOP $<span class="op">&lt;</span>$ 4 (18.6%, <span class="co">#15872)</span>
+<span class="ex">index4Bin</span> = 20524
+<span class="ex">INFO</span>: plot_scatter.py - plotUTMScatterBin: 4 $\leq$ PDOP $<span class="op">&lt;</span>$ 5 (24.0%, <span class="co">#20524)</span>
+<span class="ex">index4Bin</span> = 9506
+<span class="ex">INFO</span>: plot_scatter.py - plotUTMScatterBin: 5 $\leq$ PDOP $<span class="op">&lt;</span>$ 6 (11.1%, <span class="co">#9506)</span>
+<span class="ex">index4Bin</span> = 17645
+<span class="ex">INFO</span>: plot_scatter.py - plotUTMScatterBin: 6 $\leq$ PDOP $<span class="op">&lt;</span>$ inf (20.7%, <span class="co">#17645)</span>
+<span class="ex">INFO</span>: plot_scatter.py - plotUTMScatterBin: created plot /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/png/GALI1340-19O-scatter-bin.png
+<span class="ex">INFO</span>: pyrtkplot.py - main: creating dPRRes plots based on dict {<span class="st">&#39;name&#39;</span>: <span class="st">&#39;PRres&#39;</span>, <span class="st">&#39;yrange&#39;</span>: [-10, 7.5], <span class="st">&#39;title&#39;</span>: <span class="st">&#39;PR Residuals&#39;</span>, <span class="st">&#39;unit&#39;</span>: <span class="st">&#39;m&#39;</span>, <span class="st">&#39;linestyle&#39;</span>: <span class="st">&#39;-&#39;</span>}
+<span class="ex">INFO</span>: plot_sats_column.py - plotRTKLibSatsColumn: processing GNSS Systems = [<span class="st">&#39;GAL&#39;</span>]
+<span class="ex">INFO</span>: plot_sats_column.py - plotRTKLibSatsColumn: working on GNSS = GAL
+<span class="ex">INFO</span>: plot_sats_column.py - plotRTKLibSatsColumn: GAL statistics PRres
+                <span class="ex">E01</span>           E02           E03           E04           E05  \
+count  28519.000000  24444.000000  30939.000000  41129.000000  22879.000000   
+<span class="ex">mean</span>  -0.100600      0.264480      0.024379      0.077549     -0.021271       
+<span class="ex">std</span>    0.705065      0.978930      0.628584      0.369536      0.539779       
+<span class="ex">min</span>   -3.421000     -2.245900     -3.200900     -2.443100     -3.903000       
+<span class="ex">25%</span>   -0.254550     -0.164425     -0.127350     -0.133400     -0.210900       
+<span class="ex">50%</span>    0.005000      0.016900      0.063000      0.053500      0.021300       
+<span class="ex">75%</span>    0.267900      0.242400      0.298950      0.279600      0.287150       
+<span class="ex">max</span>    2.535200      4.204300      2.156000      2.095300      1.420100       
+
+               <span class="ex">E07</span>           E08           E09           E11           E12  \
+count  8366.000000  17814.000000  42567.000000  41242.000000  34926.000000   
+<span class="ex">mean</span>  -0.046939    -0.237451      0.067611     -0.177826     -0.183611       
+<span class="ex">std</span>    0.564818     0.803366      0.562027      0.478529      0.628914       
+<span class="ex">min</span>   -2.610600    -2.603600     -2.775500     -2.524400     -3.663300       
+<span class="ex">25%</span>   -0.232175    -0.530300     -0.216050     -0.442700     -0.593875       
+<span class="ex">50%</span>    0.004450    -0.001850      0.003300     -0.132700     -0.111400       
+<span class="ex">75%</span>    0.285950     0.312300      0.247000      0.089375      0.145400       
+<span class="ex">max</span>    1.488800     1.492000      3.717700      2.292800      2.087400       
+
+                <span class="ex">E13</span>           E15           E19           E21           E24  \
+count  20126.000000  24242.000000  30461.000000  30054.000000  34841.000000   
+<span class="ex">mean</span>  -0.106918     -0.503255     -0.046143      0.003719      0.370524       
+<span class="ex">std</span>    0.809758      0.949554      0.458359      0.518443      0.572435       
+<span class="ex">min</span>   -2.965300     -5.211800     -2.635800     -2.736800     -3.055700       
+<span class="ex">25%</span>   -0.670675     -0.764200     -0.250300     -0.270400      0.008500       
+<span class="ex">50%</span>   -0.029700     -0.165450     -0.044200     -0.006350      0.277800       
+<span class="ex">75%</span>    0.392950      0.077000      0.171400      0.228200      0.763200       
+<span class="ex">max</span>    2.289300      1.035200      1.723900      2.729100      2.496200       
+
+                <span class="ex">E25</span>           E26           E27           E30        #PRres  
+<span class="ex">count</span>  29781.000000  17568.000000  30216.000000  27436.000000  85421.000000  
+<span class="ex">mean</span>  -0.183908      0.122201      0.019946      0.053907      6.292949      
+<span class="ex">std</span>    0.431862      0.545369      0.400590      0.555898      0.943544      
+<span class="ex">min</span>   -3.006900     -2.977100     -2.684000     -3.027000      0.000000      
+<span class="ex">25%</span>   -0.445700     -0.199250     -0.134925     -0.199800      6.000000      
+<span class="ex">50%</span>   -0.192600      0.088750      0.043000      0.077100      6.000000      
+<span class="ex">75%</span>    0.057200      0.484825      0.246600      0.329225      7.000000      
+<span class="ex">max</span>    1.512000      1.685900      1.392100      2.030600      9.000000      
+<span class="ex">INFO</span>: plot_sats_column.py - plotRTKLibSatsColumn: created plot /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/png/GALI1340-19O-PRres.png
+<span class="ex">INFO</span>: pyrtkplot.py - main: creating CN0 plots based on dict {<span class="st">&#39;name&#39;</span>: <span class="st">&#39;CN0&#39;</span>, <span class="st">&#39;yrange&#39;</span>: [20, 60], <span class="st">&#39;title&#39;</span>: <span class="st">&#39;CN0 Ratio&#39;</span>, <span class="st">&#39;unit&#39;</span>: <span class="st">&#39;dBHz&#39;</span>, <span class="st">&#39;linestyle&#39;</span>: <span class="st">&#39;-&#39;</span>}
+<span class="ex">INFO</span>: plot_sats_column.py - plotRTKLibSatsColumn: processing GNSS Systems = [<span class="st">&#39;GAL&#39;</span>]
+<span class="ex">INFO</span>: plot_sats_column.py - plotRTKLibSatsColumn: working on GNSS = GAL
+<span class="ex">INFO</span>: plot_sats_column.py - plotRTKLibSatsColumn: GAL statistics CN0
+                <span class="ex">E01</span>           E02           E03           E04           E05  \
+count  28523.000000  24450.000000  30949.000000  41150.000000  22879.000000   
+<span class="ex">mean</span>   44.190969     44.080818     43.320560     43.307363     43.901788      
+<span class="ex">std</span>    3.434037      3.271548      2.821981      3.428386      2.777640       
+<span class="ex">min</span>    34.000000     34.000000     32.000000     28.000000     32.000000      
+<span class="ex">25%</span>    42.000000     42.000000     42.000000     41.000000     42.000000      
+<span class="ex">50%</span>    46.000000     45.000000     44.000000     44.000000     45.000000      
+<span class="ex">75%</span>    47.000000     47.000000     46.000000     46.000000     46.000000      
+<span class="ex">max</span>    50.000000     50.000000     48.000000     50.000000     48.000000      
+
+               <span class="ex">E07</span>           E08           E09           E11           E12  \
+count  8366.000000  17814.000000  42575.000000  41247.000000  34940.000000   
+<span class="ex">mean</span>   40.698900    42.182048     44.012683     40.333285     40.806468      
+<span class="ex">std</span>    2.371844     3.347806      2.836476      2.752963      2.797810       
+<span class="ex">min</span>    33.000000    32.000000     28.000000     31.000000     30.000000      
+<span class="ex">25%</span>    39.000000    40.000000     42.000000     38.000000     39.000000      
+<span class="ex">50%</span>    41.000000    42.000000     44.000000     40.000000     42.000000      
+<span class="ex">75%</span>    43.000000    46.000000     46.000000     42.000000     43.000000      
+<span class="ex">max</span>    46.000000    49.000000     50.000000     45.000000     45.000000      
+
+                <span class="ex">E13</span>           E15           E19           E21           E24  \
+count  20128.000000  24247.000000  30465.000000  30059.000000  34889.000000   
+<span class="ex">mean</span>   41.663205     43.633068     39.214410     43.028976     43.829230      
+<span class="ex">std</span>    3.988020      3.583892      3.566379      3.549690      3.615366       
+<span class="ex">min</span>    30.000000     33.000000     28.000000     28.000000     28.000000      
+<span class="ex">25%</span>    38.000000     42.000000     37.000000     40.000000     42.000000      
+<span class="ex">50%</span>    42.000000     45.000000     40.000000     43.000000     45.000000      
+<span class="ex">75%</span>    45.000000     46.000000     42.000000     46.000000     46.000000      
+<span class="ex">max</span>    49.000000     49.000000     46.000000     48.000000     50.000000      
+
+                <span class="ex">E25</span>           E26           E27           E30          #CN0  
+<span class="ex">count</span>  29792.000000  17569.000000  30220.000000  27442.000000  85421.000000  
+<span class="ex">mean</span>   43.701128     40.992885     42.108438     42.374900     6.294752      
+<span class="ex">std</span>    3.208323      2.032244      2.336975      2.364055      0.940396      
+<span class="ex">min</span>    28.000000     32.000000     28.000000     33.000000     4.000000      
+<span class="ex">25%</span>    42.000000     40.000000     41.000000     41.000000     6.000000      
+<span class="ex">50%</span>    44.000000     41.000000     42.000000     42.000000     6.000000      
+<span class="ex">75%</span>    46.000000     42.000000     44.000000     44.000000     7.000000      
+<span class="ex">max</span>    50.000000     45.000000     47.000000     47.000000     9.000000      
+<span class="ex">INFO</span>: plot_sats_column.py - plotRTKLibSatsColumn: created plot /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/png/GALI1340-19O-CN0.png
+<span class="ex">INFO</span>: pyrtkplot.py - main: creating Elev plots based on dict {<span class="st">&#39;name&#39;</span>: <span class="st">&#39;Elev&#39;</span>, <span class="st">&#39;yrange&#39;</span>: [0, 90], <span class="st">&#39;title&#39;</span>: <span class="st">&#39;Elevation&#39;</span>, <span class="st">&#39;unit&#39;</span>: <span class="st">&#39;Deg&#39;</span>, <span class="st">&#39;linestyle&#39;</span>: <span class="st">&#39;-&#39;</span>}
+<span class="ex">INFO</span>: plot_sats_column.py - plotRTKLibSatsColumn: processing GNSS Systems = [<span class="st">&#39;GAL&#39;</span>]
+<span class="ex">INFO</span>: plot_sats_column.py - plotRTKLibSatsColumn: working on GNSS = GAL
+<span class="ex">INFO</span>: plot_sats_column.py - plotRTKLibSatsColumn: GAL statistics Elev
+                <span class="ex">E01</span>           E02           E03           E04           E05  \
+count  28523.000000  24450.000000  30949.000000  41150.000000  22879.000000   
+<span class="ex">mean</span>   40.515605     34.233039     36.189111     35.163723     36.506128      
+<span class="ex">std</span>    23.758212     18.208567     24.435068     22.916476     18.089336      
+<span class="ex">min</span>    5.000000      5.000000      5.000000      5.000000      5.000000       
+<span class="ex">25%</span>    19.000000     17.400000     16.600000     17.000000     20.200000      
+<span class="ex">50%</span>    39.700000     35.100000     23.400000     24.000000     36.500000      
+<span class="ex">75%</span>    62.200000     51.700000     59.800000     54.200000     54.100000      
+<span class="ex">max</span>    78.200000     59.900000     81.000000     80.600000     61.300000      
+
+               <span class="ex">E07</span>           E08           E09           E11           E12  \
+count  8366.000000  17814.000000  42575.000000  41247.000000  34940.000000   
+<span class="ex">mean</span>   16.488429    25.797990     32.394821     35.616326     34.815484      
+<span class="ex">std</span>    7.870172     20.729978     15.852132     22.442584     16.060302      
+<span class="ex">min</span>    5.000000     5.000000      5.000000      5.000000      5.000000       
+<span class="ex">25%</span>    10.000000    9.300000      19.000000     18.100000     21.000000      
+<span class="ex">50%</span>    15.000000    12.600000     32.900000     26.800000     37.100000      
+<span class="ex">75%</span>    22.500000    43.900000     42.000000     53.700000     45.300000      
+<span class="ex">max</span>    33.300000    70.100000     60.700000     80.800000     60.200000      
+
+                <span class="ex">E13</span>           E15           E19           E21           E24  \
+count  20128.000000  24247.000000  30465.000000  30059.000000  34889.000000   
+<span class="ex">mean</span>   26.090893     41.885462     43.173369     28.389407     41.482327      
+<span class="ex">std</span>    19.142970     23.024286     27.493161     18.253639     25.444991      
+<span class="ex">min</span>    5.000000      5.000000      5.000000      5.000000      5.000000       
+<span class="ex">25%</span>    10.100000     22.400000     10.400000     10.800000     15.200000      
+<span class="ex">50%</span>    15.600000     43.200000     46.700000     25.200000     39.600000      
+<span class="ex">75%</span>    47.100000     62.150000     68.000000     46.300000     64.300000      
+<span class="ex">max</span>    56.800000     77.100000     85.300000     57.700000     84.900000      
+
+                <span class="ex">E25</span>           E26           E27           E30         #Elev  
+<span class="ex">count</span>  29792.000000  17569.000000  30220.000000  27442.000000  85421.000000  
+<span class="ex">mean</span>   40.881475     16.597752     22.023819     23.338452     6.294752      
+<span class="ex">std</span>    23.882958     5.800826      9.397659      10.332838     0.940396      
+<span class="ex">min</span>    5.000000      5.000000      5.000000      5.000000      4.000000      
+<span class="ex">25%</span>    17.900000     11.700000     14.600000     15.800000     6.000000      
+<span class="ex">50%</span>    39.200000     17.600000     21.600000     21.300000     6.000000      
+<span class="ex">75%</span>    62.400000     22.000000     29.800000     33.000000     7.000000      
+<span class="ex">max</span>    80.300000     26.200000     38.100000     40.200000     9.000000      
+<span class="ex">INFO</span>: plot_sats_column.py - plotRTKLibSatsColumn: created plot /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/png/GALI1340-19O-Elev.png
+<span class="ex">INFO</span>: pyrtkplot.py - main: creating Clock plots
+<span class="ex">INFO</span>: plot_clock.py - plotClock: Clock available for GNSS systems GAL
+<span class="ex">INFO</span>: plot_clock.py - plotClock: plotting clock offset for GAL
+<span class="ex">INFO</span>: plot_clock.py - plotClock: created plot /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/png/GALI1340-19O-CLK.png
+<span class="ex">INFO</span>: pyrtkplot.py - main: final amc.dRTK =
+<span class="kw">{</span>
+    <span class="st">&quot;info&quot;</span>: <span class="kw">{</span>
+        <span class="st">&quot;dir&quot;</span>: <span class="st">&quot;/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/&quot;</span>,
+        <span class="st">&quot;rtkPosFile&quot;</span>: <span class="st">&quot;GALI1340-19O.pos&quot;</span>,
+        <span class="st">&quot;rtkStatFile&quot;</span>: <span class="st">&quot;GALI1340-19O.pos.stat&quot;</span>
+    <span class="kw">}</span>,
+    <span class="st">&quot;syst&quot;</span>: <span class="st">&quot;GAL&quot;</span>,
+    <span class="st">&quot;PDOP&quot;</span>: <span class="kw">{</span>
+        <span class="st">&quot;bins&quot;</span>:<span class="bu"> [</span>
+            0,
+            2,
+            3,
+            4,
+            5,
+            6,
+            Infinity
+        ],
+        <span class="st">&quot;bin0-2&quot;</span>: {
+            <span class="st">&quot;perc&quot;</span>: 0.0630641177228082,
+            <span class="st">&quot;UTM.N&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 5633404.235761121,
+                <span class="st">&quot;stddev&quot;</span>: 0.5976105085749913,
+                <span class="st">&quot;min&quot;</span>: 5633402.846171377,
+                <span class="st">&quot;max&quot;</span>: 5633406.191345545
+            },
+            <span class="st">&quot;UTM.E&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 598066.5865779052,
+                <span class="st">&quot;stddev&quot;</span>: 0.41524041148086294,
+                <span class="st">&quot;min&quot;</span>: 598065.5749348954,
+                <span class="st">&quot;max&quot;</span>: 598068.2807015836
+            },
+            <span class="st">&quot;ellH&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 148.80031639131244,
+                <span class="st">&quot;stddev&quot;</span>: 1.080856582133117,
+                <span class="st">&quot;min&quot;</span>: 145.8679,
+                <span class="st">&quot;max&quot;</span>: 151.4576
+            }
+        },
+        <span class="st">&quot;bin2-3&quot;</span>: {
+            <span class="st">&quot;perc&quot;</span>: 0.19300874492220882,
+            <span class="st">&quot;UTM.N&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 5633404.589088354,
+                <span class="st">&quot;stddev&quot;</span>: 0.8798556721956519,
+                <span class="st">&quot;min&quot;</span>: 5633402.071957521,
+                <span class="st">&quot;max&quot;</span>: 5633408.604738303
+            },
+            <span class="st">&quot;UTM.E&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 598066.7807107716,
+                <span class="st">&quot;stddev&quot;</span>: 1.0549838359249408,
+                <span class="st">&quot;min&quot;</span>: 598064.5468330742,
+                <span class="st">&quot;max&quot;</span>: 598073.432555287
+            },
+            <span class="st">&quot;ellH&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 149.07066116334082,
+                <span class="st">&quot;stddev&quot;</span>: 2.1713506087863874,
+                <span class="st">&quot;min&quot;</span>: 139.4511,
+                <span class="st">&quot;max&quot;</span>: 154.0132
+            }
+        },
+        <span class="st">&quot;bin3-4&quot;</span>: {
+            <span class="st">&quot;perc&quot;</span>: 0.18580911017197177,
+            <span class="st">&quot;UTM.N&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 5633404.190263596,
+                <span class="st">&quot;stddev&quot;</span>: 0.6329426640960935,
+                <span class="st">&quot;min&quot;</span>: 5633402.052991309,
+                <span class="st">&quot;max&quot;</span>: 5633406.00852294
+            },
+            <span class="st">&quot;UTM.E&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 598066.5545258559,
+                <span class="st">&quot;stddev&quot;</span>: 0.6731626694144918,
+                <span class="st">&quot;min&quot;</span>: 598064.8720311663,
+                <span class="st">&quot;max&quot;</span>: 598071.1487937543
+            },
+            <span class="st">&quot;ellH&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 148.84520379284274,
+                <span class="st">&quot;stddev&quot;</span>: 1.7906959937819673,
+                <span class="st">&quot;min&quot;</span>: 138.3738,
+                <span class="st">&quot;max&quot;</span>: 154.5108
+            }
+        },
+        <span class="st">&quot;bin4-5&quot;</span>: {
+            <span class="st">&quot;perc&quot;</span>: 0.24026878636400886,
+            <span class="st">&quot;UTM.N&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 5633404.085165759,
+                <span class="st">&quot;stddev&quot;</span>: 0.6557138699062555,
+                <span class="st">&quot;min&quot;</span>: 5633401.805615355,
+                <span class="st">&quot;max&quot;</span>: 5633406.077609786
+            },
+            <span class="st">&quot;UTM.E&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 598066.6193154329,
+                <span class="st">&quot;stddev&quot;</span>: 0.7271224067050132,
+                <span class="st">&quot;min&quot;</span>: 598064.6206785273,
+                <span class="st">&quot;max&quot;</span>: 598071.9438370543
+            },
+            <span class="st">&quot;ellH&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 149.18848940265056,
+                <span class="st">&quot;stddev&quot;</span>: 2.446697333737052,
+                <span class="st">&quot;min&quot;</span>: 139.2352,
+                <span class="st">&quot;max&quot;</span>: 155.1881
+            }
+        },
+        <span class="st">&quot;bin5-6&quot;</span>: {
+            <span class="st">&quot;perc&quot;</span>: 0.11128411046463985,
+            <span class="st">&quot;UTM.N&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 5633404.166278064,
+                <span class="st">&quot;stddev&quot;</span>: 0.756717724919459,
+                <span class="st">&quot;min&quot;</span>: 5633402.406514706,
+                <span class="st">&quot;max&quot;</span>: 5633406.835063887
+            },
+            <span class="st">&quot;UTM.E&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 598066.7846157834,
+                <span class="st">&quot;stddev&quot;</span>: 1.0821329383356526,
+                <span class="st">&quot;min&quot;</span>: 598064.1979102248,
+                <span class="st">&quot;max&quot;</span>: 598071.6928215937
+            },
+            <span class="st">&quot;ellH&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 148.72088342099727,
+                <span class="st">&quot;stddev&quot;</span>: 2.5170160713822933,
+                <span class="st">&quot;min&quot;</span>: 140.0784,
+                <span class="st">&quot;max&quot;</span>: 154.3994
+            }
+        },
+        <span class="st">&quot;bin6-inf&quot;</span>: {
+            <span class="st">&quot;perc&quot;</span>: 0.2065651303543625,
+            <span class="st">&quot;UTM.N&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 5633404.599196945,
+                <span class="st">&quot;stddev&quot;</span>: 0.9220139384483016,
+                <span class="st">&quot;min&quot;</span>: 5633400.753855418,
+                <span class="st">&quot;max&quot;</span>: 5633407.454590203
+            },
+            <span class="st">&quot;UTM.E&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 598066.3196794891,
+                <span class="st">&quot;stddev&quot;</span>: 0.6841189171493272,
+                <span class="st">&quot;min&quot;</span>: 598064.678149532,
+                <span class="st">&quot;max&quot;</span>: 598069.6780184926
+            },
+            <span class="st">&quot;ellH&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 149.4220138792859,
+                <span class="st">&quot;stddev&quot;</span>: 2.7899641177253356,
+                <span class="st">&quot;min&quot;</span>: 134.7559,
+                <span class="st">&quot;max&quot;</span>: 157.5077
+            }
+        },
+        <span class="st">&quot;PDOPlt6&quot;</span>: {
+            <span class="st">&quot;perc&quot;</span>: 0.7934348696456375,
+            <span class="st">&quot;UTM.N&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 5633404.255706886,
+                <span class="st">&quot;stddev&quot;</span>: 0.747667137649791,
+                <span class="st">&quot;min&quot;</span>: 5633401.805615355,
+                <span class="st">&quot;max&quot;</span>: 5633408.604738303
+            },
+            <span class="st">&quot;UTM.E&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 598066.6639857121,
+                <span class="st">&quot;stddev&quot;</span>: 0.8509489974256529,
+                <span class="st">&quot;min&quot;</span>: 598064.1979102248,
+                <span class="st">&quot;max&quot;</span>: 598073.432555287
+            },
+            <span class="st">&quot;ellH&quot;</span>: {
+                <span class="st">&quot;mean&quot;</span>: 148.9829975787889,
+                <span class="st">&quot;stddev&quot;</span>: 2.1732905202687056,
+                <span class="st">&quot;min&quot;</span>: 138.3738,
+                <span class="st">&quot;max&quot;</span>: 155.1881
+            }
+        }
+    },
+    <span class="st">&quot;marker&quot;</span>: {
+        <span class="st">&quot;lat&quot;</span>: NaN,
+        <span class="st">&quot;lon&quot;</span>: NaN,
+        <span class="st">&quot;ellH&quot;</span>: NaN,
+        <span class="st">&quot;UTM.E&quot;</span>: NaN,
+        <span class="st">&quot;UTM.N&quot;</span>: NaN,
+        <span class="st">&quot;UTM.Z&quot;</span>: <span class="st">&quot;&quot;</span>,
+        <span class="st">&quot;UTM.L&quot;</span>: <span class="st">&quot;&quot;</span>
+    },
+    <span class="st">&quot;Time&quot;</span>: {
+        <span class="st">&quot;epochs&quot;</span>: 85421,
+        <span class="st">&quot;date&quot;</span>: <span class="st">&quot;14 May 2019&quot;</span>,
+        <span class="st">&quot;start&quot;</span>: <span class="st">&quot;00:00:00&quot;</span>,
+        <span class="st">&quot;end&quot;</span>: <span class="st">&quot;23:59:59&quot;</span>
+    },
+    <span class="st">&quot;WAvg&quot;</span>: {
+        <span class="st">&quot;lat&quot;</span>: 50.84402201057825,
+        <span class="st">&quot;lon&quot;</span>: 4.392926240912683,
+        <span class="st">&quot;ellH&quot;</span>: 149.24603542745334,
+        <span class="st">&quot;UTM.N&quot;</span>: 5633404.218276535,
+        <span class="st">&quot;UTM.E&quot;</span>: 598066.4723520176,
+        <span class="st">&quot;sdn&quot;</span>: 1.619212210243509,
+        <span class="st">&quot;sde&quot;</span>: 1.3262323574841384,
+        <span class="st">&quot;sdu&quot;</span>: 2.972683279366318
+    },
+    <span class="st">&quot;stat&quot;</span>: {
+        <span class="st">&quot;cart&quot;</span>: <span class="st">&quot;/tmp/GALI1340-19O.pos.stat.cart&quot;</span>,
+        <span class="st">&quot;sat&quot;</span>: <span class="st">&quot;/tmp/GALI1340-19O.pos.stat.sat&quot;</span>,
+        <span class="st">&quot;clk&quot;</span>: <span class="st">&quot;/tmp/GALI1340-19O.pos.stat.clk&quot;</span>,
+        <span class="st">&quot;vel&quot;</span>: <span class="st">&quot;/tmp/GALI1340-19O.pos.stat.vel&quot;</span>
+    },
+    <span class="st">&quot;PRres&quot;</span>: {
+        <span class="st">&quot;#total&quot;</span>: 19,
+        <span class="st">&quot;#GPS&quot;</span>: 0,
+        <span class="st">&quot;#GAL&quot;</span>: 19,
+        <span class="st">&quot;GALList&quot;</span>: [
+            <span class="st">&quot;E01&quot;</span>,
+            <span class="st">&quot;E02&quot;</span>,
+            <span class="st">&quot;E03&quot;</span>,
+            <span class="st">&quot;E04&quot;</span>,
+            <span class="st">&quot;E05&quot;</span>,
+            <span class="st">&quot;E07&quot;</span>,
+            <span class="st">&quot;E08&quot;</span>,
+            <span class="st">&quot;E09&quot;</span>,
+            <span class="st">&quot;E11&quot;</span>,
+            <span class="st">&quot;E12&quot;</span>,
+            <span class="st">&quot;E13&quot;</span>,
+            <span class="st">&quot;E15&quot;</span>,
+            <span class="st">&quot;E19&quot;</span>,
+            <span class="st">&quot;E21&quot;</span>,
+            <span class="st">&quot;E24&quot;</span>,
+            <span class="st">&quot;E25&quot;</span>,
+            <span class="st">&quot;E26&quot;</span>,
+            <span class="st">&quot;E27&quot;</span>,
+            <span class="st">&quot;E30&quot;</span>
+        ],
+        <span class="st">&quot;GPSList&quot;</span>: [],
+        <span class="st">&quot;GALSVs&quot;</span>: {
+            <span class="st">&quot;E01&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 28519,
+                <span class="st">&quot;PRmean&quot;</span>: -0.10059953715067149,
+                <span class="st">&quot;PRmedian&quot;</span>: 0.005,
+                <span class="st">&quot;PRstd&quot;</span>: 0.7050646715300878,
+                <span class="st">&quot;PRlt2&quot;</span>: 27327,
+                <span class="st">&quot;PRlt2%&quot;</span>: 95.82033030611171
+            },
+            <span class="st">&quot;E02&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 24444,
+                <span class="st">&quot;PRmean&quot;</span>: 0.2644797987236132,
+                <span class="st">&quot;PRmedian&quot;</span>: 0.0169,
+                <span class="st">&quot;PRstd&quot;</span>: 0.9789301560610516,
+                <span class="st">&quot;PRlt2&quot;</span>: 22533,
+                <span class="st">&quot;PRlt2%&quot;</span>: 92.18213058419244
+            },
+            <span class="st">&quot;E03&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 30939,
+                <span class="st">&quot;PRmean&quot;</span>: 0.024378855166618196,
+                <span class="st">&quot;PRmedian&quot;</span>: 0.063,
+                <span class="st">&quot;PRstd&quot;</span>: 0.6285838018238171,
+                <span class="st">&quot;PRlt2&quot;</span>: 30372,
+                <span class="st">&quot;PRlt2%&quot;</span>: 98.16736158246873
+            },
+            <span class="st">&quot;E04&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 41129,
+                <span class="st">&quot;PRmean&quot;</span>: 0.07754930827396726,
+                <span class="st">&quot;PRmedian&quot;</span>: 0.0535,
+                <span class="st">&quot;PRstd&quot;</span>: 0.3695355911076543,
+                <span class="st">&quot;PRlt2&quot;</span>: 41111,
+                <span class="st">&quot;PRlt2%&quot;</span>: 99.95623525979236
+            },
+            <span class="st">&quot;E05&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 22879,
+                <span class="st">&quot;PRmean&quot;</span>: -0.021271279339131928,
+                <span class="st">&quot;PRmedian&quot;</span>: 0.0213,
+                <span class="st">&quot;PRstd&quot;</span>: 0.5397791258165356,
+                <span class="st">&quot;PRlt2&quot;</span>: 22549,
+                <span class="st">&quot;PRlt2%&quot;</span>: 98.55762926701341
+            },
+            <span class="st">&quot;E07&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 8366,
+                <span class="st">&quot;PRmean&quot;</span>: -0.046938799904374884,
+                <span class="st">&quot;PRmedian&quot;</span>: 0.00445,
+                <span class="st">&quot;PRstd&quot;</span>: 0.5648183945160498,
+                <span class="st">&quot;PRlt2&quot;</span>: 8285,
+                <span class="st">&quot;PRlt2%&quot;</span>: 99.03179536218025
+            },
+            <span class="st">&quot;E08&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 17814,
+                <span class="st">&quot;PRmean&quot;</span>: -0.23745061749186036,
+                <span class="st">&quot;PRmedian&quot;</span>: -0.00185,
+                <span class="st">&quot;PRstd&quot;</span>: 0.8033656595025888,
+                <span class="st">&quot;PRlt2&quot;</span>: 17189,
+                <span class="st">&quot;PRlt2%&quot;</span>: 96.49152352082632
+            },
+            <span class="st">&quot;E09&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 42567,
+                <span class="st">&quot;PRmean&quot;</span>: 0.06761113538656707,
+                <span class="st">&quot;PRmedian&quot;</span>: 0.0033,
+                <span class="st">&quot;PRstd&quot;</span>: 0.5620267543744342,
+                <span class="st">&quot;PRlt2&quot;</span>: 41978,
+                <span class="st">&quot;PRlt2%&quot;</span>: 98.61629901097095
+            },
+            <span class="st">&quot;E11&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 41242,
+                <span class="st">&quot;PRmean&quot;</span>: -0.17782580864167596,
+                <span class="st">&quot;PRmedian&quot;</span>: -0.1327,
+                <span class="st">&quot;PRstd&quot;</span>: 0.4785286515770887,
+                <span class="st">&quot;PRlt2&quot;</span>: 41148,
+                <span class="st">&quot;PRlt2%&quot;</span>: 99.77207700887445
+            },
+            <span class="st">&quot;E12&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 34926,
+                <span class="st">&quot;PRmean&quot;</span>: -0.18361108629674172,
+                <span class="st">&quot;PRmedian&quot;</span>: -0.1114,
+                <span class="st">&quot;PRstd&quot;</span>: 0.6289135322155109,
+                <span class="st">&quot;PRlt2&quot;</span>: 34713,
+                <span class="st">&quot;PRlt2%&quot;</span>: 99.39013915134856
+            },
+            <span class="st">&quot;E13&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 20126,
+                <span class="st">&quot;PRmean&quot;</span>: -0.10691849845970382,
+                <span class="st">&quot;PRmedian&quot;</span>: -0.0297,
+                <span class="st">&quot;PRstd&quot;</span>: 0.8097578486320884,
+                <span class="st">&quot;PRlt2&quot;</span>: 19969,
+                <span class="st">&quot;PRlt2%&quot;</span>: 99.21991453840803
+            },
+            <span class="st">&quot;E15&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 24242,
+                <span class="st">&quot;PRmean&quot;</span>: -0.5032546077056348,
+                <span class="st">&quot;PRmedian&quot;</span>: -0.16544999999999999,
+                <span class="st">&quot;PRstd&quot;</span>: 0.9495539981863772,
+                <span class="st">&quot;PRlt2&quot;</span>: 22513,
+                <span class="st">&quot;PRlt2%&quot;</span>: 92.86775018562825
+            },
+            <span class="st">&quot;E19&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 30461,
+                <span class="st">&quot;PRmean&quot;</span>: -0.046142910607005684,
+                <span class="st">&quot;PRmedian&quot;</span>: -0.0442,
+                <span class="st">&quot;PRstd&quot;</span>: 0.45835908565864475,
+                <span class="st">&quot;PRlt2&quot;</span>: 30410,
+                <span class="st">&quot;PRlt2%&quot;</span>: 99.83257279800401
+            },
+            <span class="st">&quot;E21&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 30054,
+                <span class="st">&quot;PRmean&quot;</span>: 0.003718829440340691,
+                <span class="st">&quot;PRmedian&quot;</span>: -0.00635,
+                <span class="st">&quot;PRstd&quot;</span>: 0.5184429733549455,
+                <span class="st">&quot;PRlt2&quot;</span>: 29939,
+                <span class="st">&quot;PRlt2%&quot;</span>: 99.61735542689824
+            },
+            <span class="st">&quot;E24&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 34841,
+                <span class="st">&quot;PRmean&quot;</span>: 0.3705243190493958,
+                <span class="st">&quot;PRmedian&quot;</span>: 0.2778,
+                <span class="st">&quot;PRstd&quot;</span>: 0.5724352344563407,
+                <span class="st">&quot;PRlt2&quot;</span>: 34742,
+                <span class="st">&quot;PRlt2%&quot;</span>: 99.71585201343245
+            },
+            <span class="st">&quot;E25&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 29781,
+                <span class="st">&quot;PRmean&quot;</span>: -0.18390834760417718,
+                <span class="st">&quot;PRmedian&quot;</span>: -0.1926,
+                <span class="st">&quot;PRstd&quot;</span>: 0.43186166911485024,
+                <span class="st">&quot;PRlt2&quot;</span>: 29689,
+                <span class="st">&quot;PRlt2%&quot;</span>: 99.69107820422417
+            },
+            <span class="st">&quot;E26&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 17568,
+                <span class="st">&quot;PRmean&quot;</span>: 0.12220142873406195,
+                <span class="st">&quot;PRmedian&quot;</span>: 0.08875,
+                <span class="st">&quot;PRstd&quot;</span>: 0.5453690533231094,
+                <span class="st">&quot;PRlt2&quot;</span>: 17481,
+                <span class="st">&quot;PRlt2%&quot;</span>: 99.50478142076503
+            },
+            <span class="st">&quot;E27&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 30216,
+                <span class="st">&quot;PRmean&quot;</span>: 0.01994634630659253,
+                <span class="st">&quot;PRmedian&quot;</span>: 0.043,
+                <span class="st">&quot;PRstd&quot;</span>: 0.4005902816486397,
+                <span class="st">&quot;PRlt2&quot;</span>: 30180,
+                <span class="st">&quot;PRlt2%&quot;</span>: 99.88085782366957
+            },
+            <span class="st">&quot;E30&quot;</span>: {
+                <span class="st">&quot;count&quot;</span>: 27436,
+                <span class="st">&quot;PRmean&quot;</span>: 0.053907322495990666,
+                <span class="st">&quot;PRmedian&quot;</span>: 0.0771,
+                <span class="st">&quot;PRstd&quot;</span>: 0.555897606070732,
+                <span class="st">&quot;PRlt2&quot;</span>: 27235,
+                <span class="st">&quot;PRlt2%&quot;</span>: 99.26738591631434
+            }
+        },
+        <span class="st">&quot;GPSSVs&quot;</span>: <span class="dt">{}</span>
+    }
+}
+INFO: pyrtkplot.py - main: created json file GALI1340-19O.pos.json</code></pre></div>
+<p>and creates following additional directories and files:</p>
+<div class="sourceCode"><pre class="sourceCode bash"><code class="sourceCode bash">$ <span class="ex">ll</span> /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/ -R
+<span class="ex">/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134</span>/:
+<span class="ex">total</span> 95812
+<span class="ex">-rw-r--r--</span> 1 amuls amuls   565703 Oct 28 15:04 GALI1340.19E
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 97537766 Oct 28 15:04 GALI1340.19O
+<span class="ex">drwxr-xr-x</span> 3 amuls amuls     4096 Oct 28 15:15 rtkp
+
+<span class="ex">/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134</span>/rtkp:
+<span class="ex">total</span> 4
+<span class="ex">drwxr-xr-x</span> 3 amuls amuls 4096 Oct 28 15:28 gal
+
+<span class="ex">/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp</span>/gal:
+<span class="ex">total</span> 121964
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 11190734 Oct 28 15:15 GALI1340-19O.pos
+<span class="ex">-rw-r--r--</span> 1 amuls amuls  4634643 Oct 28 15:26 GALI1340-19O.pos.clks
+<span class="ex">-rw-r--r--</span> 1 amuls amuls    24225 Oct 28 15:26 GALI1340-19O.pos.dops
+<span class="ex">-rw-r--r--</span> 1 amuls amuls    11704 Oct 28 15:28 GALI1340-19O.pos.json
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 14169273 Oct 28 15:26 GALI1340-19O.pos.posn
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 35992130 Oct 28 15:26 GALI1340-19O.pos.sats
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 58842324 Oct 28 15:15 GALI1340-19O.pos.stat
+<span class="ex">-rw-r--r--</span> 1 amuls amuls     5548 Oct 28 15:15 GALI1340-GAL.conf
+<span class="ex">drwxr-xr-x</span> 2 amuls amuls     4096 Oct 28 15:28 png
+
+<span class="ex">/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal</span>/png:
+<span class="ex">total</span> 1948
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 249442 Oct 28 15:28 GALI1340-19O-CLK.png
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 227224 Oct 28 15:28 GALI1340-19O-CN0.png
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 268774 Oct 28 15:28 GALI1340-19O-Elev.png
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 235600 Oct 28 15:26 GALI1340-19O-ENU.png
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 352235 Oct 28 15:27 GALI1340-19O-PRres.png
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 345596 Oct 28 15:27 GALI1340-19O-scatter-bin.png
+<span class="ex">-rw-r--r--</span> 1 amuls amuls 305778 Oct 28 15:27 GALI1340-19O-scatter.png</code></pre></div>
+<h3 id="plots-created">Plots created</h3>
+<div class="figure">
+<img src="./png/GALI1340-19O-ENU.png" title="Optional title" alt="UTM East, North, Up and DOP, NsSVs vs time" />
+<p class="caption">UTM East, North, Up and DOP, NsSVs vs time</p>
+</div>
+<div class="figure">
+<img src="./png/GALI1340-19O-scatter.png" title="Optional title" alt="UTM East, North scatter plot" />
+<p class="caption">UTM East, North scatter plot</p>
+</div>
+<div class="figure">
+<img src="./png/GALI1340-19O-scatter-bin.png" title="Optional title" alt="UTM East, North scatter plot per DOP bin" />
+<p class="caption">UTM East, North scatter plot per DOP bin</p>
+</div>
+<div class="figure">
+<img src="./png/GALI1340-19O-PRres.png" title="Optional title" alt="Pseudo-range residuals" />
+<p class="caption">Pseudo-range residuals</p>
+</div>
+<div class="figure">
+<img src="./png/GALI1340-19O-CN0.png" title="Optional title" alt="Carrier-to-Noise ratio" />
+<p class="caption">Carrier-to-Noise ratio</p>
+</div>
+<div class="figure">
+<img src="./png/GALI1340-19O-Elev.png" title="Optional title" alt="Elevation" />
+<p class="caption">Elevation</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I never tested this repository using another directory structure.<a href="#fnref1">↩</a></p></li>
+<li id="fn2"><p>Depending on the selected <code>GNSS</code>, the station name is <code>GALI</code> (Galileo only), <code>GPSS</code> (GPS only) or <code>COMB</code> (Galileo and GPS combined) for the free available signals.<a href="#fnref2">↩</a></p></li>
+<li id="fn3"><p>Depending on the selected <code>GNSS</code>, the station name is <code>GALI</code> (Galileo only), <code>GPSS</code> (GPS only) or <code>COMB</code> (Galileo and GPS combined) for the free available signals.<a href="#fnref3">↩</a></p></li>
+</ol>
+</div>
