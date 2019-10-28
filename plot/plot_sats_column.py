@@ -57,7 +57,7 @@ def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger:log
         for i, sv in enumerate(curSVsList):
             dfSVCol = pd.DataFrame(dfSVs[['DT', dCol['name']]][dfSVs['SV'] == sv])
             dfSVCol.rename(columns={dCol['name']: sv}, inplace=True)
-            logger.debug('{func:s}: dfSVCol = {df!s}  (#{size!s})'.format(df=dfSVCol, size=dfSVCol.size), func=cFuncName)
+            logger.debug('{func:s}: dfSVCol = {df!s}  (#{size!s})'.format(df=dfSVCol, size=dfSVCol.size, func=cFuncName))
 
             # merge together
             dfMerged = pd.merge(dfSatsCol, dfSVCol, on=['DT'], how='outer')
