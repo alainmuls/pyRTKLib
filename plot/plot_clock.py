@@ -1,7 +1,4 @@
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import time
-import numpy as np
 import os
 import pandas as pd
 import sys
@@ -11,7 +8,6 @@ import logging
 import am_config as amc
 
 from ampyutils import amutils
-from rnx2rtkp import rtklibconstants
 from plot import plot_utils
 
 

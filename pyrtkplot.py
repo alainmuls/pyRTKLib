@@ -8,12 +8,10 @@ import json
 import pandas as pd
 import numpy as np
 import math
-import logging
-import io
 import utm as UTM
 
 import am_config as amc
-from ampyutils import amutils, location, exeprogram, utm
+from ampyutils import utm
 from rnx2rtkp import parse_rtk_files
 from plot import plot_position, plot_scatter, plot_sats_column, plot_clock
 
@@ -29,7 +27,6 @@ def treatCmdOpts(argv):
     """
     baseName = os.path.basename(__file__)
     amc.cBaseName = colored(baseName, 'yellow')
-    cFuncName = amc.cBaseName + ': ' + colored(sys._getframe().f_code.co_name, 'green')
 
     helpTxt = amc.cBaseName + ' make plots from RTKLib processed files (position and/or residuals)'
 
@@ -113,13 +110,12 @@ def main(argv):
     else:
         dMarker['UTM.E'], dMarker['UTM.N'], dMarker['UTM.Z'], dMarker['UTM.L'] = UTM.from_latlon(dMarker['lat'], dMarker['lon'])
 
-
     logger.info('{func:s}: marker coordinates = {crd!s}'.format(func=cFuncName, crd=dMarker))
     amc.dRTK['marker'] = dMarker
 
     # check wether pos and stat file are present, else exit
     if not os.access(os.path.join(rtkDir, amc.dRTK['info']['rtkPosFile']), os.R_OK) or not os.access(os.path.join(rtkDir, amc.dRTK['info']['rtkStatFile']), os.R_OK):
-        logger.error('{func:s}: file {pos:s} or {stat:s} is not accessible'.format(func=cFuncName,pos=os.path.join(rtkDir, amc.dRTK['info']['rtkPosFile']), stat=os.path.join(rtkDir, amc.dRTK['info']['rtkStatFile'])))
+        logger.error('{func:s}: file {pos:s} or {stat:s} is not accessible'.format(func=cFuncName, pos=os.path.join(rtkDir, amc.dRTK['info']['rtkPosFile']), stat=os.path.join(rtkDir, amc.dRTK['info']['rtkStatFile'])))
 
         sys.exit(amc.E_FILE_NOT_EXIST)
 
@@ -187,7 +183,7 @@ def main(argv):
     plot_sats_column.plotRTKLibSatsColumn(dCol=dCN0Info, dRtk=amc.dRTK, dfSVs=dfSats, logger=logger, showplot=showPlots)
 
     # # plot elevation
-    dElevInfo = {'name': 'Elev', 'yrange': [0,90], 'title': 'Elevation', 'unit': 'Deg', 'linestyle': '-'}
+    dElevInfo = {'name': 'Elev', 'yrange': [0, 90], 'title': 'Elevation', 'unit': 'Deg', 'linestyle': '-'}
     logger.info('{func:s}: creating Elev plots based on dict {dict!s}'.format(func=cFuncName, dict=dElevInfo))
     plot_sats_column.plotRTKLibSatsColumn(dCol=dElevInfo, dRtk=amc.dRTK, dfSVs=dfSats, logger=logger, showplot=showPlots)
 

@@ -51,7 +51,7 @@ Processing is split up in 5 steps:
 - __`pyconvbin.py`__
     + converts the binary (daily) `SBF` or `u-Blox` file to `RINEX` observation and navigation files.
 - __`pyftposnav.py`__
-    + downloads the globally collected navigation file for all GNSS systems for a specific date. This creates a directory `igs` on the same level as the `rinex` directory.
+    + downloads the `RINEX` navigation file for all GNSS systems for a specific date. This creates a directory `igs` on the same level as the `ASTX` directory, in which the sub-directories `YYDOY` are created.
 - __`pyrtkproc.py`__
     + based on a common template, ensuring similar processing for all GNSSs, the `RINEX` observation and navigation files are processed using `rnx2rtkp` program from the `RTKLib` library. Two output files are created in a `rtkp`/`GNSS` subdirectory:
         * `<file-name>.pos` containing date-time, position and (co-)variance information. The processing mode and number of satellites used are also reported,
@@ -213,6 +213,84 @@ The conversion for `u-Blox` receivers is still to be done.
 
 [^2]: Depending on the selected `GNSS`, the station name is `GALI` (Galileo only), `GPSS` (GPS only) or `COMB` (Galileo and GPS combined) for the free available signals.
 
+
+## __`pyftpposnav.py`__
+
+
+
+### Getting help
+
+```bash
+$ pyftposnav.py -h
+usage: pyftposnav.py [-h] [-r ROOTDIR] [-s SERVER] -y YEAR -d DOY [-o]
+                     [-l {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET} {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}]
+
+pyftposnav.py downloads file from FTP server
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -r ROOTDIR, --rootdir ROOTDIR
+                        session's root directory (default .)
+  -s SERVER, --server SERVER
+                        FTP server (default cddis.gsfc.nasa.gov)
+  -y YEAR, --year YEAR  year (4 digits)
+  -d DOY, --doy DOY     day of year
+  -o, --overwrite       overwrite intermediate files (default False)
+  -l {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET} {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}, --logging {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET} {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}
+                        specify logging level console/file (default INFO
+                        DEBUG)
+```
+### Processing example
+
+```bash
+$  pyftposnav.py -r ~/RxTURP/BEGPIOS/igs/ -d 255 -y 2019
+INFO: location.py - locateProg: locate programs ncftpget
+INFO: location.py - locateProg: ncftpget is /usr/bin/ncftpget
+INFO: pyftposnav.py - doNcFTPDownload: downloading for gal RINEX Nav BRUX00BEL_R_20192550000_01D_EN.rnx.gz
+INFO: pyftposnav.py - doNcFTPDownload: ... running /usr/bin/ncftpget -u ftp -p alain.muls@gmail.com -v  ftp://cddis.gsfc.nasa.gov/pub/gps/data/daily/2019/255/19l/BRUX00BEL_R_20192550000_01D_EN.rnx.gz
+ncftpget: local file appears to be the same as the remote file, download is not necessary.
+
+INFO: pyftposnav.py - doNcFTPDownload: downloading for gps RINEX Nav brdc2550.19n.Z
+INFO: pyftposnav.py - doNcFTPDownload: ... running /usr/bin/ncftpget -u ftp -p alain.muls@gmail.com -v  ftp://cddis.gsfc.nasa.gov/pub/gps/data/daily/2019/255/19n/brdc2550.19n.Z
+ncftpget: local file appears to be the same as the remote file, download is not necessary.
+
+INFO: pyftposnav.py - doNcFTPDownload: downloading for com RINEX Nav BRDC00IGS_R_20192550000_01D_MN.rnx.gz
+INFO: pyftposnav.py - doNcFTPDownload: ... running /usr/bin/ncftpget -u ftp -p alain.muls@gmail.com -v  ftp://cddis.gsfc.nasa.gov/pub/gps/data/daily/2019/255/19p/BRDC00IGS_R_20192550000_01D_MN.rnx.gz
+ncftpget: local file appears to be the same as the remote file, download is not necessary.
+
+INFO: pyftposnav.py - main: amc.dRTK =
+{
+    "ftp": {
+        "server": "cddis.gsfc.nasa.gov",
+        "user": "ftp",
+        "passwd": "alain.muls@gmail.com"
+    },
+    "date": {
+        "year": "2019",
+        "daynr": 255,
+        "YY": "19",
+        "DOY": "255"
+    },
+    "local": {
+        "root": "/home/amuls/RxTURP/BEGPIOS/igs/",
+        "YYDOY": "19255"
+    },
+    "remote": {
+        "gal": {
+            "rpath": "pub/gps/data/daily/2019/255/19l",
+            "rfile": "BRUX00BEL_R_20192550000_01D_EN.rnx.gz"
+        },
+        "gps": {
+            "rpath": "pub/gps/data/daily/2019/255/19n",
+            "rfile": "brdc2550.19n.Z"
+        },
+        "com": {
+            "rpath": "pub/gps/data/daily/2019/255/19p",
+            "rfile": "BRDC00IGS_R_20192550000_01D_MN.rnx.gz"
+        }
+    }
+}
+```
 
 ##  __`pyrtkproc.py`__
 

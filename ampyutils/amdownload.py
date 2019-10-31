@@ -1,5 +1,5 @@
 import urllib
-import requests
+# import requests
 
 
 def download_file(url, localName):
@@ -20,7 +20,7 @@ def download_file(url, localName):
     # open local file
     fdLocal = open(localName, 'wb')
 
-    chunk_size=1024
+    chunk_size = 1024
 
     data = remote.read(chunk_size)
     while data:
@@ -49,18 +49,17 @@ def download_file(url, localName):
     # print('done download 2')
 
 
-
 def ping(host: str) -> bool:
     """
     Returns True if host responds to a ping request
     """
-    import subprocess, platform
+    import subprocess
+    import platform
 
     # Ping parameters as function of OS
-    ping_str = "-n 1" if  platform.system().lower()=="windows" else "-c 1"
+    ping_str = "-n 1" if platform.system().lower() == "windows" else "-c 1"
     args = "ping " + " " + ping_str + " " + host
-    need_sh = False if  platform.system().lower()=="windows" else True
+    need_sh = False if platform.system().lower() == "windows" else True
 
     # Ping
     return (subprocess.call(args, shell=need_sh) == 0)
-
