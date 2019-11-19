@@ -22,10 +22,18 @@ RXTURP=${HOME}/RxTURP/BEGPIOS
 
 # commands
 GIT=/usr/bin/git
+GREP=/bin/grep
+TR=/usr/bin/tr
+
+# pythonscripts
+SBFDAILY=${PYHOMEDIR}/pySBFDaily.py
 
 # make sure to be on the master branch
-${GIT} checkout master
-${GIT} branch
+CURBRANCH=`${GIT} branch | ${GREP} ^* | ${TR} -d '*'`
+if [ ${CURBRANCH} != 'master' ]
+then
+	${GIT} checkout master
+fi
 
 echo 'Activating the python virtual environment '${PROJECT_HOME}/${PROJECT_NAME}
 source ${VIRTUAL_ENV}/bin/activate
@@ -36,5 +44,10 @@ for DOY in $(seq $STDOY $ENDOY)
 do
 	YYDOY=${YY}`leading_zero ${DOY}`
 	echo 'Creating daily file for '${YYDOY}
-	${PYHOMEDIR}/pySBFDaily.py -d ${RXTURP}/ASTX/${YYDOY}
+	cd ${RXTURP}/ASTX/${YYDOY}
+	${SBFDAILY} --dir=${RXTURP}/ASTX/${YYDOY}
 done
+
+# return to git branch we had in original shell
+cd ${PYHOMEDIR}
+${GIT} checkout ${CURBRANCH}
