@@ -2,9 +2,20 @@
 	"build_systems":
 	[
 		{
-			"name": "pandoc to pdf",
-			"cmd": ["/home/amuls/scripts/pandoc2pdf.sh", "$file"]
-		}	],
+			"cmd":
+			[
+				"/home/amuls/scripts/pandoc2pdf.sh",
+				"$file"
+			],
+			"name": "pandoc to pdf"
+		},
+		{
+			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+			"name": "Anaconda Python Builder",
+			"selector": "source.python",
+			"shell_cmd": "\"/usr/bin/python3\" -u \"$file\""
+		}
+	],
 	"folders":
 	[
 		{
