@@ -119,7 +119,7 @@ total 853200
 $ pyconvbin.py --help
 usage: pyconvbin.py [-h] [-d DIR] -f FILE [-b {SBF,UBlox}] [-r RINEXDIR]
                     [-v {R3,R2}] [-g {gal,gps,com}] -n NAMING NAMING NAMING
-                    [-e EXPERIMENT] [-o]
+                    [-o]
                     [-l {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET} {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}]
 
 pyconvbin.py convert binary raw data from SBF or UBlox to RINEX Obs & Nav
@@ -139,9 +139,6 @@ optional arguments:
                         GNSS systems to process (default=gal)
   -n NAMING NAMING NAMING, --naming NAMING NAMING NAMING
                         Enter MARKER DOY YY for naming RINEX output files
-  -e EXPERIMENT, --experiment EXPERIMENT
-                        description of experiment (added to naming of RINEX
-                        file)
   -o, --overwrite       overwrite intermediate files (default False)
   -l {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET} {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}, --logging {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET} {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}
                         specify logging level console/file (default INFO
@@ -152,7 +149,7 @@ optional arguments:
 
 ```bash
 $ 19134-gal-conv.sh 
-INFO: pyconvbin.py - main: arguments processed: amc.dRTK = {'rootDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/19134/', 'binFile': 'SEPT1340.19_', 'binType': 'SBF', 'rinexDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/', 'rinexVersion': 'R3', 'gnssSyst': 'gal', 'rinexNaming': ['GALI', '134', '19'], 'experiment': ''}
+INFO: pyconvbin.py - main: arguments processed: amc.dRTK = {'rootDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/19134/', 'binFile': 'SEPT1340.19_', 'binType': 'SBF', 'rinexDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/', 'rinexVersion': 'R3', 'gnssSyst': 'gal', 'rinexNaming': ['GALI', '134', '19']}
 INFO: pyconvbin.py - checkValidityArgs: check existence of rootDir /home/amuls/RxTURP/BEGPIOS/ASTX/19134/
 INFO: pyconvbin.py - checkValidityArgs: check existence of binary file /home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_ to convert
 INFO: pyconvbin.py - checkValidityArgs: check existence of rinexdir /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/ and create if needed
@@ -184,7 +181,6 @@ INFO: pyconvbin.py - main: amc.dRTK =
         "134",
         "19"
     ],
-    "experiment": "",
     "marker": "GALI",
     "doy": "134",
     "yy": "19",
