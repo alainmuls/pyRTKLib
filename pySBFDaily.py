@@ -55,7 +55,7 @@ def main(argv):
 
     if not os.path.exists(workDir):
         logger.error('{func:s}: directory {dir:s} does not exists.'.format(func=cFuncName, dir=colored(workDir, 'red')))
-        sys.exit(E_DIR_NOT_EXIST)
+        sys.exit(amc.E_DIR_NOT_EXIST)
     else:
         os.chdir(workDir)
         logger.info('{func:s}: changed to directory {dir:s}'.format(func=cFuncName, dir=workDir))
