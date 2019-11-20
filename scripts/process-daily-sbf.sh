@@ -62,9 +62,14 @@ do
 	if [ ${RXTYPE} = 'ASTX' ]
 	then
 		MARKER=SEPT
-		for gnss in gal gps com
+
+		# the gnss and corresponding marker name lists
+		gnss=([0]='gal' [1]='gps' [2]='com')
+		gnssmark=([0]='GALI' [1]='GPSS' [2]='COMB')
+
+		for i in "${!gnss[@]}"
 		do
-			echo ${PYCONVBIN} --dir=${RXTURP}/${RXTYPE}/${YYDOY} --file=${MARKER}${DOY}0.${YY}_ --rinexdir=${RXTURP}/${RXTYPE}/rinex/${YYDOY} --rinexver=R3 --binary=SBF --gnss=${gnss} -n ${gnss} ${DOY} ${YY}
+			${PYCONVBIN} --dir=${RXTURP}/${RXTYPE}/${YYDOY} --file=${MARKER}${DOY}0.${YY}_ --rinexdir=${RXTURP}/${RXTYPE}/rinex/${YYDOY} --rinexver=R3 --binary=SBF --gnss=${gnss[i]} -n ${gnssmark[i]} ${DOY} ${YY}
 		done
 	fi
 done
