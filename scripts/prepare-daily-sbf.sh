@@ -5,7 +5,7 @@ usage()
     echo "usage: $0 -v pyenv-s startDOY -e endDOY -y YYYY -r RxType [-h]"
 }
 
-if [ $# -eq 0 ]; then
+if [ $# -ne 10	 ]; then
     usage
     exit 1
 fi
