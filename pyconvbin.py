@@ -34,7 +34,6 @@ def treatCmdOpts(argv: list):
     parser.add_argument('-v', '--rinexver', help='Select RINEX version (default {:s})'.format(colored('R3', 'green')), required=False, choices=['R3', 'R2'], default='R3')
     parser.add_argument('-g', '--gnss', help='GNSS systems to process (default={:s})'.format(colored('gal', 'green')), required=False, default='gal', choices=['gal', 'gps', 'com'])
     parser.add_argument('-n', '--naming', help='Enter MARKER DOY YY for naming RINEX output files', nargs=3, required=True)
-    parser.add_argument('-e', '--experiment', help='description of experiment (added to naming of RINEX file)', required=False, default='')
     # parser.add_argument('-c', '--convfile', help='Converted name of RINEX file (default named by converter program)', required=False, default=None)
 
 
@@ -46,7 +45,7 @@ def treatCmdOpts(argv: list):
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.file, args.binary, args.rinexdir, args.rinexver, args.gnss, args.naming, args.experiment, args.overwrite, args.logging
+    return args.dir, args.file, args.binary, args.rinexdir, args.rinexver, args.gnss, args.naming, args.overwrite, args.logging
 
 
 def checkValidityArgs(logger: logging.Logger) -> bool:
@@ -121,11 +120,7 @@ def sbf2rinex(logger: logging.Logger, dGnssSysts: dict):
         args4SBF2RIN.extend(['-R210'])
 
     # create the output RINEX obs file name
-    if len(amc.dRTK['experiment']) == 0:
-        amc.dRTK['obs'] = '{marker:s}{doy:s}0.{yy:s}O'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'])
-    else:
-        amc.dRTK['obs'] = '{marker:s}{doy:s}0-{exp:s}.{yy:s}O'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'], exp=amc.dRTK['experiment'])
-
+    amc.dRTK['obs'] = '{marker:s}{doy:s}0.{yy:s}O'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'])
     amc.dRTK['obs'] = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['obs'])
     args4SBF2RIN.extend(['-o', amc.dRTK['obs']])
 
@@ -152,11 +147,7 @@ def sbf2rinex(logger: logging.Logger, dGnssSysts: dict):
         args4SBF2RIN.extend(['-R210'])
 
     # create the output RINEX obs file name
-    if len(amc.dRTK['experiment']) == 0:
-        amc.dRTK['nav'] = '{marker:s}{doy:s}0.{yy:s}{typenav:s}'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'], typenav=typeNav)
-    else:
-        amc.dRTK['nav'] = '{marker:s}{doy:s}0-{exp:s}.{yy:s}{typenav:s}'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'], typenav=typeNav, exp=amc.dRTK['experiment'])
-
+    amc.dRTK['nav'] = '{marker:s}{doy:s}0.{yy:s}{typenav:s}'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'], typenav=typeNav)
     amc.dRTK['nav'] = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['nav'])
     args4SBF2RIN.extend(['-o', amc.dRTK['nav']])
 
@@ -212,7 +203,7 @@ def main(argv):
     dGNSSSysts = {'G': 'GPS', 'R': 'Glonass', 'E': 'Galileo', 'S': 'SBAS', 'C': 'Beidou', 'J': 'QZSS', 'I': 'IRNSS'}
 
     # treat command line options
-    rootDir, binFile, binType, rinexDir, rinexVersion, gnssSyst, rinexNaming, experiment, overwrite, logLevels = treatCmdOpts(argv)
+    rootDir, binFile, binType, rinexDir, rinexVersion, gnssSyst, rinexNaming, overwrite, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger = amc.createLoggers(os.path.basename(__file__), dir=rootDir, logLevels=logLevels)
@@ -226,7 +217,6 @@ def main(argv):
     amc.dRTK['rinexVersion'] = rinexVersion
     amc.dRTK['gnssSyst'] = gnssSyst
     amc.dRTK['rinexNaming'] = rinexNaming
-    amc.dRTK['experiment'] = experiment
 
     logger.info('{func:s}: arguments processed: amc.dRTK = {drtk!s}'.format(func=cFuncName, drtk=amc.dRTK))
 
