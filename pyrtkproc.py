@@ -27,8 +27,6 @@ def treatCmdOpts(argv):
     url = "ftp://cddis.gsfc.nasa.gov/pub/gps/data/daily/2018/318/18d/CORD00ARG_R_20183180000_01D_30S_MO.crx.gz"
 
     """
-    cFuncName = colored(sys._getframe().f_code.co_name, 'yellow')
-
     helpTxt = os.path.basename(__file__) + ' processes GNSS Observations with RTKLib'
 
     # create lists from dict values used as choices for arguments
@@ -37,7 +35,7 @@ def treatCmdOpts(argv):
     lstIono = list(rtkc.dIono.values())
     lstTropo = list(rtkc.dTropo.values())
     lstSatEph = list(rtkc.dSatEph.values())
-    lstFreq = list(rtkc.dFreq.keys())
+    # lstFreq = list(rtkc.dFreq.keys())
 
     # create the parser for command line arguments
     parser = argparse.ArgumentParser(description=helpTxt)
@@ -45,8 +43,8 @@ def treatCmdOpts(argv):
     parser.add_argument('-d', '--dir', help='project root directory (default {:s})'.format(colored('./', 'green')), required=False, default='./', type=str)
     parser.add_argument('-r', '--roverobs', help='rover observation file', required=True, type=str)
     parser.add_argument('-m', '--mode', help='rnx2rtkp positioning mode (default {:s})'.format(colored(lstPosMode[0], 'green')), required=False, default=lstPosMode[0], type=str, choices=lstPosMode)
-    parser.add_argument('-f', '--freq', help='Select frequencies for relative mode (default {:s}, choices are 1:l1, 2:l1+l2, 3:l1+l2+l5, 4:l1+l2+l5+l6, 5:l1+l2+l5+l6+l7)'.format(colored(1, 'green')), required=False, default=1, choices=range(1,6), type=int)
-    parser.add_argument('-c', '--cutoff', help='cutoff angle [degrees] (default {:s})'.format(colored('5', 'green')), choices=range(0, 15),required=False, default=5, type=int)
+    parser.add_argument('-f', '--freq', help='Select frequencies for relative mode (default {:s}, choices are 1:l1, 2:l1+l2, 3:l1+l2+l5, 4:l1+l2+l5+l6, 5:l1+l2+l5+l6+l7)'.format(colored(1, 'green')), required=False, default=1, choices=range(1, 6), type=int)
+    parser.add_argument('-c', '--cutoff', help='cutoff angle [degrees] (default {:s})'.format(colored('5', 'green')), choices=range(0, 15), required=False, default=5, type=int)
     parser.add_argument('-b', '--baseobs', help='base station observation file', required=False, default='', type=str)
 
     parser.add_argument('-e', '--ephem', help='(list of) ephemeris files', nargs='+', required=True, type=str)
@@ -54,10 +52,10 @@ def treatCmdOpts(argv):
     parser.add_argument('-g', '--gnss', help='GNSS systems to process (default={:s})'.format(colored(lstNavSys[3], 'green')), required=False, default=lstNavSys[3], choices=lstNavSys)
 
     parser.add_argument('-s', '--sateph', help='type of ephemerides used (default {:s})'.format(colored(lstSatEph[0], 'green')), default=lstSatEph[0], required=False, choices=lstSatEph, type=str)
-    parser.add_argument('-a', '--atmtropo', help='select troposheric correction (default {:s}'.format(colored(lstTropo[1], 'green')), default=lstTropo[1], required=False, type=str)
+    parser.add_argument('-a', '--atmtropo', help='select troposheric correction (default {:s})'.format(colored(lstTropo[1], 'green')), default=lstTropo[1], required=False, type=str)
     parser.add_argument('-i', '--iono', help='select ionospheric correction (default {:s})'.format(colored(lstIono[1], 'green')), required=False, default=lstIono[1], choices=lstIono, type=str)
 
-    parser.add_argument('-t', '--template', help='rnx2rtkp template file (dafult {:s})'.format(colored('rnx2rtkp.tmpl', 'green')), required=False, type=str, default='~/amPython/pyRTKLib/rnx2rtkp.tmpl')
+    parser.add_argument('-t', '--template', help='rnx2rtkp template file (default {:s})'.format(colored('rnx2rtkp.tmpl', 'green')), required=False, type=str, default='~/amPython/pyRTKLib/rnx2rtkp.tmpl')
 
     parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default False)', action='store_true', required=False)
 

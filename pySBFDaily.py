@@ -49,9 +49,9 @@ def main(argv):
 
     # change to the directory dirSBF if it exists
     workDir = os.getcwd()
-    if dirSBF is not '.':
+    if dirSBF != '.':
         workDir = os.path.normpath(os.path.join(workDir, dirSBF))
-    logger.info('{func:s}: working diretory is {dir:s}'.format(func=cFuncName, dir=workDir))
+    logger.info('{func:s}: working directory is {dir:s}'.format(func=cFuncName, dir=workDir))
 
     if not os.path.exists(workDir):
         logger.error('{func:s}: directory {dir:s} does not exists.'.format(func=cFuncName, dir=colored(workDir, 'red')))

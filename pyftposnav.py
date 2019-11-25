@@ -52,7 +52,8 @@ def createRemoteFTPInfo(logger: logging.Logger) -> dict:
 
     dGPS = {}
     dGPS['rpath'] = 'pub/gps/data/daily/{year:4s}/{DOY:3s}/{YY:2s}n'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DOY'], YY=amc.dRTK['date']['YY'])
-    dGPS['rfile'] = 'brdc{DOY:3s}0.{YY:2s}n.Z'.format(DOY=amc.dRTK['date']['DOY'], YY=amc.dRTK['date']['YY'])
+    # dGPS['rfile'] = 'brdc{DOY:3s}0.{YY:2s}n.Z'.format(DOY=amc.dRTK['date']['DOY'], YY=amc.dRTK['date']['YY'])
+    dGPS['rfile'] = 'BRUX00BEL_R_{year:4s}{DOY:s}0000_01D_GN.rnx.gz'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DOY'])
 
     dCom = {}
     dCom['rpath'] = 'pub/gps/data/daily/{year:4s}/{DOY:3s}/{YY:2s}p'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DOY'], YY=amc.dRTK['date']['YY'])
