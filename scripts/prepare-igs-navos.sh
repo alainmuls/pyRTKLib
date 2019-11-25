@@ -2,10 +2,10 @@
 
 usage()
 {
-    echo "usage: $0 -v pyenv-s startDOY -e endDOY -y YYYY -r RxType [-h]"
+    echo "usage: $0 -v pyenv-s startDOY -e endDOY -y YYYY [-h]"
 }
 
-if [ $# -ne 10 ]; then
+if [ $# -ne 8 ]; then
     usage
     exit 1
 fi
@@ -21,8 +21,6 @@ do
 			ENDOY=$1 ;;
     	-y) shift
 			YYYY=$1 ;;
-        -r) shift
-			RXTYPE=$1 ;;
         *)  usage
             exit 1
     esac
@@ -40,14 +38,11 @@ do
 	YYDOY=${YY}${DOY}
 	# printf ${YY}' '${DOY}' '${YYDOY}
 
-	DIRRAW=${RXTURP}/${RXTYPE}/${YYDOY}
-	DIRRIN=${RXTURP}/${RXTYPE}/rinex/${YYDOY}
 	DIRIGS=${RXTURP}/${RXTYPE}/igs/
+	cd ${DIRIGS}
 
-	printf '\nCreating daily SBF file for '${YYDOY}'\n'
-	cd ${DIRRAW}
-
-	${NICE} ${PYSBFDAILY} --dir=${DIRRAW} --overwrite
+	printf '\nDownloading OS files for '${YYDOY}'\n'
+	${NICE} ${PYFTPOSNAV} --rootdir=${DIRIGS} --year=20${YY} --doy=${DOY}
 done
 
 # return to git branch we had in original shell

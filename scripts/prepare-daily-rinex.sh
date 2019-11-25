@@ -1,11 +1,11 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 usage()
 {
-    echo "usage: $0 -v pyenv-s startDOY -e endDOY -y YYYY -r RxType -g GNSS [-h]"
+    echo "usage: $0 -v pyenv-s startDOY -e endDOY -y YYYY -r RxType [-h]"
 }
 
-if [ $# -ne 12 ]; then
+if [ $# -ne 10 ]; then
     usage
     exit 1
 fi
@@ -23,24 +23,15 @@ do
 			YYYY=$1 ;;
         -r) shift
 			RXTYPE=$1 ;;
-		-g) shift
-			GNSS=$1 ;;
         *)  usage
             exit 1
     esac
     	shift
 done
 
-echo ${PYVENV}
-echo ${STDOY}
-echo ${ENDOY}
-echo ${YYYY}
-echo ${RXTYPE}
-
 #source the common shell script
 source ${HOME}/amPython/${PYVENV}/scripts/common.sh
-# ${PYRTKPROC} -h
-
+# ${PYSBFDAILY} -h
 
 for curDOY in $(seq $STDOY $ENDOY)
 do
@@ -49,24 +40,22 @@ do
 	YYDOY=${YY}${DOY}
 	# printf ${YY}' '${DOY}' '${YYDOY}
 
+	DIRRAW=${RXTURP}/${RXTYPE}/${YYDOY}
 	DIRRIN=${RXTURP}/${RXTYPE}/rinex/${YYDOY}
-	DIRIGS=${RXTURP}/${RXTYPE}/igs/${YYDOY}
+	DIRIGS=${RXTURP}/${RXTYPE}/igs/
 
-	echo 'DIRRIN = '${DIRRIN}
-	echo 'DIRIGS = '${DIRIGS}
+	cd ${DIRRAW}
 
+	printf '\nCreating RINEX files for '${YYDOY}'\n'
 	if [ ${RXTYPE} = 'ASTX' ]
 	then
+		MARKER=SEPT
+
 		for i in "${!gnss[@]}"
 		do
-			# create names for obs / nav file of rover station
-			ROVEROBS=${gnssMarker[i]}${DOY}'0.'${YY}O
-			ROVERNAV=${gnssMarker[i]}${DOY}'0.'${YY}${gnssNavExt[i]}
-
-			echo ${gnss[i]}' -> '${ROVEROBS}' '${ROVERNAV}
-
-			# create names for igs downloaded nav file
-
+			${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
+				--rinexdir=${DIRRIN} --rinexver=R3 --binary=SBF --gnss=${gnss[i]} \
+				-n ${gnssMarker[i]} ${DOY} ${YY}
 		done
 	fi
 done
