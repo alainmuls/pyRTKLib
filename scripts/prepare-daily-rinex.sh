@@ -57,6 +57,12 @@ do
 				--rinexdir=${DIRRIN} --rinexver=R3 --binary=SBF --gnss=${gnss[i]} \
 				-n ${gnssMarker[i]} ${DOY} ${YY}
 		done
+	else
+		MARKER=BEGP
+
+		${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
+			--rinexdir=${DIRRIN} --rinexver=R3 --binary=SBF --gnss=gal \
+			-n BEGP ${DOY} ${YY}
 	fi
 done
 
