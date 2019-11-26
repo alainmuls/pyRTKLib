@@ -47,7 +47,7 @@ do
 	printf '\nCreating daily SBF file for '${YYDOY}'\n'
 	cd ${DIRRAW}
 
-	${NICE} ${PYSBFDAILY} --dir=${DIRRAW} --overwrite
+	${NICE} ${PYSBFDAILY} --dir=${DIRRAW}  # --overwrite
 done
 
 # return to git branch we had in original shell
