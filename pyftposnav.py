@@ -77,8 +77,10 @@ def doNcFTPDownload(logger: logging.Logger):
 
     # create and change to download directory
     amc.dRTK['local']['YYDOY'] = '{YY:s}{DOY:s}'.format(YY=amc.dRTK['date']['YY'], DOY=amc.dRTK['date']['DOY'])
-    amutils.mkdir_p(os.path.join(amc.dRTK['local']['root'], amc.dRTK['local']['YYDOY']))
-    amutils.changeDir(os.path.join(amc.dRTK['local']['root'], amc.dRTK['local']['YYDOY']))
+    amc.dRTK['local']['dir'] = os.path.join(amc.dRTK['local']['root'], amc.dRTK['local']['YYDOY'])
+    amutils.mkdir_p(amc.dRTK['local']['dir'])
+    amutils.changeDir(amc.dRTK['local']['dir'])
+    logger.info('{func:s}: changed to local directory {dir:s}'.format(dir=amc.dRTK['local']['dir'], func=cFuncName))
 
     for gnss in amc.dRTK['remote'].keys():
         logger.info('{func:s}: downloading for {gnss:s} RINEX Nav {nav:s}'.format(gnss=gnss, nav=amc.dRTK['remote'][gnss]['rfile'], func=cFuncName))
