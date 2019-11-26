@@ -2,10 +2,10 @@
 
 usage()
 {
-    echo "usage: $0 -v pyenv-s startDOY -e endDOY -y YYYY [-h]"
+    echo "usage: $0 -v pyenv-s startDOY -e endDOY -y YYYY -r RxType [-h]"
 }
 
-if [ $# -ne 8 ]; then
+if [ $# -ne 10 ]; then
     usage
     exit 1
 fi
@@ -21,6 +21,8 @@ do
 			ENDOY=$1 ;;
     	-y) shift
 			YYYY=$1 ;;
+        -r) shift
+			RXTYPE=$1 ;;
         *)  usage
             exit 1
     esac
