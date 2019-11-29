@@ -1,17 +1,21 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 usage()
 {
-    echo "usage: $0 -v pyenv-s startDOY -e endDOY -y YYYY -r RxType -g GNSS [-h]"
+    echo "usage: $0 -v pyenv -s startDOY -e endDOY -y YYYY -r RxType [-g GNSS] [-h]"
 }
 
-if [ $# -ne 12 ]; then
+argc=$#
+echo $argc
+if [ $argc -eq 12 ] || [ $argc -gt 10 ]
+then
     usage
     exit 1
 fi
 
 while [ $# -gt 0 ];
 do
+	echo $1
     case $1 in
 		-v)	shift
         	PYVENV=$1 ;;
@@ -63,10 +67,11 @@ do
 			ROVEROBS=${gnssMarker[i]}${DOY}'0.'${YY}O
 			ROVERNAV=${gnssMarker[i]}${DOY}'0.'${YY}${gnssNavExt[i]}
 
-			echo ${gnss[i]}' -> '${ROVEROBS}' '${ROVERNAV}
-
 			# create names for igs downloaded nav file
+			IGSNAV=${igsNavName[i]}00${igsNavCountry[i]}_R_${YYYY}${DOY}0000_01D_${igsNavNameExt[i]}N.rnx.gz
 
+			echo 'Processing: '${gnss[i]}' -> '${ROVEROBS}' '${ROVERNAV}' '${IGSNAV} >> ${DIRRIN}/rtkprocessing.txt
+			${NICE} ${PYRTKPROC} --dir=${DIRRIN} --rover=${ROVEROBS} --freq=4 --cutoff=5 -e ${ROVERNAV} ${DIRIGS}/${IGSNAV} --gnss=${gnss[i]}
 		done
 	fi
 done

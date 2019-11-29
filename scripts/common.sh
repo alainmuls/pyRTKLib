@@ -33,7 +33,8 @@ gnss=([0]='gal' [1]='gps' [2]='com')
 gnssMarker=([0]='GALI' [1]='GPSS' [2]='COMB')
 gnssNavExt=([0]='E' [1]='N' [2]='P')
 igsNavName=([0]='BRUX' [1]='BRUX' [2]='BRDC')
-igsNavNameExt=([0]='E' [1]='N' [2]='M')
+igsNavCountry=([0]='BEL' [1]='BEL' [2]='IGS')
+igsNavNameExt=([0]='E' [1]='G' [2]='M')
 
 # make sure to be on the master branch
 CURBRANCH=`${GIT} branch | ${GREP} ^* | ${TR} -d '*'`
