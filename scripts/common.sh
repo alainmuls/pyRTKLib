@@ -8,9 +8,7 @@ function leading_zero()
 
 function cleanup()
 {
-	cd ${PYHOMEDIR}
 	printf '\n'
-	echo 'in cleanup'
 	if [[ '${CURBRANCH}' != 'master' ]]
 	then
 		${GIT} checkout ${CURBRANCH}
