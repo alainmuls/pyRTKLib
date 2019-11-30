@@ -43,6 +43,7 @@ PYPOS2MAVG=${PYHOMEDIR}/pos2movavg.py
 
 # log files
 LOGPYRTKPROC=${PYHOMEDIR}/pyrtkproc.log
+LOGPYRTKPLOT=${PYHOMEDIR}/pyrtkplot.log
 
 # the gnss and corresponding marker name lists
 gnss=([0]='gal' [1]='gps' [2]='com')

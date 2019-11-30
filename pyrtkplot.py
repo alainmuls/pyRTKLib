@@ -37,7 +37,7 @@ def treatCmdOpts(argv):
     # parser.add_argument('-r', '--resFile', help='RTKLib residuals file', type=str, required=False, default=None)
     parser.add_argument('-m', '--marker', help='Geodetic coordinates (lat,lon,ellH) of reference point in degrees: ["50.8440152778" "4.3929283333" "151.39179"] for RMA, ["50.93277777", "4.46258333", "123"] for Peutie, default ["0", "0", "0"] means use mean position', nargs=3, type=str, required=False, default=["0", "0", "0"])
 
-    parser.add_argument('-p', '--plots', help='displays interactive plots (default True)', action='store_true', required=False, default=True)
+    parser.add_argument('-p', '--plots', help='displays interactive plots (default True)', action='store_true', required=False, default=False)
     parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default False)', action='store_true', required=False)
     parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'])
 
