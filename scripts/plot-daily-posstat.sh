@@ -48,10 +48,10 @@ for curDOY in $(seq $STDOY $ENDOY); do
 	YYDOY=${YY}${DOY}
 	# printf ${YY}' '${DOY}' '${YYDOY}
 
-	DIRRIN=${RXTURP}/${RXTYPE}/rinex/${YYDOY}
-	DIRIGS=${RXTURP}/${RXTYPE}/igs/${YYDOY}
+	DIRRIN=${RXTURPROOT}/${RXTYPE}/rinex/${YYDOY}
+	DIRIGS=${RXTURPROOT}/${RXTYPE}/igs/${YYDOY}
 
-	PROCESSINGFILE=${RXTURP}/${RXTYPE}/rtkprocessing.txt
+	PROCESSINGFILE=${RXTURPROOT}/${RXTYPE}/rtkprocessing.txt
 	${TOUCH} ${PROCESSINGFILE}
 
 	echo 'DIRRIN = '${DIRRIN}
