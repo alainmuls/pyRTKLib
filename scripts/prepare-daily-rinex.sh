@@ -64,7 +64,21 @@ do
 			--rinexdir=${DIRRIN} --rinexver=R3 --binary=SBF --gnss=gal \
 			-n BEGP ${DOY} ${YY}
 
-		# sed -i 's/original/new/g' file.txt
+		# check existence of OBS file
+		BEGPOBS=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'O'
+		BEGPNAV=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'E'
+		echo ${BEGPOBS}
+
+		# correct in observation file the PRNs for E33 (from E28) and E36 (from E29)
+		OLDPRN33='E28'
+		OLDPRN36='E29'
+		NEWPRN33='E33'
+		NEWPRN36='E36'
+
+		${SED} -i "s/${OLDPRN33}/${NEWPRN33}/g" ${BEGPOBS}
+		${SED} -i "s/${OLDPRN36}/${NEWPRN36}/g" ${BEGPOBS}
+		${SED} -i "s/${OLDPRN33}/${NEWPRN33}/g" ${BEGPNAV}
+		${SED} -i "s/${OLDPRN36}/${NEWPRN36}/g" ${BEGPNAV}
 	fi
 done
 
