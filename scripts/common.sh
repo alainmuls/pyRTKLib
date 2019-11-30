@@ -6,13 +6,25 @@ function leading_zero()
     echo ${zeroos:${#num}:${#zeroos}}${num}
 }
 
+function cleanup()
+{
+	cd ${PYHOMEDIR}
+	printf '\n'
+	echo 'in cleanup'
+	if [[ '${CURBRANCH}' != 'master' ]]
+	then
+		${GIT} checkout ${CURBRANCH}
+	fi
+	cd ${OLDPWD}
+}
+
 # set the python virtual environment
 PROJECT_NAME=${PYVENV}
 VIRTUAL_ENV=${WORKON_HOME}/${PROJECT_NAME}
 PYHOMEDIR=${PROJECT_HOME}/${PROJECT_NAME}
 
 # set the start directory
-RXTURP=${HOME}/RxTURP/BEGPIOS
+RXTURPROOT=${HOME}/RxTURP/BEGPIOS
 
 # commands
 GIT=/usr/bin/git
@@ -20,6 +32,7 @@ GREP=/bin/grep
 TR=/usr/bin/tr
 NICE='/usr/bin/nice -n 19'
 TOUCH=/usr/bin/touch
+SED=/bin/sed
 
 # pythonscripts
 PYSBFDAILY=${PYHOMEDIR}/pySBFDaily.py
@@ -38,8 +51,10 @@ igsNavCountry=([0]='BEL' [1]='BEL' [2]='IGS')
 igsNavNameExt=([0]='E' [1]='G' [2]='M')
 
 # make sure to be on the master branch
+OLDPWD=`pwd`
+cd ${PYHOMEDIR}
 CURBRANCH=`${GIT} branch | ${GREP} ^* | ${TR} -d '*'`
-if [ ${CURBRANCH} != 'master' ]
+if [ '${CURBRANCH}' != 'master' ]
 then
 	${GIT} checkout master
 fi
@@ -50,20 +65,16 @@ printf '\nActivated python virtual environment '${PROJECT_HOME}/${PROJECT_NAME}'
 
 
 echo '-------------------------------------------------'
-echo 'CURBRANCH = '${CURBRANCH}
-echo 'GIT = '${GIT}
-echo 'GREP = '${GREP}
-echo 'NICE = '${NICE}
+echo 'VIRTUAL_ENV = '${VIRTUAL_ENV}
 echo 'PROJECT_NAME = '${PROJECT_NAME}
+echo 'CURBRANCH = '${CURBRANCH}
+echo
+echo 'PYHOMEDIR = '${PYHOMEDIR}
+echo 'PYSBFDAILY = '${PYSBFDAILY}
+echo 'RXTURPROOT = '${RXTURPROOT}
 echo 'PYCONVBIN = '${PYCONVBIN}
 echo 'PYFTPOSNAV = '${PYFTPOSNAV}
-echo 'PYHOMEDIR = '${PYHOMEDIR}
-echo 'PYPOS2MAVG = '${PYPOS2MAVG}
-echo 'PYRTKPLOT = '${PYRTKPLOT}
 echo 'PYRTKPROC = '${PYRTKPROC}
-echo 'PYSBFDAILY = '${PYSBFDAILY}
-echo 'RXTURP = '${RXTURP}
-echo 'TOUCH = '${TOUCH}
-echo 'TR = '${TR}
-echo 'VIRTUAL_ENV = '${VIRTUAL_ENV}
+echo 'PYRTKPLOT = '${PYRTKPLOT}
+echo 'PYPOS2MAVG = '${PYPOS2MAVG}
 echo '-------------------------------------------------'

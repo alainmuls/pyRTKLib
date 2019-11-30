@@ -1,4 +1,4 @@
-#!/bin/bash
+#/usr/env/bin bash
 
 usage()
 {
@@ -40,9 +40,9 @@ do
 	YYDOY=${YY}${DOY}
 	# printf ${YY}' '${DOY}' '${YYDOY}
 
-	DIRRAW=${RXTURP}/${RXTYPE}/${YYDOY}
-	DIRRIN=${RXTURP}/${RXTYPE}/rinex/${YYDOY}
-	DIRIGS=${RXTURP}/${RXTYPE}/igs/
+	DIRRAW=${RXTURPROOT}/${RXTYPE}/${YYDOY}
+	DIRRIN=${RXTURPROOT}/${RXTYPE}/rinex/${YYDOY}
+	DIRIGS=${RXTURPROOT}/${RXTYPE}/igs/
 
 	cd ${DIRRAW}
 
@@ -63,13 +63,11 @@ do
 		${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
 			--rinexdir=${DIRRIN} --rinexver=R3 --binary=SBF --gnss=gal \
 			-n BEGP ${DOY} ${YY}
+
+		# sed -i 's/original/new/g' file.txt
 	fi
 done
 
 # return to git branch we had in original shell
 cd ${PYHOMEDIR}
-printf '\n'
-if [ ${CURBRANCH} != 'master' ]
-then
-	${GIT} checkout ${CURBRANCH}
-fi
+cleanup

@@ -40,7 +40,7 @@ do
 	YYDOY=${YY}${DOY}
 	# printf ${YY}' '${DOY}' '${YYDOY}
 
-	DIRIGS=${RXTURP}/${RXTYPE}/igs/
+	DIRIGS=${RXTURPROOT}/${RXTYPE}/igs/
 	cd ${DIRIGS}
 
 	printf '\nDownloading OS files for '${YYDOY}'\n'

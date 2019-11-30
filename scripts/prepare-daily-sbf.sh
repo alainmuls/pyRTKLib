@@ -40,9 +40,9 @@ do
 	YYDOY=${YY}${DOY}
 	# printf ${YY}' '${DOY}' '${YYDOY}
 
-	DIRRAW=${RXTURP}/${RXTYPE}/${YYDOY}
-	DIRRIN=${RXTURP}/${RXTYPE}/rinex/${YYDOY}
-	DIRIGS=${RXTURP}/${RXTYPE}/igs/
+	DIRRAW=${RXTURPROOT}/${RXTYPE}/${YYDOY}
+	DIRRIN=${RXTURPROOT}/${RXTYPE}/rinex/${YYDOY}
+	DIRIGS=${RXTURPROOT}/${RXTYPE}/igs/
 
 	printf '\nCreating daily SBF file for '${YYDOY}'\n'
 	cd ${DIRRAW}
