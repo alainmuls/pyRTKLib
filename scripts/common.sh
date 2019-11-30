@@ -31,6 +31,7 @@ TR=/usr/bin/tr
 NICE='/usr/bin/nice -n 19'
 TOUCH=/usr/bin/touch
 SED=/bin/sed
+CP=/bin/cp
 
 # pythonscripts
 PYSBFDAILY=${PYHOMEDIR}/pySBFDaily.py
@@ -39,6 +40,9 @@ PYFTPOSNAV=${PYHOMEDIR}/pyftposnav.py
 PYRTKPROC=${PYHOMEDIR}/pyrtkproc.py
 PYRTKPLOT=${PYHOMEDIR}/pyrtkplot.py
 PYPOS2MAVG=${PYHOMEDIR}/pos2movavg.py
+
+# log files
+LOGPYRTKPROC=${PYHOMEDIR}/pyrtkproc.log
 
 # the gnss and corresponding marker name lists
 gnss=([0]='gal' [1]='gps' [2]='com')

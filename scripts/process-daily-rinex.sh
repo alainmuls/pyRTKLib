@@ -68,20 +68,26 @@ for curDOY in $(seq $STDOY $ENDOY); do
 
 			echo 'Processing: '${gnss[i]}' '${YY}' '${DOY}': '${ROVEROBS}' '${ROVERNAV}' '${IGSNAV}' '${DIRRIN} >> ${PROCESSINGFILE}
 			${NICE} ${PYRTKPROC} --dir=${DIRRIN} --rover=${ROVEROBS} --freq=4 --cutoff=5 -e ${ROVERNAV} ${DIRIGS}/${IGSNAV} --gnss=${gnss[i]}
+
+			# cp the log file to the directory where the processing placed its files
+			${CP} ${LOGPYRTKPROC} ${DIRRIN}/'pyrtkproc-'${gnssMarker[i]}'-'${YY}'-'${DOY}'.log'
 		done
 	elif [[ ${RXTYPE} = 'BEGP' ]]; then
 		# create names for obs / nav file of rover station
-		ROVEROBS='BEGP'${DOY}'0.'${YY}O
-		ROVERNAV='BEGP'${DOY}'0.'${YY}E
-
+		ROVEROBS='BEGP'${DOY}'0.'${YY}'O'
+		ROVERNAV='BEGP'${DOY}'0.'${YY}'E'
 
 		# create names for igs downloaded nav file
 		IGSNAV=${igsNavName[0]}00${igsNavCountry[0]}_R_${YYYY}${DOY}0000_01D_${igsNavNameExt[0]}N.rnx.gz
 
 		echo 'Processing: '${RXTYPE}' '${YY}' '${DOY}': '${ROVEROBS}' '${ROVERNAV}' '${IGSNAV}' '${DIRRIN} >> ${PROCESSINGFILE}
 		${NICE} ${PYRTKPROC} --dir=${DIRRIN} --rover=${ROVEROBS} --freq=4 --cutoff=5 -e ${ROVERNAV} ${DIRIGS}/${IGSNAV} --gnss=gal
+
+		# cp the log file to the directory where the processing placed its files
+		${CP} ${LOGPYRTKPROC} ${DIRRIN}/'pyrtkproc-BEGP-'${YY}'-'${DOY}'.log'
 	fi
 done
+
 
 # return to git branch we had in original shell
 cd ${PYHOMEDIR}
