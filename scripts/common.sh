@@ -19,6 +19,7 @@ GIT=/usr/bin/git
 GREP=/bin/grep
 TR=/usr/bin/tr
 NICE='/usr/bin/nice -n 19'
+TOUCH=/usr/bin/touch
 
 # pythonscripts
 PYSBFDAILY=${PYHOMEDIR}/pySBFDaily.py
@@ -62,6 +63,7 @@ echo 'PYRTKPLOT = '${PYRTKPLOT}
 echo 'PYRTKPROC = '${PYRTKPROC}
 echo 'PYSBFDAILY = '${PYSBFDAILY}
 echo 'RXTURP = '${RXTURP}
+echo 'TOUCH = '${TOUCH}
 echo 'TR = '${TR}
 echo 'VIRTUAL_ENV = '${VIRTUAL_ENV}
 echo '-------------------------------------------------'

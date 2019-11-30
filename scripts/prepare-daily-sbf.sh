@@ -53,7 +53,6 @@ done
 # return to git branch we had in original shell
 cd ${PYHOMEDIR}
 printf '\n'
-if [ ${CURBRANCH} != 'master' ]
-then
+if [[ '${CURBRANCH}' != 'master' ]]; then
 	${GIT} checkout ${CURBRANCH}
 fi
