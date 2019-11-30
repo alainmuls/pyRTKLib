@@ -1,7 +1,5 @@
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
 from matplotlib import dates
-import time
 import numpy as np
 import os
 import pandas as pd
@@ -9,7 +7,6 @@ import sys
 from termcolor import colored
 import logging
 import am_config as amc
-import json
 
 from plot import plot_utils
 from ampyutils import amutils
@@ -17,7 +14,7 @@ from ampyutils import amutils
 __author__ = 'amuls'
 
 
-def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger:logging.Logger, showplot: bool = False):
+def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
     """
     plotRTKLibSatsColumn plots a data columln from the stas dataframe
     """
@@ -210,6 +207,7 @@ def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger:log
         elif dCol['name'] == 'PRres':
             # THIRD: FOR PRRES WE ALSO PLOT THE PERCENTAGE OF PRRES WITHIN [-2, +2]
             ax3 = axis[2]
+            ax3bis = ax3.twinx()
 
             # get the list of SVs for this GNSS
             if GNSSSyst == 'COM':
@@ -238,8 +236,24 @@ def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger:log
 
             amc.logDataframeInfo(df=dfSVPR, dfName='dfSVPR', callerName=cFuncName, logger=logger)
 
-            dfSVPR.plot(kind='bar', ax=ax3, x='SV', y=['#res', '#reslt2'], edgecolor='white', fontsize='large')
+            # plot the bars for PRres and PRReslt2
+            dfSVPR.plot(kind='bar', ax=ax3, x='SV', y=['#res', '#reslt2'], edgecolor='white', fontsize='large', alpha=0.5)
             ax3.legend(labels=[r'#PRres', r'#PRres $\leq$ 2'], fontsize='medium')
+
+            start, end = ax3.get_xlim()
+            # print('start = {!s}'.format(start))
+            # print('end = {!s}'.format(end))
+            # ax3.set_xlim(left=start-1, right=end+1)
+
+            # plot line for representing the percentage
+            dfSVPR.plot(kind='line', ax=ax3bis, x='SV', y=['#pcreslt2'], fontsize='large', color='green', marker='o', markersize=5, linestyle='')
+            ax3bis.legend(labels=[r'% PRres  $\leq$ 2'], fontsize='medium')
+            ax3bis.set_ylim([94.5, 100.5])
+            ax3bis.tick_params(axis='y', colors='green')
+            # start, end = ax3bis.get_xlim()
+            # print('start = {!s}'.format(start))
+            # print('end = {!s}'.format(end))
+            ax3bis.set_xlim(left=start, right=end)
 
             svRects = []
             for i, rect in enumerate(ax3.patches):
@@ -254,10 +268,11 @@ def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger:log
                     sv = curSVsList[int(i / 2)]
                     # print('SV = {:s}  rect = {!s}'.format(sv, rect))
                     svRect = svRects[int(i / 2)]
-                    ax3.text(svRect.get_x() + svRect.get_width(), svRect.get_y() + svRect.get_height(), '{:.2f}%'.format(dfSVPR.loc[sv]['#pcreslt2']), fontsize='medium', color='black', horizontalalignment='center')
+                    ax3.text(svRect.get_x() + svRect.get_width(), svRect.get_y() + svRect.get_height(), '{:.2f}%'.format(dfSVPR.loc[sv]['#pcreslt2']), fontsize='medium', color='green', horizontalalignment='center')
 
             # name the y axis
             ax3.set_ylabel('# of {:s}'.format(dCol['name']), fontsize='large')
+            ax3bis.set_ylabel(r'% $\in$ [-2, +2]'.format(dCol['name']), fontsize='large', color='green')
 
     # save the plot in subdir png of GNSSSystem
     amutils.mkdir_p(os.path.join(dRtk['info']['dir'], 'png'))
