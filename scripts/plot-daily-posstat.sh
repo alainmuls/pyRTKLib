@@ -63,9 +63,6 @@ for curDOY in $(seq $STDOY $ENDOY); do
 			ROVERPOS=${gnssMarker[i]}${DOY}'0-'${YY}'O.pos'
 			DIRPOS=${DIRRIN}/rtkp/${gnss[i]}
 
-
-			'Plotting: '${gnssMarker[i]}' '${YY}' '${DOY}': '${ROVERPOS}' '${DIRPOS} >> ${PLOTTINGFILE}
-			echo
 			echo 'Plotting: '${gnssMarker[i]}' '${YY}' '${DOY}': '${ROVERPOS}' '${DIRPOS}
 			${NICE} ${PYRTKPLOT} --dir=${DIRPOS} --file=${ROVERPOS}
 
