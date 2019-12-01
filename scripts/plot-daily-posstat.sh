@@ -63,7 +63,7 @@ for curDOY in $(seq $STDOY $ENDOY); do
 			ROVERPOS=${gnssMarker[i]}${DOY}'0-'${YY}'O.pos'
 			DIRPOS=${DIRRIN}/rtkp/${gnss[i]}
 
-			echo 'Plotting: '${gnssMarker[i]}' '${YY}' '${DOY}': '${ROVERPOS}' '${DIRPOS}
+			echo 'Plotting: '${gnssMarker[i]}' '${YY}' '${DOY}': '${ROVERPOS}' '${DIRPOS} >> ${PLOTTINGFILE}
 			${NICE} ${PYRTKPLOT} --dir=${DIRPOS} --file=${ROVERPOS}
 
 			# cp the log file to the directory where the processing placed its files
