@@ -59,15 +59,12 @@ for curDOY in $(seq $STDOY $ENDOY); do
 
 	if [[ ${RXTYPE} = 'ASTX' ]]; then
 		for i in "${!gnss[@]}"; do
-			# create names for obs / nav file of rover station
-			ROVEROBS=${gnssMarker[i]}${DOY}'0.'${YY}O
-			ROVERNAV=${gnssMarker[i]}${DOY}'0.'${YY}${gnssNavExt[i]}
+			# create name for POS file
+			ROVERPOS=${gnssMarker[i]}${DOY}'0-'${YY}'O.pos'
+			DIRPOS=${DIRRIN}/rtkp/gal
 
-			# create names for igs downloaded nav file
-			IGSNAV=${igsNavName[i]}00${igsNavCountry[i]}_R_${YYYY}${DOY}0000_01D_${igsNavNameExt[i]}N.rnx.gz
-
-			echo 'Processing: '${gnss[i]}' '${YY}' '${DOY}': '${ROVEROBS}' '${ROVERNAV}' '${IGSNAV}' '${DIRRIN} >> ${PLOTTINGFILE}
-			${NICE} ${PYRTKPROC} --dir=${DIRRIN} --rover=${ROVEROBS} --freq=4 --cutoff=5 -e ${ROVERNAV} ${DIRIGS}/${IGSNAV} --gnss=${gnss[i]}
+			echo 'Plotting: '${RXTYPE}' '${YY}' '${DOY}': '${ROVERPOS}' '${DIRPOS} >> ${PLOTTINGFILE}
+			${NICE} ${PYRTKPLOT} --dir=${DIRPOS} --file=${ROVERPOS}
 
 			# cp the log file to the directory where the processing placed its files
 			${CP} ${LOGPYRTKPLOT} ${DIRRIN}/'pyrtkplot-'${gnssMarker[i]}'-'${YY}'-'${DOY}'.log'
