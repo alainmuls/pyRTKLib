@@ -61,9 +61,12 @@ for curDOY in $(seq $STDOY $ENDOY); do
 		for i in "${!gnss[@]}"; do
 			# create name for POS file
 			ROVERPOS=${gnssMarker[i]}${DOY}'0-'${YY}'O.pos'
-			DIRPOS=${DIRRIN}/rtkp/gal
+			DIRPOS=${DIRRIN}/rtkp/${gnss[i]}
 
-			echo 'Plotting: '${RXTYPE}' '${YY}' '${DOY}': '${ROVERPOS}' '${DIRPOS} >> ${PLOTTINGFILE}
+
+			'Plotting: '${gnssMarker[i]}' '${YY}' '${DOY}': '${ROVERPOS}' '${DIRPOS} >> ${PLOTTINGFILE}
+			echo
+			echo 'Plotting: '${gnssMarker[i]}' '${YY}' '${DOY}': '${ROVERPOS}' '${DIRPOS}
 			${NICE} ${PYRTKPLOT} --dir=${DIRPOS} --file=${ROVERPOS}
 
 			# cp the log file to the directory where the processing placed its files
