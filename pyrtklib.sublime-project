@@ -20,6 +20,9 @@
 	[
 		{
 			"path": "."
+		},
+		{
+			"path": "/home/amuls/RxTURP/BEGPIOS"
 		}
 	]
 }
