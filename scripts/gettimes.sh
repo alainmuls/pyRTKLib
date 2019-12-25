@@ -1,4 +1,7 @@
 #! /bin/bash
 
-echo > ./times.txt
-for file in `find rtkp/ -name '*.obs' | sort`; do echo ${file} ; TimeRinex ${file} | grep 'obs:' >> ./times.txt ; done
+echo -n > ./times.txt
+for file in `find ./ -name '*.19O' | sort`; do
+	echo 'Extracting times from '${file}
+	TimeRinex ${file} | grep '19O:' >> ./times.txt
+done
