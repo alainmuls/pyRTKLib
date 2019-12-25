@@ -84,6 +84,8 @@ def main(argv):
     dInfo['dir'] = rtkDir
     dInfo['rtkPosFile'] = rtkPosFile
     dInfo['rtkStatFile'] = dInfo['rtkPosFile'] + '.stat'
+    dInfo['posn'] = dInfo['rtkPosFile'] + '.posn'
+    dInfo['posnstat'] = dInfo['posn'] + '.html'
     amc.dRTK['info'] = dInfo
 
     # GNSS system is last part of root directory
@@ -96,8 +98,6 @@ def main(argv):
     # info about PDOP bins and statistics
     dPDOP = {}
     dPDOP['bins'] = [0, 2, 3, 4, 5, 6, math.inf]
-    # dPDOP['binsMin'] = [0, 2, 3, 4, 5, 6]
-    # dPDOP['binsMax'] = [2, 3, 4, 5, 6, math.inf]
     amc.dRTK['PDOP'] = dPDOP
 
     # set the reference point
@@ -121,8 +121,11 @@ def main(argv):
 
     # read the position file into a dataframe and add dUTM coordinates
     dfPosn = parse_rtk_files.parseRTKLibPositionFile(logger=logger)
-    dfPosn.to_csv(amc.dRTK['info']['rtkPosFile'] + '.posn', index=None, header=True)
+    dfPosn.to_csv(amc.dRTK['info']['posn'], index=None, header=True)
     logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.posn', 'green')))
+
+    logger.info('{func:s}: final amc.dRTK =\n{settings!s}'.format(func=cFuncName, settings=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
+    sys.exit(55)
 
     # calculate the weighted avergae of llh & enu
     amc.dRTK['WAvg'] = parse_rtk_files.weightedAverage(dfPos=dfPosn, logger=logger)

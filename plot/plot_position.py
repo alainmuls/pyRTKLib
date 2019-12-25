@@ -7,7 +7,6 @@ import os
 import pandas as pd
 import sys
 import logging
-import json
 from typing import Tuple
 
 from ampyutils import amutils

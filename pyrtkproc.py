@@ -131,7 +131,6 @@ def main(argv):
     # limit float precision
     encoder.FLOAT_REPR = lambda o: format(o, '.3f')
 
-
     # treat command line options
     rootDir, roverObs, posMode, freq, cutOff, baseObs, ephemeris, gnss, typeEphem, tropo, iono, template, overwrite, logLevels = treatCmdOpts(argv)
 
@@ -143,7 +142,7 @@ def main(argv):
     amc.dRTK['rootDir'] = rootDir
     amc.dRTK['roverObs'] = roverObs
     amc.dRTK['posMode'] = posMode
-    amc.dRTK['freq'] = [v for k,v in rtkc.dFreq.items() if k == freq][0]
+    amc.dRTK['freq'] = [v for k, v in rtkc.dFreq.items() if k == freq][0]
     amc.dRTK['cutOff'] = cutOff
     amc.dRTK['baseObs'] = baseObs
     amc.dRTK['ephems'] = ephemeris

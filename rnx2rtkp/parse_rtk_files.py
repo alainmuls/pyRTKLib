@@ -1,19 +1,17 @@
 import pandas as pd
 from termcolor import colored
 import sys
-from typing import List
 import numpy as np
-import json
 import os
-from typing import Tuple
-import datetime
 import logging
 import utm as UTM
+import pandas_profiling
 
 from ampyutils import amutils
 from GNSS import gpstime
 from rnx2rtkp import rtklibconstants as rtkc
 import am_config as amc
+
 
 def parseRTKLibPositionFile(logger: logging.Logger) -> pd.DataFrame:
     """
@@ -27,7 +25,7 @@ def parseRTKLibPositionFile(logger: logging.Logger) -> pd.DataFrame:
     # check whether the datafile is readable
     endHeaderLine = amutils.line_num_for_phrase_in_file('%  GPST', amc.dRTK['info']['rtkPosFile'])
     dfPos = pd.read_csv(amc.dRTK['info']['rtkPosFile'], header=endHeaderLine, delim_whitespace=True)
-    dfPos = dfPos.rename(columns={'%': 'WNC', 'GPST': 'TOW', 'latitude(deg)': 'lat', 'longitude(deg)': 'lon', 'height(m)': 'ellH', 'sdn(m)': 'sdn',  'sde(m)': 'sde',  'sdu(m)': 'sdu',  'sdne(m)': 'sdne',  'sdeu(m)': 'sdeu',  'sdun(m)': 'sdun',  'age(s)': 'age'})
+    dfPos = dfPos.rename(columns={'%': 'WNC', 'GPST': 'TOW', 'latitude(deg)': 'lat', 'longitude(deg)': 'lon', 'height(m)': 'ellH', 'sdn(m)': 'sdn', 'sde(m)': 'sde', 'sdu(m)': 'sdu', 'sdne(m)': 'sdne', 'sdeu(m)': 'sdeu', 'sdun(m)': 'sdun', 'age(s)': 'age'})
 
     # convert the GPS time to UTC
     dfPos['DT'] = dfPos.apply(lambda x: gpstime.UTCFromWT(x['WNC'], x['TOW']), axis=1)
@@ -48,10 +46,19 @@ def parseRTKLibPositionFile(logger: logging.Logger) -> pd.DataFrame:
     logger.info('{func:s}: dTime = {time!s}'.format(func=cFuncName, time=dTime))
     amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPos, dfName='{posf:s}'.format(posf=amc.dRTK['info']['rtkPosFile']))
 
+    # put the info of the dfPosn into debug logging
+    logger.debug('{func:s}: dfPos info\n{info!s}'.format(info=dfPos.info(), func=cFuncName))
+
+    # store statistics about lat lon UTM.E UTM.N ellH sde sdn sdu #GAL #GPS dUTM.E dUTM.N dEllH
+    logger.info('{func:s}: creating pandas profile report, {help:s}'.format(help=colored('be patient', 'red'), func=cFuncName))
+    dfProfile = dfPos[['DT', 'ns', 'UTM.E', 'UTM.N', 'ellH', 'sdn', 'sde', 'sdu']]
+    profile = dfProfile.profile_report(title='Report on {posn:s} - {syst:s} - {date:s}'.format(posn=amc.dRTK['info']['posn'], syst=amc.dRTK['syst'], date=amc.dRTK['Time']['date']))
+    profile.to_file(output_file=amc.dRTK['info']['posnstat'])
+
     return dfPos
 
 
-def splitStatusFile(statFileName: str, logger:logging.Logger) -> dict:
+def splitStatusFile(statFileName: str, logger: logging.Logger) -> dict:
     """
     splitStatusFile splits the statistics file into the POS, SAT, CLK & VELACC parts
     """
@@ -71,12 +78,12 @@ def splitStatusFile(statFileName: str, logger:logging.Logger) -> dict:
     open(dStat['clk'], 'w').writelines(line for line in open(statFileName) if '$CLK' in line)
     open(dStat['vel'], 'w').writelines(line for line in open(statFileName) if '$VELACC' in line)
 
-    logger.debug('{func:s}: created partial files {stat!s}'.format(func=cFuncName, stat=' '.join([v for k,v in dStat.items()])))
+    logger.debug('{func:s}: created partial files {stat!s}'.format(func=cFuncName, stat=' '.join([v for k, v in dStat.items()])))
 
     return dStat
 
 
-def weightedAverage(dfPos: pd.DataFrame, logger:logging.Logger) -> dict:
+def weightedAverage(dfPos: pd.DataFrame, logger: logging.Logger) -> dict:
     """
     calculates the weighted average of LLH and ENU
     """
@@ -85,7 +92,7 @@ def weightedAverage(dfPos: pd.DataFrame, logger:logging.Logger) -> dict:
     logger.info('{func:s}: calculating weighted averages'.format(func=cFuncName))
 
     llh = ['lat', 'lon', 'ellH']
-    UTM = ['UTM.N','UTM.E','ellH']
+    UTM = ['UTM.N', 'UTM.E', 'ellH']
     sdENU = ['sdn', 'sde', 'sdu']
 
     dWAVG = {}
@@ -107,7 +114,7 @@ def wavg(group: dict, avg_name: str, weight_name: str) -> float:
     should return otherwise.
     """
     coordinate = group[avg_name]
-    invVariance = 1/np.square(group[weight_name])
+    invVariance = 1 / np.square(group[weight_name])
 
     try:
         return (coordinate * invVariance).sum() / invVariance.sum()
@@ -115,7 +122,7 @@ def wavg(group: dict, avg_name: str, weight_name: str) -> float:
         return coordinate.mean()
 
 
-def parseSatelliteStatistics(statsSat: str, logger:logging.Logger) -> pd.DataFrame:
+def parseSatelliteStatistics(statsSat: str, logger: logging.Logger) -> pd.DataFrame:
     """
     parseSatelliteStatistics reads the SAT statitics file into a dataframe
     """
@@ -130,7 +137,6 @@ def parseSatelliteStatistics(statsSat: str, logger:logging.Logger) -> pd.DataFra
     # add DT column
     dfSat['DT'] = dfSat.apply(lambda x: gpstime.UTCFromWT(x['WNC'], x['TOW']), axis=1)
 
-
     # if PRres == 0.0 => than I suppose only 4 SVs used, so no residuals can be calculated, so change to NaN
     dfSat.PRres.replace(0.0, np.nan, inplace=True)
 
@@ -141,7 +147,7 @@ def parseSatelliteStatistics(statsSat: str, logger:logging.Logger) -> pd.DataFra
     return dfSat
 
 
-def parseResiduals(dfSat: pd.DataFrame, logger:logging.Logger) -> dict:
+def parseResiduals(dfSat: pd.DataFrame, logger: logging.Logger) -> dict:
     """
     parseResiduals parses the observed resiudals of the satellites
     """
@@ -173,7 +179,7 @@ def parseResiduals(dfSat: pd.DataFrame, logger:logging.Logger) -> dict:
         dSV['PRstd'] = dfSat.PRres[dfSat['SV'] == sv].std()
         s = dfSat.PRres[dfSat['SV'] == sv].between(-2, +2, inclusive=True)
         dSV['PRlt2'] = int(s.sum())
-        dSV['PRlt2%'] = dSV['PRlt2']/dSV['count']*100
+        dSV['PRlt2%'] = dSV['PRlt2'] / dSV['count'] * 100
 
         # print(dfSat.PRres[dfSat['SV'] == sv].iat[2052])
         # print(dfSat.PRres[dfSat['SV'] == sv].iat[2053])
@@ -205,7 +211,7 @@ def parseResiduals(dfSat: pd.DataFrame, logger:logging.Logger) -> dict:
     return dSVList
 
 
-def calcDOPs(dfSats: pd.DataFrame, logger:logging.Logger) -> pd.DataFrame:
+def calcDOPs(dfSats: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
     """
     calculates the number of SVs used and corresponding DOP values
     """
@@ -236,7 +242,7 @@ def calcDOPs(dfSats: pd.DataFrame, logger:logging.Logger) -> pd.DataFrame:
 
     # create a dataframe for DOP values containing the DateTime column (unique values)
     dfDOPs = pd.DataFrame(naTOWs4DOP, columns=['DT'])
-    amc.logDataframeInfo(df=dfDOPs, dfName='dfDOPs start',callerName= cFuncName, logger=logger)
+    amc.logDataframeInfo(df=dfDOPs, dfName='dfDOPs start', callerName=cFuncName, logger=logger)
 
     # select the #SVs from dfSVCount for the intervals we use for DOP calculation
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfSVCount, dfName='dfSVCount')
@@ -245,7 +251,7 @@ def calcDOPs(dfSats: pd.DataFrame, logger:logging.Logger) -> pd.DataFrame:
     amc.logDataframeInfo(df=dfNrSVs4DOP, dfName='dfNrSVs4DOP', callerName=cFuncName, logger=logger)
 
     # merge last column with #SVs into dfDops
-    dfDOPs.loc[:,'#SVs'] = dfNrSVs4DOP['#SVs']
+    dfDOPs.loc[:, '#SVs'] = dfNrSVs4DOP['#SVs']
 
     # add NA columns for xDOP values
     dfDOPs = dfDOPs.reindex(columns=dfDOPs.columns.tolist() + ['HDOP', 'VDOP', 'PDOP', 'GDOP'])
@@ -299,15 +305,13 @@ def calcDOPs(dfSats: pd.DataFrame, logger:logging.Logger) -> pd.DataFrame:
     # drop the cos/sin & direction cosines columns from dfSats
     dfSats.drop(['sinEl', 'cosEl', 'sinAz', 'cosAz', 'alpha', 'beta', 'gamma'], axis=1, inplace=True)
 
-    amc.logDataframeInfo(df=dfDOPs, dfName='dfDOPs (end)', callerName=cFuncName,logger= logger)
-
-
+    amc.logDataframeInfo(df=dfDOPs, dfName='dfDOPs (end)', callerName=cFuncName, logger=logger)
     amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfDOPs, dfName='dfDOPs')
 
     return dfDOPs
 
 
-def parseClockBias(statsClk: str, logger:logging.Logger) -> pd.DataFrame:
+def parseClockBias(statsClk: str, logger: logging.Logger) -> pd.DataFrame:
     """
     parse the clock file
     """
@@ -335,12 +339,12 @@ def parseClockBias(statsClk: str, logger:logging.Logger) -> pd.DataFrame:
 
 
 def progbar(curr, total, full_progbar):
-    frac = curr/total
-    filled_progbar = round(frac*full_progbar)
-    print('\r', '#'*filled_progbar + '-'*(full_progbar-filled_progbar), '[{:>7.1%}]'.format(frac), end='')
+    frac = curr / total
+    filled_progbar = round(frac * full_progbar)
+    print('\r', '#' * filled_progbar + '-' * (full_progbar - filled_progbar), '[{:>7.1%}]'.format(frac), end='')
 
 
-def countSVs(dfSVs: pd.DataFrame, logger:logging.Logger) -> pd.DataFrame:
+def countSVs(dfSVs: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
     """
     get a count of SVs for each TOW and determine the difference between these counts
     """
@@ -361,7 +365,7 @@ def countSVs(dfSVs: pd.DataFrame, logger:logging.Logger) -> pd.DataFrame:
     return dfCountSVs
 
 
-def getTOWs4DOP(dfNrSVs: pd.DataFrame, logger:logging.Logger) -> np.ndarray:
+def getTOWs4DOP(dfNrSVs: pd.DataFrame, logger: logging.Logger) -> np.ndarray:
     """
     getTOWs4DOP selects
     - eveny spread TOWs so that max 1440 DOPs are calculated per session
@@ -395,7 +399,7 @@ def getTOWs4DOP(dfNrSVs: pd.DataFrame, logger:logging.Logger) -> np.ndarray:
     return naTOWs4DOP
 
 
-def addPDOPStatistics(dRtk: dict, dfPos: pd.DataFrame, logger:logging.Logger):
+def addPDOPStatistics(dRtk: dict, dfPos: pd.DataFrame, logger: logging.Logger):
     """
     add the statistics for PDOP bins for E, N and U coordinates
     """
@@ -405,13 +409,13 @@ def addPDOPStatistics(dRtk: dict, dfPos: pd.DataFrame, logger:logging.Logger):
 
     # go over the different bin values
     for i in range(len(dRtk['PDOP']['bins']) - 1):
-        binInterval = 'bin{:d}-{:.0f}'.format(dRtk['PDOP']['bins'][i], dRtk['PDOP']['bins'][i+1])
+        binInterval = 'bin{:d}-{:.0f}'.format(dRtk['PDOP']['bins'][i], dRtk['PDOP']['bins'][i + 1])
         logger.debug('{func:s}: binInterval = {bin!s}'.format(bin=binInterval, func=cFuncName))
 
         # create the dict for this PDOP interval
         dRtk['PDOP'][binInterval] = {}
         # find index for the diffrerent PDOP bins selected
-        index4Bin = (dfPos['PDOP'] > dRtk['PDOP']['bins'][i]) & (dfPos['PDOP'] <= dRtk['PDOP']['bins'][i+1])
+        index4Bin = (dfPos['PDOP'] > dRtk['PDOP']['bins'][i]) & (dfPos['PDOP'] <= dRtk['PDOP']['bins'][i +1])
 
         dRtk['PDOP'][binInterval]['perc'] = index4Bin.mean()
 
@@ -431,7 +435,7 @@ def addPDOPStatistics(dRtk: dict, dfPos: pd.DataFrame, logger:logging.Logger):
     # add also for all witin bin of [0..6]
     dRtk['PDOP']['PDOPlt6'] = {}
 
-    indexBin06 =  (dfPos['PDOP'] <= 6)
+    indexBin06 = (dfPos['PDOP'] <= 6)
     dRtk['PDOP']['PDOPlt6']['perc'] = indexBin06.mean()
 
     for j, posCrd in enumerate(['UTM.N', 'UTM.E', 'ellH']):  # lat       lon      ellH
