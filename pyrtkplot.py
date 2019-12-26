@@ -132,23 +132,6 @@ def main(argv):
     dfCrd, dCrdLim = plot_position.crdDiff(dMarker=amc.dRTK['marker'], dfUTMh=dfPosn[['UTM.E', 'UTM.N', 'ellH']], plotCrds=['UTM.E', 'UTM.N', 'ellH'], logger=logger)
     # merge dfCrd into dfPosn
     dfPosn[['dUTM.E', 'dUTM.N', 'dEllH']] = dfCrd[['UTM.E', 'UTM.N', 'ellH']]
-    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPosn, dfName='dfPosn')
-
-    # store statistics for dfPosn
-    logger.info('{func:s}: creating pandas profile report {ppname:s} for dfPosn, {help:s}'.format(ppname=colored(amc.dRTK['info']['posnstat'], 'green'), help=colored('be patient', 'red'), func=cFuncName))
-    dfProfile = dfPosn[['DT', 'ns', 'dUTM.E', 'dUTM.N', 'dEllH', 'sdn', 'sde', 'sdu']]
-
-    ppTitle = 'Report on {posn:s} - {syst:s} - {date:s}'.format(posn=amc.dRTK['info']['posn'], syst=amc.dRTK['syst'], date=amc.dRTK['Time']['date'])
-
-    profile = pp.ProfileReport(df=dfProfile, check_correlation_pearson=False, correlations={'pearson': False, 'spearman': False, 'kendall': False, 'phi_k': False, 'cramers': False, 'recoded': False}, title=ppTitle)
-    profile.to_file(output_file=amc.dRTK['info']['posnstat'])
-
-    sys.exit(99)
-
-    dfPosn.to_csv(amc.dRTK['info']['posn'], index=None, header=True)
-    logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.posn', 'green')))
-
-    logger.info('{func:s}: amc.dRTK =\n{settings!s}'.format(func=cFuncName, settings=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
 
     # work on the statistics file
     # split it in relavant parts
@@ -163,14 +146,32 @@ def main(argv):
     amc.dRTK['PRres'] = parse_rtk_files.parseResiduals(dfSats, logger=logger)
     # calculate DOP values from El, Az info for each TOW
     dfDOPs = parse_rtk_files.calcDOPs(dfSats, logger=logger)
-    # merge the PDOP column of dfDOPs into dfPosn and interpolate the PDOP column
-    dfResults = pd.merge(left=dfPosn, right=dfDOPs[['DT', 'PDOP']], left_on='DT', right_on='DT', how='left')
-    dfPosn = dfResults.interpolate()
     dfDOPs.to_csv(amc.dRTK['info']['rtkPosFile'] + '.dops', index=None, header=True)
     logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.dops', 'green')))
 
+    # merge the PDOP column of dfDOPs into dfPosn and interpolate the PDOP column
+    dfResults = pd.merge(left=dfPosn, right=dfDOPs[['DT', 'PDOP']], left_on='DT', right_on='DT', how='left')
+    dfPosn = dfResults.interpolate()
+
+    logger.info('{func:s}: amc.dRTK =\n{settings!s}'.format(func=cFuncName, settings=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPosn, dfName='dfPosn')
+
+    dfPosn.to_csv(amc.dRTK['info']['posn'], index=None, header=True)
+    logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.posn', 'green')))
+
     # calculate per DOP bin the statistics of PDOP
     parse_rtk_files.addPDOPStatistics(dRtk=amc.dRTK, dfPos=dfPosn, logger=logger)
+
+    # store statistics for dfPosn
+    logger.info('{func:s}: creating pandas profile report {ppname:s} for dfPosn, {help:s}'.format(ppname=colored(amc.dRTK['info']['posnstat'], 'green'), help=colored('be patient', 'red'), func=cFuncName))
+    dfProfile = dfPosn[['DT', 'ns', 'dUTM.E', 'dUTM.N', 'dEllH', 'sdn', 'sde', 'sdu', 'PDOP']]
+
+    ppTitle = 'Report on {posn:s} - {syst:s} - {date:s}'.format(posn=amc.dRTK['info']['posn'], syst=amc.dRTK['syst'], date=amc.dRTK['Time']['date'])
+
+    profile = pp.ProfileReport(df=dfProfile, check_correlation_pearson=False, correlations={'pearson': False, 'spearman': False, 'kendall': False, 'phi_k': False, 'cramers': False, 'recoded': False}, title=ppTitle)
+    profile.to_file(output_file=amc.dRTK['info']['posnstat'])
+
+    sys.exit(99)
 
     # parse the clock stats
     dfCLKs = parse_rtk_files.parseClockBias(amc.dRTK['stat']['clk'], logger=logger)
