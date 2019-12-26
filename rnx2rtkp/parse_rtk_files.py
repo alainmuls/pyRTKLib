@@ -5,7 +5,6 @@ import numpy as np
 import os
 import logging
 import utm as UTM
-import pandas_profiling
 
 from ampyutils import amutils
 from GNSS import gpstime
@@ -48,12 +47,6 @@ def parseRTKLibPositionFile(logger: logging.Logger) -> pd.DataFrame:
 
     # put the info of the dfPosn into debug logging
     logger.debug('{func:s}: dfPos info\n{info!s}'.format(info=dfPos.info(), func=cFuncName))
-
-    # store statistics about lat lon UTM.E UTM.N ellH sde sdn sdu #GAL #GPS dUTM.E dUTM.N dEllH
-    logger.info('{func:s}: creating pandas profile report, {help:s}'.format(help=colored('be patient', 'red'), func=cFuncName))
-    dfProfile = dfPos[['DT', 'ns', 'UTM.E', 'UTM.N', 'ellH', 'sdn', 'sde', 'sdu']]
-    profile = dfProfile.profile_report(title='Report on {posn:s} - {syst:s} - {date:s}'.format(posn=amc.dRTK['info']['posn'], syst=amc.dRTK['syst'], date=amc.dRTK['Time']['date']))
-    profile.to_file(output_file=amc.dRTK['info']['posnstat'])
 
     return dfPos
 

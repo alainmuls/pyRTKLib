@@ -9,9 +9,10 @@ import pandas as pd
 import numpy as np
 import math
 import utm as UTM
+import pandas_profiling as pp
 
 import am_config as amc
-from ampyutils import utm
+from ampyutils import utm, amutils
 from rnx2rtkp import parse_rtk_files
 from plot import plot_position, plot_scatter, plot_sats_column, plot_clock
 
@@ -120,17 +121,36 @@ def main(argv):
         sys.exit(amc.E_FILE_NOT_EXIST)
 
     # read the position file into a dataframe and add dUTM coordinates
+    logger.info('{func:s}: parsing RTKLib pos file {pos:s}'.format(pos=amc.dRTK['info']['rtkPosFile'], func=cFuncName))
     dfPosn = parse_rtk_files.parseRTKLibPositionFile(logger=logger)
-    dfPosn.to_csv(amc.dRTK['info']['posn'], index=None, header=True)
-    logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.posn', 'green')))
-
-    logger.info('{func:s}: final amc.dRTK =\n{settings!s}'.format(func=cFuncName, settings=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
-    sys.exit(55)
 
     # calculate the weighted avergae of llh & enu
     amc.dRTK['WAvg'] = parse_rtk_files.weightedAverage(dfPos=dfPosn, logger=logger)
 
-    # woek on the statistics file
+    # find difference with reference and ax/min limits for UTM plot
+    logger.info('{func:s}: calculating coordinate difference with reference/mean position'.format(func=cFuncName))
+    dfCrd, dCrdLim = plot_position.crdDiff(dMarker=amc.dRTK['marker'], dfUTMh=dfPosn[['UTM.E', 'UTM.N', 'ellH']], plotCrds=['UTM.E', 'UTM.N', 'ellH'], logger=logger)
+    # merge dfCrd into dfPosn
+    dfPosn[['dUTM.E', 'dUTM.N', 'dEllH']] = dfCrd[['UTM.E', 'UTM.N', 'ellH']]
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPosn, dfName='dfPosn')
+
+    # store statistics for dfPosn
+    logger.info('{func:s}: creating pandas profile report {ppname:s} for dfPosn, {help:s}'.format(ppname=colored(amc.dRTK['info']['posnstat'], 'green'), help=colored('be patient', 'red'), func=cFuncName))
+    dfProfile = dfPosn[['DT', 'ns', 'dUTM.E', 'dUTM.N', 'dEllH', 'sdn', 'sde', 'sdu']]
+
+    ppTitle = 'Report on {posn:s} - {syst:s} - {date:s}'.format(posn=amc.dRTK['info']['posn'], syst=amc.dRTK['syst'], date=amc.dRTK['Time']['date'])
+
+    profile = pp.ProfileReport(df=dfProfile, check_correlation_pearson=False, correlations={'pearson': False, 'spearman': False, 'kendall': False, 'phi_k': False, 'cramers': False, 'recoded': False}, title=ppTitle)
+    profile.to_file(output_file=amc.dRTK['info']['posnstat'])
+
+    sys.exit(99)
+
+    dfPosn.to_csv(amc.dRTK['info']['posn'], index=None, header=True)
+    logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.posn', 'green')))
+
+    logger.info('{func:s}: amc.dRTK =\n{settings!s}'.format(func=cFuncName, settings=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
+
+    # work on the statistics file
     # split it in relavant parts
     amc.dRTK['stat'] = parse_rtk_files.splitStatusFile(amc.dRTK['info']['rtkStatFile'], logger=logger)
 
@@ -158,15 +178,19 @@ def main(argv):
     logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.clks', 'green')))
 
     # for debug
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPosn, dfName='dfPosn')
     amc.logDataframeInfo(df=dfPosn, dfName='dfPosn', callerName=cFuncName, logger=logger)
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfSats, dfName='dfSats')
     amc.logDataframeInfo(df=dfSats, dfName='dfSats', callerName=cFuncName, logger=logger)
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfDOPs, dfName='dfDOPs')
     amc.logDataframeInfo(df=dfDOPs, dfName='dfDOPs', callerName=cFuncName, logger=logger)
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfCLKs, dfName='dfCLKs')
     amc.logDataframeInfo(df=dfCLKs, dfName='dfCLKs', callerName=cFuncName, logger=logger)
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfCrd, dfName='dfCrd')
+    amc.logDataframeInfo(df=dfCrd, dfName='dfCrd', callerName=cFuncName, logger=logger)
 
     # create the position plot (use DOP to color segments)
-    # find difference with reference and ax/min limits for UTM plot
-    logger.info('{func:s}: calculating coordinate difference with reference/mean position'.format(func=cFuncName))
-    dfCrd, dCrdLim = plot_position.crdDiff(dMarker=amc.dRTK['marker'], dfUTMh=dfPosn[['UTM.E', 'UTM.N', 'ellH']], plotCrds=['UTM.E', 'UTM.N', 'ellH'], logger=logger)
+    sys.exit(66)
 
     logger.info('{func:s}: creating Position coordinates plot'.format(func=cFuncName))
     plot_position.plotUTMOffset(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
