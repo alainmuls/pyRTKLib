@@ -15,6 +15,7 @@ import am_config as amc
 from ampyutils import utm, amutils
 from rnx2rtkp import parse_rtk_files
 from plot import plot_position, plot_scatter, plot_sats_column, plot_clock
+from stats import enu_statistics as enu_stat
 
 __author__ = 'amuls'
 
@@ -36,7 +37,7 @@ def treatCmdOpts(argv):
     parser.add_argument('-f', '--file', help='RTKLib processed position file', required=True, type=str)
     parser.add_argument('-d', '--dir', help='Root directory for RTKLib processed files (default .)', required=False, type=str, default='.')
     # parser.add_argument('-r', '--resFile', help='RTKLib residuals file', type=str, required=False, default=None)
-    parser.add_argument('-m', '--marker', help='Geodetic coordinates (lat,lon,ellH) of reference point in degrees: ["50.8440152778" "4.3929283333" "151.39179"] for RMA, ["50.93277777", "4.46258333", "123"] for Peutie, default ["0", "0", "0"] means use mean position', nargs=3, type=str, required=False, default=["0", "0", "0"])
+    parser.add_argument('-m', '--marker', help='Geodetic coordinates (lat,lon,ellH) of reference point in degrees: 50.8440152778 4.3929283333 151.39179 for RMA, 50.93277777 4.46258333 123 for Peutie, default 0 0 0 means use mean position', nargs=3, type=str, required=False, default=["0", "0", "0"])
 
     parser.add_argument('-p', '--plots', help='displays interactive plots (default True)', action='store_true', required=False, default=False)
     parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default False)', action='store_true', required=False)
@@ -104,6 +105,8 @@ def main(argv):
     # set the reference point
     dMarker = {}
     dMarker['lat'], dMarker['lon'], dMarker['ellH'] = map(float, crdMarker)
+    print('crdMarker = {!s}'.format(crdMarker))
+
     if [dMarker['lat'], dMarker['lon'], dMarker['ellH']] == [0, 0, 0]:
         dMarker['lat'] = dMarker['lon'] = dMarker['ellH'] = np.NaN
         dMarker['UTM.E'] = dMarker['UTM.N'] = np.NaN
@@ -162,14 +165,17 @@ def main(argv):
     # calculate per DOP bin the statistics of PDOP
     parse_rtk_files.addPDOPStatistics(dRtk=amc.dRTK, dfPos=dfPosn, logger=logger)
 
-    # store statistics for dfPosn
-    logger.info('{func:s}: creating pandas profile report {ppname:s} for dfPosn, {help:s}'.format(ppname=colored(amc.dRTK['info']['posnstat'], 'green'), help=colored('be patient', 'red'), func=cFuncName))
-    dfProfile = dfPosn[['DT', 'ns', 'dUTM.E', 'dUTM.N', 'dEllH', 'sdn', 'sde', 'sdu', 'PDOP']]
+    # add statistics for the E,N,U coordinate differences
+    enu_stat.enu_statistics(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH']], logger=logger)
 
-    ppTitle = 'Report on {posn:s} - {syst:s} - {date:s}'.format(posn=amc.dRTK['info']['posn'], syst=amc.dRTK['syst'], date=amc.dRTK['Time']['date'])
+    # # store statistics for dfPosn
+    # logger.info('{func:s}: creating pandas profile report {ppname:s} for dfPosn, {help:s}'.format(ppname=colored(amc.dRTK['info']['posnstat'], 'green'), help=colored('be patient', 'red'), func=cFuncName))
+    # dfProfile = dfPosn[['DT', 'ns', 'dUTM.E', 'dUTM.N', 'dEllH', 'sdn', 'sde', 'sdu', 'PDOP']]
 
-    profile = pp.ProfileReport(df=dfProfile, check_correlation_pearson=False, correlations={'pearson': False, 'spearman': False, 'kendall': False, 'phi_k': False, 'cramers': False, 'recoded': False}, title=ppTitle)
-    profile.to_file(output_file=amc.dRTK['info']['posnstat'])
+    # ppTitle = 'Report on {posn:s} - {syst:s} - {date:s}'.format(posn=amc.dRTK['info']['posn'], syst=amc.dRTK['syst'], date=amc.dRTK['Time']['date'])
+
+    # profile = pp.ProfileReport(df=dfProfile, check_correlation_pearson=False, correlations={'pearson': False, 'spearman': False, 'kendall': False, 'phi_k': False, 'cramers': False, 'recoded': False}, title=ppTitle)
+    # profile.to_file(output_file=amc.dRTK['info']['posnstat'])
 
     sys.exit(99)
 
@@ -226,6 +232,11 @@ def main(argv):
         json.dump(amc.dRTK, f, ensure_ascii=False, indent=4)
 
     logger.info('{func:s}: created json file {json:s}'.format(func=cFuncName, json=colored(jsonName, 'green')))
+
+    # cleanup the tmp files
+    logger.info('{func:s}: cleaning up temporary files'.formar(func=cFuncName))
+    for tmpFile in amc.dRTK['stat'].values():
+        os.remove(tmpFile)
 
 
 if __name__ == "__main__":  # Only run if this file is called directly

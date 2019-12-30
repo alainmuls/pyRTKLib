@@ -85,14 +85,17 @@ def weightedAverage(dfPos: pd.DataFrame, logger: logging.Logger) -> dict:
     logger.info('{func:s}: calculating weighted averages'.format(func=cFuncName))
 
     llh = ['lat', 'lon', 'ellH']
-    UTM = ['UTM.N', 'UTM.E', 'ellH']
+    UTMcrd = ['UTM.N', 'UTM.E', 'ellH']
+    # dUTMcrd = ['dUTM.N', 'dUTM.E', 'dEllH']
     sdENU = ['sdn', 'sde', 'sdu']
 
     dWAVG = {}
     for values in zip(llh, sdENU):
         dWAVG[values[0]] = wavg(dfPos, values[0], values[1])
-    for values in zip(UTM, sdENU):
+    for values in zip(UTMcrd, sdENU):
         dWAVG[values[0]] = wavg(dfPos, values[0], values[1])
+    # for values in zip(dUTMcrd, sdENU):
+    #     dWAVG[values[0]] = wavg(dfPos, values[0], values[1])
     for values in zip(sdENU, sdENU):
         dWAVG[values[0]] = wavg(dfPos, values[0], values[1])
 
