@@ -9,10 +9,8 @@ import gzip
 import shutil
 import logging
 from pandas import DataFrame
-import os
 
 from GNSS import gpstime
-import am_config as amc
 
 __author__ = 'amuls'
 
@@ -133,7 +131,7 @@ def printHeadTailDataFrame(df, name='DataFrame', head=10, tail=10, index=True):
         print('   ... Tail of %s (size %d)\n%s' % (colored(name, 'green'), df.shape[0], df.tail(n=tail).to_string(index=index)))
 
 
-def logHeadTailDataFrame(logger: logging.Logger, callerName:str, df: DataFrame, dfName:str ='DataFrame', head:int =10, tail:int =10, index: bool=True):
+def logHeadTailDataFrame(logger: logging.Logger, callerName: str, df: DataFrame, dfName: str = 'DataFrame', head: int = 10, tail: int = 10, index: bool = True):
     """
     logHeadTailDataFrame logs the head first/tail last rows of the dataframe df
 
@@ -148,7 +146,7 @@ def logHeadTailDataFrame(logger: logging.Logger, callerName:str, df: DataFrame, 
     :param index: display th eindex of the dataframe or not
     :type: bool
     """
-    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+    # cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     if df.shape[0] <= (head + tail):
         logger.info('{func:s}: dataframe {dfname:s} (#{shape:d})\n{df:s}'.format(func=callerName, dfname=colored(dfName, 'green'), shape=df.shape[0], df=df.to_string(index=index)))
@@ -300,7 +298,6 @@ def count_lines(filename):
 
     # print('lines = {}'.format(lines))
     return lines
-
 
 
 def decompress(fileCompName: str, fileName: str):
