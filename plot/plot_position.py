@@ -55,7 +55,7 @@ def markerAnnotation(coord: str, coordSD: str) -> str:
     """
     creates text to annotate with info about reference position
     """
-    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+    # cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     # annotate each subplot with its reference position
     if [amc.dRTK['marker']['UTM.E'], amc.dRTK['marker']['UTM.N'], amc.dRTK['marker']['ellH']] == [np.NaN, np.NaN, np.NaN]:
