@@ -167,6 +167,8 @@ def main(argv):
 
     # add statistics for the E,N,U coordinate differences
     enu_stat.enu_statistics(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH']], logger=logger)
+    # add statistics for the E,N,U coordinate differences
+    enu_stat.enu_distribution(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH', 'PDOP']], logger=logger)
 
     # # store statistics for dfPosn
     # logger.info('{func:s}: creating pandas profile report {ppname:s} for dfPosn, {help:s}'.format(ppname=colored(amc.dRTK['info']['posnstat'], 'green'), help=colored('be patient', 'red'), func=cFuncName))
