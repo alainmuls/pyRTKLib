@@ -61,7 +61,7 @@ def plot_enu_distribution(dRtk, dfENUdist: pd.DataFrame, dfENUstat: pd.DataFrame
     ax[0].xaxis.set_major_locator(FixedLocator(ind))
 
     # copyright this
-    ax[-1].annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 1), xycoords='axes fraction', xytext=(0, -25), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='medium')
+    ax[-1].annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 1), xycoords='axes fraction', xytext=(0, +25), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='medium')
 
     if showplot:
         plt.show(block=True)
