@@ -21,20 +21,18 @@ def enu_statistics(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger):
     amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfENUStats, dfName='dfENUStats')
 
     # add statistics for UTM coordinate differences
-    dDistENU = {}
+    dENUStats = {}
     for col in ('dUTM.E', 'dUTM.N', 'dEllH'):
         print('col = {:s}'.format(col))
         dCol = {}
         for index, row in dfENUStats.iterrows():
             dCol[index] = row[col]
-        dDistENU[col] = dCol
+        dENUStats[col] = dCol
 
-        logger.debug('{func:s}: statistics for {col:s}\n{stat!s}'.format(col=col, stat=dDistENU[col], func=cFuncName))
+        logger.debug('{func:s}: statistics for {col:s}\n{stat!s}'.format(col=col, stat=dENUStats[col], func=cFuncName))
 
     # add to global dRTK dict
-    dRtk['distENU'] = dDistENU
-
-    logger.info('{func:s}: dRtk =\n{settings!s}'.format(func=cFuncName, settings=json.dumps(dRtk, sort_keys=False, indent=4)))
+    dRtk['stats'] = dENUStats
 
 
 def enu_distribution(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger):
