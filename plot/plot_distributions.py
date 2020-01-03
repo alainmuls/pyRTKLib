@@ -37,13 +37,19 @@ def plot_enu_distribution(dRtk, dfENUdist: pd.DataFrame, dfENUstat: pd.DataFrame
 
     # the indexes on the x-axis
     ind = np.arange(len(dfENUdist.index))
-    print('ind = {!s}'.format(ind))
 
     for axis, crd, color in zip(ax[:3], ('dUTM.E', 'dUTM.N', 'dEllH'), colors):
         axis.bar(ind, dfENUdist[crd], alpha=0.5, color=color, edgecolor='none')
         # rotate the ticks on this axis
         axis.set_xticklabels(dfENUdist.index.tolist(), rotation='vertical')
+        # set th etitle for sub-plot
+        axis.set_title(label=crd, color=color, fontsize='large')
 
+        # annotate the plot with the statistics calculated
+        axis.annotate(r'Mean = {:.3f}'.format(dfENUstat.loc['mean', crd]), xy=(1, 1), xycoords='axes fraction', xytext=(0, -25), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='medium')
+        axis.annotate(r'$\sigma$ = {:.3f}'.format(dfENUstat.loc['std', crd]), xy=(1, 1), xycoords='axes fraction', xytext=(0, -45), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='medium')
+
+    # add the 3 distributions on 1 subplot for comparing
     width = .25
     for i, crd, color in zip((-1, 0, +1), ('dUTM.E', 'dUTM.N', 'dEllH'), colors):
         ax[-1].bar(ind - (i * width), dfENUdist[crd], width=width, alpha=0.5, color=color, edgecolor='none')
@@ -53,6 +59,9 @@ def plot_enu_distribution(dRtk, dfENUdist: pd.DataFrame, dfENUstat: pd.DataFrame
     # set the ticks on the x-axis
     ax[0].set_xlim([ind[0], ind[-1]])
     ax[0].xaxis.set_major_locator(FixedLocator(ind))
+
+    # copyright this
+    ax[-1].annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 1), xycoords='axes fraction', xytext=(0, -25), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='medium')
 
     if showplot:
         plt.show(block=True)
