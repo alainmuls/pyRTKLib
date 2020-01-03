@@ -5,6 +5,7 @@ import numpy as np
 import os
 import logging
 import utm as UTM
+import tempfile
 
 from ampyutils import amutils
 from GNSS import gpstime
@@ -57,21 +58,22 @@ def splitStatusFile(statFileName: str, logger: logging.Logger) -> dict:
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    dStat = {}
-
     logger.debug('{func:s}: splitting the statistics file {statf:s} into the POS, SAT, CLK & VELACC parts'.format(func=cFuncName, statf=statFileName))
 
-    dStat['cart'] = '/tmp/{:s}.cart'.format(statFileName)
-    dStat['sat'] = '/tmp/{:s}.sat'.format(statFileName)
-    dStat['clk'] = '/tmp/{:s}.clk'.format(statFileName)
-    dStat['vel'] = '/tmp/{:s}.vel'.format(statFileName)
+    # read in the stats file and split it in the parts we need
+    statParts = ('cart', 'sat', 'clk', 'vel')
+    lineParts = ('$POS', '$SAT', '$CLK', '$VELACC')
 
-    open(dStat['cart'], 'w').writelines(line for line in open(statFileName) if '$POS' in line)
-    open(dStat['sat'], 'w').writelines(line for line in open(statFileName) if '$SAT' in line)
-    open(dStat['clk'], 'w').writelines(line for line in open(statFileName) if '$CLK' in line)
-    open(dStat['vel'], 'w').writelines(line for line in open(statFileName) if '$VELACC' in line)
+    dStat = {}
 
-    logger.debug('{func:s}: created partial files {stat!s}'.format(func=cFuncName, stat=' '.join([v for k, v in dStat.items()])))
+    for statPart, linePart in zip(statParts, lineParts):
+        dStat[statPart] = tempfile.NamedTemporaryFile(prefix='{:s}_'.format(statFileName), suffix='_{:s}'.format(statPart), delete=True)
+
+        with open(dStat[statPart].name, 'w') as fTmp:
+            fTmp.writelines(line for line in open(statFileName) if linePart in line)
+            logger.info('{func:s}: size of {part:s} status file = {size:d}'.format(size=fTmp.tell(), part=statPart, func=cFuncName))
+            # reset at start of file
+            fTmp.seek(0)
 
     return dStat
 
@@ -118,17 +120,17 @@ def wavg(group: dict, avg_name: str, weight_name: str) -> float:
         return coordinate.mean()
 
 
-def parseSatelliteStatistics(statsSat: str, logger: logging.Logger) -> pd.DataFrame:
+def parseSatelliteStatistics(statsSat: tempfile._TemporaryFileWrapper, logger: logging.Logger) -> pd.DataFrame:
     """
     parseSatelliteStatistics reads the SAT statitics file into a dataframe
     """
     # set current function name
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    logger.info('{func:s}: Parsing RTKLib satellites file {file:s} ({info:s})'.format(func=cFuncName, file=statsSat, info=colored('be patient', 'red')))
+    logger.info('{func:s}: Parsing RTKLib satellites file {file:s} ({info:s})'.format(func=cFuncName, file=statsSat.name, info=colored('be patient', 'red')))
 
     # read in the satellite status file
-    dfSat = pd.read_csv(statsSat, header=None, sep=',', names=rtkc.dRTKPosStat['Res']['colNames'], usecols=rtkc.dRTKPosStat['Res']['useCols'])
+    dfSat = pd.read_csv(statsSat.name, header=None, sep=',', names=rtkc.dRTKPosStat['Res']['colNames'], usecols=rtkc.dRTKPosStat['Res']['useCols'])
 
     # add DT column
     dfSat['DT'] = dfSat.apply(lambda x: gpstime.UTCFromWT(x['WNC'], x['TOW']), axis=1)
@@ -307,7 +309,7 @@ def calcDOPs(dfSats: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
     return dfDOPs
 
 
-def parseClockBias(statsClk: str, logger: logging.Logger) -> pd.DataFrame:
+def parseClockBias(statsClk: tempfile._TemporaryFileWrapper, logger: logging.Logger) -> pd.DataFrame:
     """
     parse the clock file
     """
@@ -316,7 +318,7 @@ def parseClockBias(statsClk: str, logger: logging.Logger) -> pd.DataFrame:
     logger.info('{func:s}: parsing RTKLib clock statistics {file:s}'.format(func=cFuncName, file=statsClk))
 
     # read in the satellite status file
-    dfCLKs = pd.read_csv(statsClk, header=None, sep=',', names=rtkc.dRTKPosStat['Clk']['colNames'], usecols=rtkc.dRTKPosStat['Clk']['useCols'])
+    dfCLKs = pd.read_csv(statsClk.name, header=None, sep=',', names=rtkc.dRTKPosStat['Clk']['colNames'], usecols=rtkc.dRTKPosStat['Clk']['useCols'])
 
     amc.logDataframeInfo(df=dfCLKs, dfName='dfCLKs', callerName=cFuncName, logger=logger)
 

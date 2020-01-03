@@ -138,10 +138,10 @@ def main(argv):
 
     # work on the statistics file
     # split it in relavant parts
-    amc.dRTK['stat'] = parse_rtk_files.splitStatusFile(amc.dRTK['info']['rtkStatFile'], logger=logger)
+    dTmpFiles = parse_rtk_files.splitStatusFile(amc.dRTK['info']['rtkStatFile'], logger=logger)
 
     # parse the satellite file (contains Az, El, PRRes, CN0)
-    dfSats = parse_rtk_files.parseSatelliteStatistics(amc.dRTK['stat']['sat'], logger=logger)
+    dfSats = parse_rtk_files.parseSatelliteStatistics(dTmpFiles['sat'], logger=logger)
     dfSats.to_csv(amc.dRTK['info']['rtkPosFile'] + '.sats', index=None, header=True)
     logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.sats', 'green')))
 
@@ -169,6 +169,7 @@ def main(argv):
     enu_stat.enu_statistics(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH']], logger=logger)
     # add statistics for the E,N,U coordinate differences
     enu_stat.enu_distribution(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH', 'PDOP']], logger=logger)
+    logger.info('{func:s}: dRTK =\n{settings!s}'.format(func=cFuncName, settings=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
 
     # # store statistics for dfPosn
     # logger.info('{func:s}: creating pandas profile report {ppname:s} for dfPosn, {help:s}'.format(ppname=colored(amc.dRTK['info']['posnstat'], 'green'), help=colored('be patient', 'red'), func=cFuncName))
@@ -182,7 +183,7 @@ def main(argv):
     sys.exit(99)
 
     # parse the clock stats
-    dfCLKs = parse_rtk_files.parseClockBias(amc.dRTK['stat']['clk'], logger=logger)
+    dfCLKs = parse_rtk_files.parseClockBias(dTmpFiles['clk'], logger=logger)
     dfCLKs.to_csv(amc.dRTK['info']['rtkPosFile'] + '.clks', index=None, header=True)
     logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.clks', 'green')))
 
@@ -235,17 +236,6 @@ def main(argv):
 
     logger.info('{func:s}: created json file {json:s}'.format(func=cFuncName, json=colored(jsonName, 'green')))
 
-    # cleanup the tmp files
-    logger.info('{func:s}: cleaning up temporary files'.formar(func=cFuncName))
-    for tmpFile in amc.dRTK['stat'].values():
-        os.remove(tmpFile)
-
 
 if __name__ == "__main__":  # Only run if this file is called directly
     main(sys.argv)
-
-    # weights = [14.424, 14.421, 14.417, 14.413, 14.41]
-    # values = [3058.0, 8826.0, 56705.0, 30657.0, 12984.0]
-    # weighted_average = sum(weight * value for weight, value in zip(weights, values)) / sum(weights)
-
-    # np.average(sales["Current_Price"], weights=sales["Quantity"])
