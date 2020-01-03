@@ -153,7 +153,7 @@ def main(argv):
     logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.dops', 'green')))
 
     # merge the PDOP column of dfDOPs into dfPosn and interpolate the PDOP column
-    dfResults = pd.merge(left=dfPosn, right=dfDOPs[['DT', 'PDOP']], left_on='DT', right_on='DT', how='left')
+    dfResults = pd.merge(left=dfPosn, right=dfDOPs[['DT', 'PDOP', 'HDOP', 'VDOP', 'GDOP']], left_on='DT', right_on='DT', how='left')
     dfPosn = dfResults.interpolate()
 
     logger.info('{func:s}: amc.dRTK =\n{settings!s}'.format(func=cFuncName, settings=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
@@ -168,7 +168,7 @@ def main(argv):
     # add statistics for the E,N,U coordinate differences
     dfStatENU = enu_stat.enu_statistics(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH']], logger=logger)
     # add statistics for the E,N,U coordinate differences
-    dfDistENU, dfDistPDOP = enu_stat.enupdop_distribution(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH', 'PDOP']], logger=logger)
+    dfDistENU, dfDistPDOP = enu_stat.enupdop_distribution(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH', 'PDOP', 'HDOP', 'VDOP', 'GDOP']], logger=logger)
 
     logger.info('{func:s}: dRTK =\n{settings!s}'.format(func=cFuncName, settings=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
 
@@ -194,6 +194,7 @@ def main(argv):
         amc.logDataframeInfo(df=df, dfName=dfName, callerName=cFuncName, logger=logger)
     # EOF debug
 
+    sys.exit(222)
     # create the position plot (use DOP to color segments)
     logger.info('{func:s}: creating Position coordinates plot'.format(func=cFuncName))
     plot_position.plotUTMOffset(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
@@ -202,7 +203,6 @@ def main(argv):
     plot_scatter.plotUTMScatter(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
     plot_scatter.plotUTMScatterBin(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
 
-    sys.exit(222)
 
     # plot pseudo-range residus
     dPRResInfo = {'name': 'PRres', 'yrange': [-10, 7.5], 'title': 'PR Residuals', 'unit': 'm', 'linestyle': '-'}

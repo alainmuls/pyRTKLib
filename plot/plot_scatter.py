@@ -132,7 +132,7 @@ def plotUTMScatterBin(dRtk: dict, dfPos: pd.DataFrame, dfCrd: dict, dCrdLim:dict
         binInterval = 'bin{:d}-{:.0f}'.format(dRtk['PDOP']['bins'][i], dRtk['PDOP']['bins'][i+1])
         index4Bin = (dfPos['PDOP'] > dRtk['PDOP']['bins'][i]) & (dfPos['PDOP'] <= dRtk['PDOP']['bins'][i+1])
 
-        print('index4Bin = {!s}'.format(np.sum(index4Bin)))
+        # print('index4Bin = {!s}'.format(np.sum(index4Bin)))
         lblBin = r'{!s} $\leq$ PDOP $<$ {!s} ({:.1f}%, #{:d})'.format(dRtk['PDOP']['bins'][i], dRtk['PDOP']['bins'][i+1], dRtk['PDOP'][binInterval]['perc']*100, np.sum(index4Bin))
         logger.info('{func:s}: {bin:s}'.format(func=cFuncName, bin=lblBin))
 

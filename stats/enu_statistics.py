@@ -53,8 +53,8 @@ def enupdop_distribution(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger
     logger.info('{func:s}: dENU_bins = {bins!s} with step {step:.1f}'.format(bins=dENU_bins, step=dENU_step, func=cFuncName))
 
     # name the columns that describe the distribution for the coordinates
-    enu_dist_names = ['dist.E', 'dist.N', 'dist.h']
-    enu_cols = ['dUTM.E', 'dUTM.N', 'dEllH']
+    enu_dist_names = ('dist.E', 'dist.N', 'dist.h')
+    enu_cols = ('dUTM.E', 'dUTM.N', 'dEllH')
 
     # calculate the distribution for ENU coordinates
     for enu_col, enu_dist in zip(enu_cols, enu_dist_names):
@@ -64,14 +64,13 @@ def enupdop_distribution(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger
     dfPDOPDist = pd.DataFrame()
 
     # create the bins for the PDOP
-    pdop_bins = [0, 1, 2, 3, 4, 5, 6, np.inf]
-    logger.info('{func:s}: pdop_bins = {bins!s}'.format(bins=pdop_bins, func=cFuncName))
+    dop_dist_names = ('dist.PDOP', 'dist.HDOP', 'dist.VDOP', 'dist.GDOP')
+    dop_cols = ('PDOP', 'HDOP', 'VDOP', 'GDOP')
+    dop_bins = [0, 1, 2, 3, 4, 5, 6, np.inf]
+    logger.info('{func:s}: dop_bins = {bins!s}'.format(bins=dop_bins, func=cFuncName))
 
-    # calculate the distribution for PDOP coordinates
-    dfPDOPDist['dist.pdop'] = pd.cut(dfENU['PDOP'], bins=pdop_bins).value_counts(sort=False)
-
-    # print the dataframe of distribution info
-    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfENUDist, dfName='dfENUDist', head=23, tail=0)
-    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPDOPDist, dfName='dfPDOPDist', head=23, tail=0)
+    # calculate the distribution for xDOP coordinates
+    for dop_col, dop_dist_name in zip(dop_cols, dop_dist_names):
+        dfPDOPDist[dop_dist_name] = pd.cut(dfENU[dop_col], bins=dop_bins).value_counts(sort=False)
 
     return dfENUDist, dfPDOPDist
