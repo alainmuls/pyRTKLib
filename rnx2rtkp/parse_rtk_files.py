@@ -145,9 +145,9 @@ def parseSatelliteStatistics(statsSat: tempfile._TemporaryFileWrapper, logger: l
     return dfSat
 
 
-def parseResiduals(dfSat: pd.DataFrame, logger: logging.Logger) -> dict:
+def parse_sv_residuals(dfSat: pd.DataFrame, logger: logging.Logger) -> dict:
     """
-    parseResiduals parses the observed resiudals of the satellites
+    parse_sv_residuals parses the observed resiudals of the satellites
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
@@ -179,13 +179,6 @@ def parseResiduals(dfSat: pd.DataFrame, logger: logging.Logger) -> dict:
         dSV['PRlt2'] = int(s.sum())
         dSV['PRlt2%'] = dSV['PRlt2'] / dSV['count'] * 100
 
-        # print(dfSat.PRres[dfSat['SV'] == sv].iat[2052])
-        # print(dfSat.PRres[dfSat['SV'] == sv].iat[2053])
-        # print(dfSat.PRres[dfSat['SV'] == sv].iat[2054])
-        # if sv == 'E05':
-        #     print('EO5 count = {!s}   mean = {!s}  std = {!s}  lt2 = {!s}  %lt2 = {!s} median = {!s}'.format(dSV['count'], dSV['PRmean'], dSV['PRstd'], dSV['PRlt2'], dSV['PRlt2%'], dSV['PRmedian']))
-        #     sys.exit(6)
-
         if sv.startswith('E'):
             nrGAL += 1
             GALList.append(sv)
@@ -207,6 +200,37 @@ def parseResiduals(dfSat: pd.DataFrame, logger: logging.Logger) -> dict:
     dSVList['GPSSVs'] = dGPSsv
 
     return dSVList
+
+
+def parse_elevation_distribution(dfSat: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
+    """
+    parse_elevation_distribution parses the observed resiudals per constellation and per elevation bin of 10 degrees
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    logger.info('{func:s}: parses observed resiudals as funcion of elevation²'.format(func=cFuncName))
+
+    # define what we use for binning
+    gnssLetters = ('E', 'G')
+    gnssNames = ('Galileo', 'GPS')
+    cols = ['Elev', 'PRres', 'CN0']
+    elev_bins, step = np.linspace(start=0, stop=90, num=7, endpoint=True, retstep=True, dtype=int, axis=0)
+    logger.info('{func:s}: elevation bins = {bins!s}'.format(bins=elev_bins, func=cFuncName))
+
+    # calculate the number of PRres within [-2,+2] and CN0 statistics over the elevation bins
+    for gnssLetter, gnssName in zip(gnssLetters, gnssNames):
+        # create a dataframe to work on
+        dfGNSS = dfSat[dfSat['SV'].str.startswith(gnssLetter)][cols]
+        amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfGNSS, dfName=gnssName)
+
+        # go over the elevation bins and create a distribution for PRres and CN0 per bin
+        for elev_min, elev_max in zip(elev_bins[:-1], elev_bins[1:]):
+            print('elev_bins {:d} => {:d}'.format(elev_min, elev_max))
+
+        dfGNSS['PRres22'] = dfGNSS.PRres.between(-0.3, +0.3, inclusive=True)
+        amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfGNSS, dfName=gnssName)
+
+    sys.exit(5555)
 
 
 def calcDOPs(dfSats: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:

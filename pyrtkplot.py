@@ -146,8 +146,12 @@ def main(argv):
     dfSats.to_csv(amc.dRTK['info']['rtkPosFile'] + '.sats', index=None, header=True)
     logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.sats', 'green')))
 
-    # determine statistics of PR residuals
-    amc.dRTK['PRres'] = parse_rtk_files.parseResiduals(dfSats, logger=logger)
+    # determine statistics on PR residuals for all satellites per elevation bin
+    parse_rtk_files.parse_elevation_distribution(dfSat=dfSats, logger=logger)
+
+    # determine statistics of PR residuals for each satellite
+    amc.dRTK['PRres'] = parse_rtk_files.parse_sv_residuals(dfSat=dfSats, logger=logger)
+
     # calculate DOP values from El, Az info for each TOW
     dfDOPs = parse_rtk_files.calcDOPs(dfSats, logger=logger)
     dfDOPs.to_csv(amc.dRTK['info']['rtkPosFile'] + '.dops', index=None, header=True)
