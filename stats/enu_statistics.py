@@ -3,8 +3,8 @@ import os
 import pandas as pd
 import logging
 from termcolor import colored
-import json
 import numpy as np
+from typing import Tuple
 
 from ampyutils import amutils
 
@@ -35,9 +35,9 @@ def enu_statistics(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger):
     dRtk['stats'] = dENUStats
 
 
-def enu_distribution(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger):
+def enupdop_distribution(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    enu_distribution calculates the distribution of the ENU coordinates passed
+    enupdop_distribution calculates the distribution of the ENU coordinates passed
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
@@ -71,3 +71,5 @@ def enu_distribution(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger):
     # print the dataframe of distribution info
     amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfENUDist, dfName='dfENUDist', head=23, tail=0)
     amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPDOPDist, dfName='dfPDOPDist', head=23, tail=0)
+
+    return dfENUDist, dfPDOPDist

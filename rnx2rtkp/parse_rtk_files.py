@@ -315,7 +315,7 @@ def parseClockBias(statsClk: tempfile._TemporaryFileWrapper, logger: logging.Log
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    logger.info('{func:s}: parsing RTKLib clock statistics {file:s}'.format(func=cFuncName, file=statsClk))
+    logger.info('{func:s}: parsing RTKLib clock statistics {file:s}'.format(func=cFuncName, file=statsClk.name))
 
     # read in the satellite status file
     dfCLKs = pd.read_csv(statsClk.name, header=None, sep=',', names=rtkc.dRTKPosStat['Clk']['colNames'], usecols=rtkc.dRTKPosStat['Clk']['useCols'])

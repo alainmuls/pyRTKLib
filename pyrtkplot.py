@@ -168,7 +168,8 @@ def main(argv):
     # add statistics for the E,N,U coordinate differences
     enu_stat.enu_statistics(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH']], logger=logger)
     # add statistics for the E,N,U coordinate differences
-    enu_stat.enu_distribution(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH', 'PDOP']], logger=logger)
+    dfDistENU, dfDistPDOP = enu_stat.enupdop_distribution(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH', 'PDOP']], logger=logger)
+
     logger.info('{func:s}: dRTK =\n{settings!s}'.format(func=cFuncName, settings=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
 
     # # store statistics for dfPosn
@@ -180,13 +181,12 @@ def main(argv):
     # profile = pp.ProfileReport(df=dfProfile, check_correlation_pearson=False, correlations={'pearson': False, 'spearman': False, 'kendall': False, 'phi_k': False, 'cramers': False, 'recoded': False}, title=ppTitle)
     # profile.to_file(output_file=amc.dRTK['info']['posnstat'])
 
-    sys.exit(99)
-
     # parse the clock stats
     dfCLKs = parse_rtk_files.parseClockBias(dTmpFiles['clk'], logger=logger)
     dfCLKs.to_csv(amc.dRTK['info']['rtkPosFile'] + '.clks', index=None, header=True)
     logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.clks', 'green')))
 
+    sys.exit(222)
     # for debug
     amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPosn, dfName='dfPosn')
     amc.logDataframeInfo(df=dfPosn, dfName='dfPosn', callerName=cFuncName, logger=logger)
