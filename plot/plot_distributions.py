@@ -20,6 +20,8 @@ def plot_enu_distribution(dRtk, dfENUdist: pd.DataFrame, dfENUstat: pd.DataFrame
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
+    logger.info('{func:s}: creating ENU distribution plot'.format(func=cFuncName))
+
     # select colors for E, N, U coordinate difference
     colors = []
     colors.append([51 / 256., 204 / 256., 51 / 256.])
@@ -39,33 +41,22 @@ def plot_enu_distribution(dRtk, dfENUdist: pd.DataFrame, dfENUstat: pd.DataFrame
 
     for axis, crd, color in zip(ax[:3], ('dUTM.E', 'dUTM.N', 'dEllH'), colors):
         axis.bar(ind, dfENUdist[crd], alpha=0.5, color=color, edgecolor='none')
-        axis.set_xlim([ind[0], ind[-1]])
-        # Make a plot with major ticks that are multiples of 20 and minor ticks that
-        # are multiples of 5.  Label major ticks with '%d' formatting but don't label
-        # minor ticks.
-        # axis.xaxis.set_major_locator(MultipleLocator(5))
+        # rotate the ticks on this axis
         axis.set_xticklabels(dfENUdist.index.tolist(), rotation='vertical')
 
     width = .25
     for i, crd, color in zip((-1, 0, +1), ('dUTM.E', 'dUTM.N', 'dEllH'), colors):
         ax[-1].bar(ind - (i * width), dfENUdist[crd], width=width, alpha=0.5, color=color, edgecolor='none')
+        # rotate the ticks on this axis
         ax[-1].set_xticklabels(dfENUdist.index.tolist(), rotation='vertical')
-    # ax[-1].bar(ind - width / 2, dfENUdist['dUTM.E'], alpha=0.5, color='blue', edgecolor='none')
-    # ax[-1].bar(ind + width / 2, dfENUdist['dUTM.N'], alpha=0.5, color='red', edgecolor='none')
 
-    # axis.xaxis.set_major_formatter(FormatStrFormatter('%d'))
+    # set the ticks on the x-axis
+    ax[0].set_xlim([ind[0], ind[-1]])
     ax[0].xaxis.set_major_locator(FixedLocator(ind))
-    # ax[0].text(0.0, 0.1, "IndexLocator(base=0.5, offset=0.25)", fontsize=14, transform=ax.transAxes)
-
-    print('locs = {!s}'.format(ax[0].get_xticks()))
-    print('labels = {!s}'.format(ax[0].get_xticklabels()))
-
-    # For the minor ticks, use no labels; default NullFormatter.
-    ax[0].xaxis.set_minor_locator(MultipleLocator(1))
 
     if showplot:
         plt.show(block=True)
-    # else:
-        # plt.close(fig)
+    else:
+        plt.close(fig)
 
     return
