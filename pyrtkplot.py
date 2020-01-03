@@ -166,7 +166,7 @@ def main(argv):
     parse_rtk_files.addPDOPStatistics(dRtk=amc.dRTK, dfPos=dfPosn, logger=logger)
 
     # add statistics for the E,N,U coordinate differences
-    enu_stat.enu_statistics(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH']], logger=logger)
+    dfStatENU = enu_stat.enu_statistics(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH']], logger=logger)
     # add statistics for the E,N,U coordinate differences
     dfDistENU, dfDistPDOP = enu_stat.enupdop_distribution(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH', 'PDOP']], logger=logger)
 
@@ -186,28 +186,23 @@ def main(argv):
     dfCLKs.to_csv(amc.dRTK['info']['rtkPosFile'] + '.clks', index=None, header=True)
     logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.clks', 'green')))
 
-    sys.exit(222)
-    # for debug
-    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPosn, dfName='dfPosn')
-    amc.logDataframeInfo(df=dfPosn, dfName='dfPosn', callerName=cFuncName, logger=logger)
-    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfSats, dfName='dfSats')
-    amc.logDataframeInfo(df=dfSats, dfName='dfSats', callerName=cFuncName, logger=logger)
-    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfDOPs, dfName='dfDOPs')
-    amc.logDataframeInfo(df=dfDOPs, dfName='dfDOPs', callerName=cFuncName, logger=logger)
-    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfCLKs, dfName='dfCLKs')
-    amc.logDataframeInfo(df=dfCLKs, dfName='dfCLKs', callerName=cFuncName, logger=logger)
-    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfCrd, dfName='dfCrd')
-    amc.logDataframeInfo(df=dfCrd, dfName='dfCrd', callerName=cFuncName, logger=logger)
+    # BEGIN debug
+    dfs = (dfPosn, dfSats, dfCLKs, dfCrd, dfStatENU, dfDistENU, dfDistPDOP)
+    dfsNames = ('dfPosn', 'dfSats', 'dfCLKs', 'dfCrd', 'dfStatENU', 'dfDistENU', 'dfDistPDOP')
+    for df, dfName in zip(dfs, dfsNames):
+        amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df, dfName=dfName)
+        amc.logDataframeInfo(df=df, dfName=dfName, callerName=cFuncName, logger=logger)
+    # EOF debug
 
     # create the position plot (use DOP to color segments)
-    sys.exit(66)
-
     logger.info('{func:s}: creating Position coordinates plot'.format(func=cFuncName))
     plot_position.plotUTMOffset(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
     # create the UTM N-E scatter plot
     logger.info('{func:s}: creating position scatter plots'.format(func=cFuncName))
     plot_scatter.plotUTMScatter(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
     plot_scatter.plotUTMScatterBin(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
+
+    sys.exit(222)
 
     # plot pseudo-range residus
     dPRResInfo = {'name': 'PRres', 'yrange': [-10, 7.5], 'title': 'PR Residuals', 'unit': 'm', 'linestyle': '-'}
