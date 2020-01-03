@@ -1,4 +1,3 @@
-import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 from termcolor import colored
 import numpy as np
@@ -6,10 +5,12 @@ import os
 import pandas as pd
 import sys
 import logging
-from matplotlib.ticker import MultipleLocator, FixedLocator
+from matplotlib.ticker import FixedLocator
 
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
+
+from ampyutils import amutils
 
 __author__ = 'amuls'
 
@@ -62,6 +63,13 @@ def plot_enu_distribution(dRtk, dfENUdist: pd.DataFrame, dfENUstat: pd.DataFrame
 
     # copyright this
     ax[-1].annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 1), xycoords='axes fraction', xytext=(0, +25), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='medium')
+
+    # save the plot in subdir png of GNSSSystem
+    amutils.mkdir_p(os.path.join(dRtk['info']['dir'], 'png'))
+    pngName = os.path.join(dRtk['info']['dir'], 'png', os.path.splitext(dRtk['info']['rtkPosFile'])[0] + '-ENU-dist.png')
+    fig.savefig(pngName, dpi=fig.dpi)
+
+    logger.info('{func:s}: created plot {plot:s}'.format(func=cFuncName, plot=colored(pngName, 'green')))
 
     if showplot:
         plt.show(block=True)
