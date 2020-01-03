@@ -14,7 +14,7 @@ import pandas_profiling as pp
 import am_config as amc
 from ampyutils import utm, amutils
 from rnx2rtkp import parse_rtk_files
-from plot import plot_position, plot_scatter, plot_sats_column, plot_clock
+from plot import plot_position, plot_scatter, plot_sats_column, plot_clock, plot_distributions
 from stats import enu_statistics as enu_stat
 
 __author__ = 'amuls'
@@ -65,6 +65,7 @@ def main(argv):
     pd.set_option('display.max_colwidth', -1)  # or 199
     # limit float precision
     json.encoder.FLOAT_REPR = lambda o: format(o, '.3f')
+    np.set_printoptions(precision=4)
 
     # treat command line options
     rtkPosFile, rtkDir, crdMarker, showPlots, overwrite, logLevels = treatCmdOpts(argv)
@@ -194,15 +195,17 @@ def main(argv):
         amc.logDataframeInfo(df=df, dfName=dfName, callerName=cFuncName, logger=logger)
     # EOF debug
 
-    sys.exit(222)
     # create the position plot (use DOP to color segments)
+    plot_distributions.plot_enu_distribution(dRtk=amc.dRTK, dfENUdist=dfDistENU, dfENUstat=dfStatENU, logger=logger, showplot=True)
+
+    sys.exit(222)
+
     logger.info('{func:s}: creating Position coordinates plot'.format(func=cFuncName))
     plot_position.plotUTMOffset(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
     # create the UTM N-E scatter plot
     logger.info('{func:s}: creating position scatter plots'.format(func=cFuncName))
     plot_scatter.plotUTMScatter(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
     plot_scatter.plotUTMScatterBin(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
-
 
     # plot pseudo-range residus
     dPRResInfo = {'name': 'PRres', 'yrange': [-10, 7.5], 'title': 'PR Residuals', 'unit': 'm', 'linestyle': '-'}
