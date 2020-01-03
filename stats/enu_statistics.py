@@ -11,7 +11,7 @@ from ampyutils import amutils
 __author__ = 'amuls'
 
 
-def enu_statistics(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger):
+def enu_statistics(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
     """
     enu_statistics calculates the statistics of the ENU coordinates passed
     """
@@ -33,6 +33,8 @@ def enu_statistics(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger):
 
     # add to global dRTK dict
     dRtk['stats'] = dENUStats
+
+    return dfENUStats
 
 
 def enupdop_distribution(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger) -> Tuple[pd.DataFrame, pd.DataFrame]:
