@@ -129,21 +129,7 @@ def plotUTMOffset(dRtk: dict, dfPos: pd.DataFrame, dfCrd: pd.DataFrame, dCrdLim:
         axis.set_ylabel('{crd:s} [m]'.format(crd=crd, fontsize='large'), color=colors[i])
 
         # # annotate each subplot with its reference position
-        # if [dRtk['marker']['UTM.E'], dRtk['marker']['UTM.N'], dRtk['marker']['ellH']] == [np.NaN, np.NaN, np.NaN]:
-        #     # use the mean UTM/ellH position for the reference point
-        #     crdRef = dRtk['WAvg'][crd]
-        #     crdSD = dRtk['WAvg'][stdDev2Plot[i]]
-        #     annotatetxt = r'Mean: {refcrd:.3f}m ($\pm${stddev:.2f}m)'.format(refcrd=crdRef, stddev=crdSD)
-        # else:
-        #     # we have a reference point
-        #     crdRef = dRtk['marker'][crd]
-        #     crdOffset = dRtk['marker'][crd] - dRtk['WAvg'][crd]
-        #     crdSD = dRtk['WAvg'][stdDev2Plot[i]]
-        #     annotatetxt = r'Ref: {crd:s} = {refcrd:.3f}m ({offset:.3f}m $\pm${stddev:.2f}m)'.format(crd=crd, refcrd=crdRef, stddev=crdSD, offset=crdOffset)
-
         annotatetxt = markerAnnotation(crd, stdDev2Plot[i])
-
-        # put annotation text
         axis.annotate(annotatetxt, xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='large')
 
         # title of sub-plot

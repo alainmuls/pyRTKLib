@@ -1,3 +1,4 @@
+import matplotlib
 import matplotlib.pyplot as plt
 from termcolor import colored
 import numpy as np
@@ -6,16 +7,19 @@ import pandas as pd
 import sys
 import logging
 from matplotlib.ticker import FixedLocator
+from matplotlib.gridspec import GridSpec
+from matplotlib import dates
 
 from pandas.plotting import register_matplotlib_converters
-register_matplotlib_converters()
-
 from ampyutils import amutils
+from plot import plot_utils
+
+register_matplotlib_converters()
 
 __author__ = 'amuls'
 
 
-def plot_enu_distribution(dRtk, dfENUdist: pd.DataFrame, dfENUstat: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
+def plot_enu_distribution(dRtk: dict, dfENUdist: pd.DataFrame, dfENUstat: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
     """
     plot_enu_distribution plots the distribution for the ENU coordinates
     """
@@ -77,3 +81,94 @@ def plot_enu_distribution(dRtk, dfENUdist: pd.DataFrame, dfENUstat: pd.DataFrame
         plt.close(fig)
 
     return
+
+
+def plot_xdop_distribution(dRtk: dict, dfXDOP: pd.DataFrame, dfXDOPdisp: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
+    """
+    plot_xdop_distribution plots the XDOP values and the distribution XDOPs
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    logger.info('{func:s}: creating XDOP distribution plot'.format(func=cFuncName))
+
+    # select colors for E, N, U coordinate difference
+    colors = []
+    colors.append([51 / 256., 204 / 256., 51 / 256.])
+    colors.append([51 / 256., 51 / 256., 255 / 256.])
+    colors.append([255 / 256., 51 / 256., 51 / 256.])
+
+    # set up the plot
+    plt.style.use('ggplot')
+
+    # subplots
+    fig = plt.figure(figsize=(24.0, 18.0), tight_layout=True)
+    fig.suptitle('{syst:s} - {posf:s} - {date:s}: XDOP'.format(posf=dRtk['info']['rtkPosFile'], syst=dRtk['syst'], date=dRtk['Time']['date']))
+
+    # create a grid for lotting the XDOP line plots and 6 XDOP distribution plots
+    gs = GridSpec(3, 3, wspace=0.2)  # 3 rows, 3 columns
+
+    # plot the XDOPs and #SVs on the first axis
+    ax = fig.add_subplot(gs[0, :])  # first row, span all columns
+    plot_xdop_svs(dfDops=dfXDOP, axis=ax)
+
+    for row in (1, 2):
+        for col in (0, 1, 2):
+            print('{:d}-{:d}'.format(row, col))
+
+            # create exis for this figure
+            ax = fig.add_subplot(gs[row, col])
+            plot_xdop_svs(dfDops=dfXDOP, axis=ax)
+
+    # ax11 = fig.add_subplot(gs[1, 0])  # second row, first column
+    # ax12 = fig.add_subplot(gs[1, 1])  # second row, second column
+    # ax13 = fig.add_subplot(gs[1, 2])  # second row, third column
+    # ax21 = fig.add_subplot(gs[2, 0])  # third row, first column
+    # ax22 = fig.add_subplot(gs[2, 1])  # third row, second column
+    # ax23 = fig.add_subplot(gs[2, 2])  # third row, third column
+
+    if showplot:
+        plt.show(block=True)
+    else:
+        plt.close(fig)
+
+    sys.exit(55555555)
+
+
+def plot_xdop_svs(dfDops: pd.DataFrame, axis):
+    """
+    plot_xdop_svs plots the XDOP curves and #SVs on a given axis
+    """
+    axis.set_ylim([0, 24])
+    axis.set_ylabel('#SVs [-]', fontsize='large', color='grey')
+    # axis.set_xlabel('Time [sec]', fontsize='large')
+
+    axis.fill_between(dfDops['DT'], 0, dfDops['#SVs'], alpha=0.5, linestyle='-', linewidth=3, color='grey', label='#SVs', interpolate=False)
+    # plot PDOP on second y-axis
+    axRight = axis.twinx()
+
+    axRight.set_ylim([0, 15])
+    axRight.set_ylabel('XDOP [-]', fontsize='large', color='darkorchid')
+
+    # plot XDOPs
+    axRight.plot(dfDops['DT'], dfDops['PDOP'], linestyle='-', marker='.', markersize=1, color='darkorchid', label='PDOP')
+
+    # set title
+    axis.set_title('Visible satellites & XDOP', fontsize='x-large')
+
+    # create the ticks for the time axis
+    dtFormat = plot_utils.determine_datetime_ticks(startDT=dfDops['DT'].iloc[0], endDT=dfDops['DT'].iloc[-1])
+
+    if dtFormat['minutes']:
+        axis.xaxis.set_major_locator(dates.MinuteLocator(byminute=range[1, 60, 5], interval=1))
+    else:
+        axis.xaxis.set_major_locator(dates.HourLocator(interval=dtFormat['hourInterval']))   # every 4 hours
+    axis.xaxis.set_major_formatter(dates.DateFormatter('%H:%M'))  # hours and minutes
+
+    axis.xaxis.set_minor_locator(dates.DayLocator(interval=1))    # every day
+    axis.xaxis.set_minor_formatter(dates.DateFormatter('\n%d-%m-%Y'))
+
+    axis.xaxis.set_tick_params(rotation=0)
+    for tick in axis.xaxis.get_major_ticks():
+        # tick.tick1line.set_markersize(0)
+        # tick.tick2line.set_markersize(0)
+        tick.label1.set_horizontalalignment('center')

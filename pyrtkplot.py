@@ -203,29 +203,25 @@ def main(argv):
     store_to_cvs(df=dfCLKs, ext='clks', dInfo=amc.dRTK, logger=logger)
 
     # BEGIN debug
-    dfs = (dfPosn, dfSats, dfCLKs, dfCrd, dfStatENU, dfDistENU, dfDistXDOP)
-    dfsNames = ('dfPosn', 'dfSats', 'dfCLKs', 'dfCrd', 'dfStatENU', 'dfDistENU', 'dfDistXDOP')
+    dfs = (dfPosn, dfSats, dfCLKs, dfCrd, dfDOPs, dfStatENU, dfDistENU, dfDistXDOP)
+    dfsNames = ('dfPosn', 'dfSats', 'dfCLKs', 'dfCrd', 'dfDOPs', 'dfStatENU', 'dfDistENU', 'dfDistXDOP')
     for df, dfName in zip(dfs, dfsNames):
         amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df, dfName=dfName)
         amc.logDataframeInfo(df=df, dfName=dfName, callerName=cFuncName, logger=logger)
     # EOF debug
 
-    # create the position plot (use DOP to color segments)
+    # create XDOP plots
+    plot_distributions.plot_xdop_distribution(dRtk=amc.dRTK, dfXDOP=dfDOPs, dfXDOPdisp=dfDistXDOP, logger=logger, showplot=showPlots)
 
-    logger.info('{func:s}: creating Position coordinates plot'.format(func=cFuncName))
+    # create the position plot (use DOP to color segments)
     plot_position.plotUTMOffset(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
 
     # create the UTM N-E scatter plot
-    logger.info('{func:s}: creating position scatter plots'.format(func=cFuncName))
     plot_scatter.plotUTMScatter(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
     plot_scatter.plotUTMScatterBin(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
 
     # create ENU distribution plots
-    logger.info('{func:s}: creating position distribution plots'.format(func=cFuncName))
     plot_distributions.plot_enu_distribution(dRtk=amc.dRTK, dfENUdist=dfDistENU, dfENUstat=dfStatENU, logger=logger, showplot=showPlots)
-
-    # create XDOP plots
-    logger.info('{func:s}: creating XDOP plots'.format(func=cFuncName))
 
 
     sys.exit(222)
