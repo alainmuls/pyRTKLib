@@ -212,17 +212,17 @@ def parse_elevation_distribution(dfSat: pd.DataFrame, logger: logging.Logger) ->
 
     # define what we use for binning
     gnssLetters = ('E', 'G')
-    gnssNames = ('Galileo', 'GPS')
+    gnssNames = ('GAL', 'GPS')
     cols = ['Elev', 'PRres', 'CN0']
     # define the bins used
     elev_bins, step = np.linspace(start=0, stop=90, num=7, endpoint=True, retstep=True, dtype=int, axis=0)
     logger.info('{func:s}: elevation bins = {bins!s}'.format(bins=elev_bins, func=cFuncName))
-    cn0_bins, step = np.linspace(start=10, stop=70, num=7, endpoint=True, retstep=True, dtype=int, axis=0)
-    logger.info('{func:s}: SN0 bins = {bins!s}'.format(bins=cn0_bins, func=cFuncName))
+    CN0_bins, step = np.linspace(start=10, stop=70, num=13, endpoint=True, retstep=True, dtype=int, axis=0)
+    logger.info('{func:s}: CN0 bins = {bins!s}'.format(bins=CN0_bins, func=cFuncName))
     PRres_bins, step = np.linspace(start=-5, stop=5, num=21, endpoint=True, retstep=True, dtype=float, axis=0)
     tmpArr = np.append(PRres_bins, np.inf)
     PRres_bins = np.append(-np.inf, tmpArr)
-    logger.info('{func:s}: SN0 bins = {bins!s}'.format(bins=PRres_bins, func=cFuncName))
+    logger.info('{func:s}: PRres bins = {bins!s}'.format(bins=PRres_bins, func=cFuncName))
 
     # create dataframe for CN0 / PRres distribution
     dfCN0dist = pd.DataFrame()
@@ -232,23 +232,26 @@ def parse_elevation_distribution(dfSat: pd.DataFrame, logger: logging.Logger) ->
     for gnssLetter, gnssName in zip(gnssLetters, gnssNames):
         # create a dataframe to work on
         dfGNSS = dfSat[dfSat['SV'].str.startswith(gnssLetter)][cols]
-        amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfGNSS, dfName=gnssName)
 
         if len(dfGNSS.index):
+            # display frame for this system
+            amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfGNSS, dfName=gnssName)
+
             # go over the elevation bins
             for elev_min, elev_max in zip(elev_bins[:-1], elev_bins[1:]):
-                print('\names()elev_bins {:d} => {:d}'.format(elev_min, elev_max))
                 dfGNSS['elevbin'] = dfGNSS.Elev.between(elev_min, elev_max, inclusive=True)
 
                 amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfGNSS, dfName='{syst:s} in [{min:d}..{max:d}] deg'.format(syst=gnssName, min=elev_min, max=elev_max))
 
+                # create a distribution for PRres
+                dfPRresdist['{syst:s}[{min:d}..{max:d}]'.format(syst=gnssName, min=elev_min, max=elev_max)] = pd.cut(dfGNSS.loc[dfGNSS['elevbin']]['PRres'], bins=PRres_bins).value_counts(sort=False)
+
                 # create a distribution for CN0
-                # dfTest = dfGNSS.loc[dfGNSS['elevbin'] == True]['PRres']
-                # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfTest, dfName='dfTest')
-                dfPRresdist['[{min:d}..{max:d}]'.format(min=elev_min, max=elev_max)] = pd.cut(dfGNSS.loc[dfGNSS['elevbin'] == True]['PRres'], bins=PRres_bins).value_counts(sort=False)
+                dfCN0dist['{syst:s}[{min:d}..{max:d}]'.format(syst=gnssName, min=elev_min, max=elev_max)] = pd.cut(dfGNSS.loc[dfGNSS['elevbin']]['CN0'], bins=CN0_bins).value_counts(sort=False)
 
-                amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPRresdist, dfName='dfPRresdist')
-
+            # report the distibutions of CN0 and PRres to the user
+            amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPRresdist, dfName='dfPRresdist')
+            amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfCN0dist, dfName='dfCN0dist')
 
     sys.exit(5555)
 
