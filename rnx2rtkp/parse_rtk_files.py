@@ -6,6 +6,7 @@ import os
 import logging
 import utm as UTM
 import tempfile
+from typing import Tuple
 
 from ampyutils import amutils
 from GNSS import gpstime
@@ -202,7 +203,7 @@ def parse_sv_residuals(dfSat: pd.DataFrame, logger: logging.Logger) -> dict:
     return dSVList
 
 
-def parse_elevation_distribution(dfSat: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
+def parse_elevation_distribution(dRtk: dict, dfSat: pd.DataFrame, logger: logging.Logger) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     parse_elevation_distribution parses the observed resiudals per constellation and per elevation bin of 10 degrees
     """
@@ -223,6 +224,8 @@ def parse_elevation_distribution(dfSat: pd.DataFrame, logger: logging.Logger) ->
     tmpArr = np.append(PRres_bins, np.inf)
     PRres_bins = np.append(-np.inf, tmpArr)
     logger.info('{func:s}: PRres bins = {bins!s}'.format(bins=PRres_bins, func=cFuncName))
+
+    # add to dRtk the bins used
 
     # create dataframe for CN0 / PRres distribution
     dfCN0dist = pd.DataFrame()
@@ -253,7 +256,7 @@ def parse_elevation_distribution(dfSat: pd.DataFrame, logger: logging.Logger) ->
             amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPRresdist, dfName='dfPRresdist')
             amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfCN0dist, dfName='dfCN0dist')
 
-    sys.exit(5555)
+    return dfCN0dist, dfPRresdist
 
 
 def calcDOPs(dfSats: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:

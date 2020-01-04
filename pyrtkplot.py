@@ -147,7 +147,7 @@ def main(argv):
     logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.sats', 'green')))
 
     # determine statistics on PR residuals for all satellites per elevation bin
-    parse_rtk_files.parse_elevation_distribution(dfSat=dfSats, logger=logger)
+    dfDistCN0, dfDistPRres = parse_rtk_files.parse_elevation_distribution(dRtk=amc.dRTK, dfSat=dfSats, logger=logger)
 
     # determine statistics of PR residuals for each satellite
     amc.dRTK['PRres'] = parse_rtk_files.parse_sv_residuals(dfSat=dfSats, logger=logger)
