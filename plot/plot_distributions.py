@@ -91,40 +91,32 @@ def plot_xdop_distribution(dRtk: dict, dfXDOP: pd.DataFrame, dfXDOPdisp: pd.Data
 
     logger.info('{func:s}: creating XDOP distribution plot'.format(func=cFuncName))
 
-    # select colors for E, N, U coordinate difference
-    colors = []
-    colors.append([51 / 256., 204 / 256., 51 / 256.])
-    colors.append([51 / 256., 51 / 256., 255 / 256.])
-    colors.append([255 / 256., 51 / 256., 51 / 256.])
+    # select colors for xDOP coordinate difference
+    colors = ('blue', 'green', 'cyan', 'red')
 
     # set up the plot
     plt.style.use('ggplot')
 
     # subplots
-    fig = plt.figure(figsize=(24.0, 18.0), tight_layout=True)
+    fig = plt.figure(figsize=(24.0, 14.0), tight_layout=True)
     fig.suptitle('{syst:s} - {posf:s} - {date:s}: XDOP'.format(posf=dRtk['info']['rtkPosFile'], syst=dRtk['syst'], date=dRtk['Time']['date']))
 
     # create a grid for lotting the XDOP line plots and 6 XDOP distribution plots
-    gs = GridSpec(3, 3, wspace=0.2)  # 3 rows, 3 columns
+    gs = GridSpec(2, 4)
 
     # plot the XDOPs and #SVs on the first axis
     ax = fig.add_subplot(gs[0, :])  # first row, span all columns
-    plot_xdop_svs(dfDops=dfXDOP, axis=ax)
+    plot_xdop_svs(dfDops=dfXDOP, colors=colors, axis=ax)
 
-    for row in (1, 2):
-        for col in (0, 1, 2):
-            print('{:d}-{:d}'.format(row, col))
+    # add the xDOP distributions
+    for col, xdop, color in zip((0, 1, 2, 3), dfXDOPdisp.columns[-4:], colors):
+        # create exis for this figure
+        ax = fig.add_subplot(gs[1, col])
 
-            # create exis for this figure
-            ax = fig.add_subplot(gs[row, col])
-            plot_xdop_svs(dfDops=dfXDOP, axis=ax)
+, sharey=ax1
 
-    # ax11 = fig.add_subplot(gs[1, 0])  # second row, first column
-    # ax12 = fig.add_subplot(gs[1, 1])  # second row, second column
-    # ax13 = fig.add_subplot(gs[1, 2])  # second row, third column
-    # ax21 = fig.add_subplot(gs[2, 0])  # third row, first column
-    # ax22 = fig.add_subplot(gs[2, 1])  # third row, second column
-    # ax23 = fig.add_subplot(gs[2, 2])  # third row, third column
+        # plot distribution for a DOP value
+        plot_xdop_histogram(dfDopsDist=dfXDOPdisp, xdop=xdop, color=color, axis=ax)
 
     if showplot:
         plt.show(block=True)
@@ -134,7 +126,7 @@ def plot_xdop_distribution(dRtk: dict, dfXDOP: pd.DataFrame, dfXDOPdisp: pd.Data
     sys.exit(55555555)
 
 
-def plot_xdop_svs(dfDops: pd.DataFrame, axis):
+def plot_xdop_svs(dfDops: pd.DataFrame, colors: tuple, axis):
     """
     plot_xdop_svs plots the XDOP curves and #SVs on a given axis
     """
@@ -147,10 +139,11 @@ def plot_xdop_svs(dfDops: pd.DataFrame, axis):
     axRight = axis.twinx()
 
     axRight.set_ylim([0, 15])
-    axRight.set_ylabel('XDOP [-]', fontsize='large', color='darkorchid')
+    axRight.set_ylabel('XDOP [-]', fontsize='large')
 
-    # plot XDOPs
-    axRight.plot(dfDops['DT'], dfDops['PDOP'], linestyle='-', marker='.', markersize=1, color='darkorchid', label='PDOP')
+    # plot XDOPs (last 4 columns)
+    for dop, color in zip(dfDops.columns[-4:], colors):
+        axRight.plot(dfDops['DT'], dfDops[dop], linestyle='-', marker='.', markersize=1, color=color, label=dop)
 
     # set title
     axis.set_title('Visible satellites & XDOP', fontsize='x-large')
@@ -172,3 +165,20 @@ def plot_xdop_svs(dfDops: pd.DataFrame, axis):
         # tick.tick1line.set_markersize(0)
         # tick.tick2line.set_markersize(0)
         tick.label1.set_horizontalalignment('center')
+
+
+def plot_xdop_histogram(dfDopsDist: pd.DataFrame, xdop: str, color: tuple, axis):
+    """
+    plot_xdop_histogram plots the histogram for the specified xDOP
+    """
+    # the indexes on the x-axis
+    ind = np.arange(len(dfDopsDist.index))
+
+    print('ind = {!s}'.format(ind))
+    print('dfDopsDist.index.tolist() = {!s}'.format(dfDopsDist.index.tolist()))
+
+    axis.bar(ind, dfDopsDist[xdop], alpha=0.5, color=color, edgecolor='none')
+    # rotate the ticks on this axis
+    axis.set_xticklabels(dfDopsDist.index.tolist(), rotation='vertical')
+    # set th etitle for sub-plot
+    axis.set_title(label=xdop, color=color, fontsize='large')
