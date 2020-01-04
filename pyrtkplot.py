@@ -10,6 +10,7 @@ import numpy as np
 import math
 import utm as UTM
 import pandas_profiling as pp
+import logging
 
 import am_config as amc
 from ampyutils import utm, amutils
@@ -48,6 +49,20 @@ def treatCmdOpts(argv):
 
     # return arguments
     return args.file, args.dir, args.marker, args.plots, args.overwrite, args.logging
+
+
+def store_to_cvs(df: pd.DataFrame, ext: str, dInfo: dict, logger: logging.Logger, index: bool = True):
+    """
+    store the dataframe to a CSV file
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    csv_name = amc.dRTK['info']['rtkPosFile'] + '.' + ext
+    dInfo[ext] = csv_name
+    df.to_csv(csv_name, index=index, header=True)
+
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df, dfName=csv_name)
+    logger.info('{func:s}: stored dataframe as csv file {csv:s}'.format(csv=colored(csv_name, 'green'), func=cFuncName))
 
 
 def main(argv):
@@ -143,29 +158,24 @@ def main(argv):
 
     # parse the satellite file (contains Az, El, PRRes, CN0)
     dfSats = parse_rtk_files.parseSatelliteStatistics(dTmpFiles['sat'], logger=logger)
-    dfSats.to_csv(amc.dRTK['info']['rtkPosFile'] + '.sats', index=None, header=True)
-    logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.sats', 'green')))
+    store_to_cvs(df=dfSats, ext='sats', dInfo=amc.dRTK, logger=logger)
 
     # determine statistics on PR residuals for all satellites per elevation bin
     dfDistCN0, dfDistPRres = parse_rtk_files.parse_elevation_distribution(dRtk=amc.dRTK, dfSat=dfSats, logger=logger)
+    store_to_cvs(df=dfDistCN0, ext='CN0.dist', dInfo=amc.dRTK, logger=logger)
+    store_to_cvs(df=dfDistPRres, ext='PRres.dist', dInfo=amc.dRTK, logger=logger)
 
     # determine statistics of PR residuals for each satellite
     amc.dRTK['PRres'] = parse_rtk_files.parse_sv_residuals(dfSat=dfSats, logger=logger)
 
     # calculate DOP values from El, Az info for each TOW
     dfDOPs = parse_rtk_files.calcDOPs(dfSats, logger=logger)
-    dfDOPs.to_csv(amc.dRTK['info']['rtkPosFile'] + '.dops', index=None, header=True)
-    logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.dops', 'green')))
+    store_to_cvs(df=dfDOPs, ext='XDOP', dInfo=amc.dRTK, logger=logger)
 
     # merge the PDOP column of dfDOPs into dfPosn and interpolate the PDOP column
     dfResults = pd.merge(left=dfPosn, right=dfDOPs[['DT', 'PDOP', 'HDOP', 'VDOP', 'GDOP']], left_on='DT', right_on='DT', how='left')
     dfPosn = dfResults.interpolate()
-
-    logger.info('{func:s}: amc.dRTK =\n{settings!s}'.format(func=cFuncName, settings=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
-    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPosn, dfName='dfPosn')
-
-    dfPosn.to_csv(amc.dRTK['info']['posn'], index=None, header=True)
-    logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.posn', 'green')))
+    store_to_cvs(df=dfPosn, ext='posn', dInfo=amc.dRTK, logger=logger)
 
     # calculate per DOP bin the statistics of PDOP
     parse_rtk_files.addPDOPStatistics(dRtk=amc.dRTK, dfPos=dfPosn, logger=logger)
@@ -173,7 +183,9 @@ def main(argv):
     # add statistics for the E,N,U coordinate differences
     dfStatENU = enu_stat.enu_statistics(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH']], logger=logger)
     # add statistics for the E,N,U coordinate differences
-    dfDistENU, dfDistPDOP = enu_stat.enupdop_distribution(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH', 'PDOP', 'HDOP', 'VDOP', 'GDOP']], logger=logger)
+    dfDistENU, dfDistXDOP = enu_stat.enupdop_distribution(dRtk=amc.dRTK, dfENU=dfPosn[['DT', 'dUTM.E', 'dUTM.N', 'dEllH', 'PDOP', 'HDOP', 'VDOP', 'GDOP']], logger=logger)
+    store_to_cvs(df=dfDistENU, ext='ENU.dist', dInfo=amc.dRTK, logger=logger)
+    store_to_cvs(df=dfDistXDOP, ext='XDOP.dist', dInfo=amc.dRTK, logger=logger)
 
     logger.info('{func:s}: dRTK =\n{settings!s}'.format(func=cFuncName, settings=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
 
@@ -188,26 +200,33 @@ def main(argv):
 
     # parse the clock stats
     dfCLKs = parse_rtk_files.parseClockBias(dTmpFiles['clk'], logger=logger)
-    dfCLKs.to_csv(amc.dRTK['info']['rtkPosFile'] + '.clks', index=None, header=True)
-    logger.info('{func:s}: created csv file {csv:s}'.format(func=cFuncName, csv=colored(amc.dRTK['info']['rtkPosFile'] + '.clks', 'green')))
+    store_to_cvs(df=dfCLKs, ext='clks', dInfo=amc.dRTK, logger=logger)
 
     # BEGIN debug
-    dfs = (dfPosn, dfSats, dfCLKs, dfCrd, dfStatENU, dfDistENU, dfDistPDOP)
-    dfsNames = ('dfPosn', 'dfSats', 'dfCLKs', 'dfCrd', 'dfStatENU', 'dfDistENU', 'dfDistPDOP')
+    dfs = (dfPosn, dfSats, dfCLKs, dfCrd, dfStatENU, dfDistENU, dfDistXDOP)
+    dfsNames = ('dfPosn', 'dfSats', 'dfCLKs', 'dfCrd', 'dfStatENU', 'dfDistENU', 'dfDistXDOP')
     for df, dfName in zip(dfs, dfsNames):
         amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df, dfName=dfName)
         amc.logDataframeInfo(df=df, dfName=dfName, callerName=cFuncName, logger=logger)
     # EOF debug
 
     # create the position plot (use DOP to color segments)
-    plot_distributions.plot_enu_distribution(dRtk=amc.dRTK, dfENUdist=dfDistENU, dfENUstat=dfStatENU, logger=logger, showplot=showPlots)
 
     logger.info('{func:s}: creating Position coordinates plot'.format(func=cFuncName))
     plot_position.plotUTMOffset(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
+
     # create the UTM N-E scatter plot
     logger.info('{func:s}: creating position scatter plots'.format(func=cFuncName))
     plot_scatter.plotUTMScatter(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
     plot_scatter.plotUTMScatterBin(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
+
+    # create ENU distribution plots
+    logger.info('{func:s}: creating position distribution plots'.format(func=cFuncName))
+    plot_distributions.plot_enu_distribution(dRtk=amc.dRTK, dfENUdist=dfDistENU, dfENUstat=dfStatENU, logger=logger, showplot=showPlots)
+
+    # create XDOP plots
+    logger.info('{func:s}: creating XDOP plots'.format(func=cFuncName))
+
 
     sys.exit(222)
 

@@ -60,7 +60,7 @@ def enupdop_distribution(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger
     dfPDOPDist = pd.DataFrame()
 
     # create the bins for the PDOP
-    dop_bins = [0, 1, 2, 3, 4, 5, 6, np.inf]
+    dop_bins = [0, 2, 3, 4, 5, 6, np.inf]
     logger.info('{func:s}: dop_bins = {bins!s}'.format(bins=dop_bins, func=cFuncName))
 
     # calculate the distribution for xDOP coordinates
