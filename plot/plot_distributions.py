@@ -210,3 +210,9 @@ def plot_xdop_histogram(dfDopsDist: pd.DataFrame, xdop: str, color: tuple, axis,
     idx = np.asarray([i for i in range(len(dfDopsDist[xdop]))])
     axis.set_xticks(idx)
     axis.set_xticklabels(dfDopsDist.index.tolist(), rotation=65)
+
+    xDOPtotal = dfDopsDist[xdop].sum()
+    ymin, ymax = axis.get_ylim()
+    vOffset = (ymax - ymin) / 20
+    for i, h in enumerate(dfDopsDist[xdop]):
+        axis.text(i, h + vOffset, '{:.1f}'.format(h / xDOPtotal * 100), color='black', fontweight='bold', rotation=90)
