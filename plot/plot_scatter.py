@@ -1,17 +1,12 @@
 import matplotlib.pyplot as plt
-from matplotlib import dates
-from matplotlib import colors as mpcolors
 from termcolor import colored
 import numpy as np
 import os
 import pandas as pd
 import sys
 import logging
-import json
-from typing import Tuple
 
 from ampyutils import amutils
-from plot import plot_utils
 import am_config as amc
 
 from pandas.plotting import register_matplotlib_converters
@@ -20,7 +15,7 @@ register_matplotlib_converters()
 __author__ = 'amuls'
 
 
-def plotUTMScatter(dRtk: dict, dfPos: pd.DataFrame, dfCrd: dict, dCrdLim:dict, logger: logging.Logger, showplot: bool = False):
+def plotUTMScatter(dRtk: dict, dfPos: pd.DataFrame, dfCrd: dict, dCrdLim: dict, logger: logging.Logger, showplot: bool = False):
     """
     plotUTMScatter plots scatter plot wrt reference position
     """
@@ -28,7 +23,7 @@ def plotUTMScatter(dRtk: dict, dfPos: pd.DataFrame, dfCrd: dict, dCrdLim:dict, l
 
     # select colors for E, N, U coordinate difference
     colors = []
-    colors.append([51/256., 204/256., 51/256.])
+    colors.append([51 / 256., 204 / 256., 51 / 256.])
 
     # set up the plot
     plt.style.use('ggplot')
@@ -50,24 +45,23 @@ def plotUTMScatter(dRtk: dict, dfPos: pd.DataFrame, dfCrd: dict, dCrdLim:dict, l
 
     ax.annotate(annotatePosRef, xy=(0, 0), xycoords='axes fraction', xytext=(0, -45), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='strong', fontsize='medium')
 
-
     # draw circles for distancd evaluation on plot
     for radius in range(1, 15, 1):
         newCircle = plt.Circle((0, 0), radius, color='blue', fill=False, clip_on=True, alpha=0.4)
         ax.add_artist(newCircle)
         # annotate the radius for 1, 2, 5 and 10 meter
         # if radius in [1, 2, 3, 4, 5, 10]:
-        ax.annotate('{radius:d}m'.format(radius=radius), xy=(np.pi/4, radius), xytext=(np.pi/4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
+        ax.annotate('{radius:d}m'.format(radius=radius), xy=(np.pi / 4, radius), xytext=(np.pi / 4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
 
     # get the marker styles
     markerBins = predefinedMarkerStyles()
 
     # go over all PDOP bins and plot according to the markersBin defined
     for i in range(len(dRtk['PDOP']['bins']) - 1, 0, -1):
-        binInterval = 'bin{:d}-{:.0f}'.format(dRtk['PDOP']['bins'][i-1], dRtk['PDOP']['bins'][i])
-        index4Bin = (dfPos['PDOP'] > dRtk['PDOP']['bins'][i-1]) & (dfPos['PDOP'] <= dRtk['PDOP']['bins'][i])
+        binInterval = 'bin{:d}-{:.0f}'.format(dRtk['PDOP']['bins'][i - 1], dRtk['PDOP']['bins'][i])
+        index4Bin = (dfPos['PDOP'] > dRtk['PDOP']['bins'][i - 1]) & (dfPos['PDOP'] <= dRtk['PDOP']['bins'][i])
 
-        ax.plot(dfCrd.loc[index4Bin, 'UTM.E'], dfCrd.loc[index4Bin, 'UTM.N'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:.1f}%)'.format(dRtk['PDOP']['bins'][i-1], dRtk['PDOP']['bins'][i], dRtk['PDOP'][binInterval]['perc']*100), **markerBins[i])
+        ax.plot(dfCrd.loc[index4Bin, 'UTM.E'], dfCrd.loc[index4Bin, 'UTM.N'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:.1f}%)'.format(dRtk['PDOP']['bins'][i - 1], dRtk['PDOP']['bins'][i], dRtk['PDOP'][binInterval]['perc'] * 100), **markerBins[i])
 
     # lcoation of legend
     ax.legend(loc='best', markerscale=6)
@@ -94,7 +88,7 @@ def plotUTMScatter(dRtk: dict, dfPos: pd.DataFrame, dfCrd: dict, dCrdLim:dict, l
         plt.close(fig)
 
 
-def plotUTMScatterBin(dRtk: dict, dfPos: pd.DataFrame, dfCrd: dict, dCrdLim:dict, logger: logging.Logger, showplot: bool = False):
+def plotUTMScatterBin(dRtk: dict, dfPos: pd.DataFrame, dfCrd: dict, dCrdLim: dict, logger: logging.Logger, showplot: bool = False):
     """
     plotUTMScatter plots scatter plot (per DOPbin)
     """
@@ -102,7 +96,7 @@ def plotUTMScatterBin(dRtk: dict, dfPos: pd.DataFrame, dfCrd: dict, dCrdLim:dict
 
     # select colors for E, N, U coordinate difference
     colors = []
-    colors.append([51/256., 204/256., 51/256.])
+    colors.append([51 / 256., 204 / 256., 51 / 256.])
 
     # set up the plot
     plt.style.use('ggplot')
@@ -129,18 +123,18 @@ def plotUTMScatterBin(dRtk: dict, dfPos: pd.DataFrame, dfCrd: dict, dCrdLim:dict
 
     # go over all PDOP bins and plot according to the markersBin defined
     for i in range(0, len(dRtk['PDOP']['bins']) - 1):
-        binInterval = 'bin{:d}-{:.0f}'.format(dRtk['PDOP']['bins'][i], dRtk['PDOP']['bins'][i+1])
-        index4Bin = (dfPos['PDOP'] > dRtk['PDOP']['bins'][i]) & (dfPos['PDOP'] <= dRtk['PDOP']['bins'][i+1])
+        binInterval = 'bin{:d}-{:.0f}'.format(dRtk['PDOP']['bins'][i], dRtk['PDOP']['bins'][i + 1])
+        index4Bin = (dfPos['PDOP'] > dRtk['PDOP']['bins'][i]) & (dfPos['PDOP'] <= dRtk['PDOP']['bins'][i + 1])
 
         # print('index4Bin = {!s}'.format(np.sum(index4Bin)))
-        lblBin = r'{!s} $\leq$ PDOP $<$ {!s} ({:.1f}%, #{:d})'.format(dRtk['PDOP']['bins'][i], dRtk['PDOP']['bins'][i+1], dRtk['PDOP'][binInterval]['perc']*100, np.sum(index4Bin))
+        lblBin = r'{!s} $\leq$ PDOP $<$ {!s} ({:.1f}%, #{:d})'.format(dRtk['PDOP']['bins'][i], dRtk['PDOP']['bins'][i + 1], dRtk['PDOP'][binInterval]['perc'] * 100, np.sum(index4Bin))
         logger.info('{func:s}: {bin:s}'.format(func=cFuncName, bin=lblBin))
 
         # get the axis
         axis = ax[i // 3][i % 3]
 
         # plot per dopBin
-        axis.plot(dfCrd.loc[index4Bin, 'UTM.E'], dfCrd.loc[index4Bin, 'UTM.N'], label=lblBin, **markerBins[i+1])
+        axis.plot(dfCrd.loc[index4Bin, 'UTM.E'], dfCrd.loc[index4Bin, 'UTM.N'], label=lblBin, **markerBins[i + 1])
 
         # draw circles for distancd evaluation on plot
         for radius in range(1, 15, 1):
@@ -148,7 +142,7 @@ def plotUTMScatterBin(dRtk: dict, dfPos: pd.DataFrame, dfCrd: dict, dCrdLim:dict
             axis.add_artist(newCircle)
             # annotate the radius for 1, 2, 5 and 10 meter
             # if radius in [1, 2, 3, 4, 5, 10]:
-            axis.annotate('{radius:d}m'.format(radius=radius), xy=(np.pi/4, radius), xytext=(np.pi/4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
+            axis.annotate('{radius:d}m'.format(radius=radius), xy=(np.pi / 4, radius), xytext=(np.pi / 4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
 
         # lcoation of legend
         axis.legend(loc='best', markerscale=6)

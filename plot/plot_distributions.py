@@ -98,7 +98,7 @@ def plot_xdop_distribution(dRtk: dict, dfXDOP: pd.DataFrame, dfXDOPdisp: pd.Data
     plt.style.use('ggplot')
 
     # subplots
-    fig = plt.figure(figsize=(24.0, 14.0), tight_layout=True)
+    fig = plt.figure(figsize=(14.0, 9.0), tight_layout=False)
     fig.suptitle('{syst:s} - {posf:s} - {date:s}: XDOP'.format(posf=dRtk['info']['rtkPosFile'], syst=dRtk['syst'], date=dRtk['Time']['date']))
 
     # create a grid for lotting the XDOP line plots and 6 XDOP distribution plots
@@ -106,17 +106,27 @@ def plot_xdop_distribution(dRtk: dict, dfXDOP: pd.DataFrame, dfXDOPdisp: pd.Data
 
     # plot the XDOPs and #SVs on the first axis
     ax = fig.add_subplot(gs[0, :])  # first row, span all columns
-    plot_xdop_svs(dfDops=dfXDOP, colors=colors, axis=ax)
+    plot_xdop_svs(dfDops=dfXDOP, colors=colors, axis=ax, logger=logger)
 
     # add the xDOP distributions
+    axisShare = None
     for col, xdop, color in zip((0, 1, 2, 3), dfXDOPdisp.columns[-4:], colors):
         # create exis for this figure
-        ax = fig.add_subplot(gs[1, col])
-
-, sharey=ax1
+        if axisShare is None:
+            ax = fig.add_subplot(gs[1, col])
+            axisShare = ax
+        else:
+            ax = fig.add_subplot(gs[1, col], sharey=axisShare)
+            # ax.get_yaxis().set_ticklabels([])
+            ax.tick_params(labelleft=False)
 
         # plot distribution for a DOP value
-        plot_xdop_histogram(dfDopsDist=dfXDOPdisp, xdop=xdop, color=color, axis=ax)
+        plot_xdop_histogram(dfDopsDist=dfXDOPdisp, xdop=xdop, color=color, axis=ax, logger=logger)
+
+    # save the plot in subdir png of GNSSSystem
+    amutils.mkdir_p(os.path.join(dRtk['info']['dir'], 'png'))
+    pngName = os.path.join(dRtk['info']['dir'], 'png', os.path.splitext(dRtk['info']['rtkPosFile'])[0] + '-XDOP.png')
+    fig.savefig(pngName, dpi=fig.dpi)
 
     if showplot:
         plt.show(block=True)
@@ -126,10 +136,14 @@ def plot_xdop_distribution(dRtk: dict, dfXDOP: pd.DataFrame, dfXDOPdisp: pd.Data
     sys.exit(55555555)
 
 
-def plot_xdop_svs(dfDops: pd.DataFrame, colors: tuple, axis):
+def plot_xdop_svs(dfDops: pd.DataFrame, colors: tuple, axis, logger: logging.Logger):
     """
     plot_xdop_svs plots the XDOP curves and #SVs on a given axis
     """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    logger.info('{func:s}: creating XDOP / #SVs vs time plot'.format(func=cFuncName))
+
     axis.set_ylim([0, 24])
     axis.set_ylabel('#SVs [-]', fontsize='large', color='grey')
     # axis.set_xlabel('Time [sec]', fontsize='large')
@@ -144,6 +158,9 @@ def plot_xdop_svs(dfDops: pd.DataFrame, colors: tuple, axis):
     # plot XDOPs (last 4 columns)
     for dop, color in zip(dfDops.columns[-4:], colors):
         axRight.plot(dfDops['DT'], dfDops[dop], linestyle='-', marker='.', markersize=1, color=color, label=dop)
+
+    # add the legend to the plot
+    axRight.legend(loc="upper right")
 
     # set title
     axis.set_title('Visible satellites & XDOP', fontsize='x-large')
@@ -167,18 +184,29 @@ def plot_xdop_svs(dfDops: pd.DataFrame, colors: tuple, axis):
         tick.label1.set_horizontalalignment('center')
 
 
-def plot_xdop_histogram(dfDopsDist: pd.DataFrame, xdop: str, color: tuple, axis):
+def plot_xdop_histogram(dfDopsDist: pd.DataFrame, xdop: str, color: tuple, axis, logger: logging.Logger):
     """
     plot_xdop_histogram plots the histogram for the specified xDOP
     """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    logger.info('{func:s}: creating XDOP distribution plots'.format(func=cFuncName))
+
     # the indexes on the x-axis
     ind = np.arange(len(dfDopsDist.index))
 
-    print('ind = {!s}'.format(ind))
-    print('dfDopsDist.index.tolist() = {!s}'.format(dfDopsDist.index.tolist()))
-
+    # create the histogram plot
     axis.bar(ind, dfDopsDist[xdop], alpha=0.5, color=color, edgecolor='none')
-    # rotate the ticks on this axis
-    axis.set_xticklabels(dfDopsDist.index.tolist(), rotation='vertical')
+    # change and rotate the ticks on this axis
+    # tickList = dfDopsDist.index.tolist()
+    # tickList = [''] + tickList
+    # axis.set_xticklabels(tickList, rotation='vertical')
     # set th etitle for sub-plot
     axis.set_title(label=xdop, color=color, fontsize='large')
+
+    start, end = axis.get_xlim()
+    axis.xaxis.set_ticks(np.arange(start, end, 1))
+
+    idx = np.asarray([i for i in range(len(dfDopsDist[xdop]))])
+    axis.set_xticks(idx)
+    axis.set_xticklabels(dfDopsDist.index.tolist(), rotation=65)
