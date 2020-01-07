@@ -15,7 +15,7 @@ import logging
 import am_config as amc
 from ampyutils import utm, amutils
 from rnx2rtkp import parse_rtk_files
-from plot import plot_position, plot_scatter, plot_sats_column, plot_clock, plot_distributions
+from plot import plot_position, plot_scatter, plot_sats_column, plot_clock, plot_distributions_crds, plot_distributions_elev
 from stats import enu_statistics as enu_stat
 
 __author__ = 'amuls'
@@ -165,6 +165,11 @@ def main(argv):
     store_to_cvs(df=dfDistCN0, ext='CN0.dist', dInfo=amc.dRTK, logger=logger)
     store_to_cvs(df=dfDistPRres, ext='PRres.dist', dInfo=amc.dRTK, logger=logger)
 
+    # BEGIN DEBUG PLOT
+    plot_distributions_elev.plot_elev_distribution(dRtk=amc.dRTK, df=dfDistCN0, obsName='CN0', logger=logger, showplot=showPlots)
+    # END DEBUG PLOT
+
+
     # determine statistics of PR residuals for each satellite
     amc.dRTK['PRres'] = parse_rtk_files.parse_sv_residuals(dfSat=dfSats, logger=logger)
 
@@ -210,9 +215,6 @@ def main(argv):
         amc.logDataframeInfo(df=df, dfName=dfName, callerName=cFuncName, logger=logger)
     # EOF debug
 
-    # create XDOP plots
-    plot_distributions.plot_xdop_distribution(dRtk=amc.dRTK, dfXDOP=dfDOPs, dfXDOPdisp=dfDistXDOP, logger=logger, showplot=showPlots)
-
     # create the position plot (use DOP to color segments)
     plot_position.plotUTMOffset(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
 
@@ -221,10 +223,10 @@ def main(argv):
     plot_scatter.plotUTMScatterBin(dRtk=amc.dRTK, dfPos=dfPosn, dfCrd=dfCrd, dCrdLim=dCrdLim, logger=logger, showplot=showPlots)
 
     # create ENU distribution plots
-    plot_distributions.plot_enu_distribution(dRtk=amc.dRTK, dfENUdist=dfDistENU, dfENUstat=dfStatENU, logger=logger, showplot=showPlots)
+    plot_distributions_crds.plot_enu_distribution(dRtk=amc.dRTK, dfENUdist=dfDistENU, dfENUstat=dfStatENU, logger=logger, showplot=showPlots)
 
-
-    sys.exit(222)
+    # create XDOP plots
+    plot_distributions_crds.plot_xdop_distribution(dRtk=amc.dRTK, dfXDOP=dfDOPs, dfXDOPdisp=dfDistXDOP, logger=logger, showplot=showPlots)
 
     # plot pseudo-range residus
     dPRResInfo = {'name': 'PRres', 'yrange': [-10, 7.5], 'title': 'PR Residuals', 'unit': 'm', 'linestyle': '-'}

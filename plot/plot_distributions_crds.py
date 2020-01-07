@@ -133,8 +133,6 @@ def plot_xdop_distribution(dRtk: dict, dfXDOP: pd.DataFrame, dfXDOPdisp: pd.Data
     else:
         plt.close(fig)
 
-    sys.exit(55555555)
-
 
 def plot_xdop_svs(dfDops: pd.DataFrame, colors: tuple, axis, logger: logging.Logger):
     """
