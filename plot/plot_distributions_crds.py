@@ -57,7 +57,7 @@ def plot_enu_distribution(dRtk: dict, dfENUdist: pd.DataFrame, dfENUstat: pd.Dat
     # add the 3 distributions on 1 subplot for comparing
     width = .25
     for i, crd, color in zip((-1, 0, +1), ('dUTM.E', 'dUTM.N', 'dEllH'), colors):
-        ax[-1].bar(ind - (i * width), dfENUdist[crd], width=width, alpha=0.5, color=color, edgecolor='none')
+        ax[-1].bar(ind + (i * width), dfENUdist[crd], width=width, alpha=0.5, color=color, edgecolor='none')
         # rotate the ticks on this axis
         ax[-1].set_xticklabels(dfENUdist.index.tolist(), rotation='vertical')
 
@@ -195,11 +195,7 @@ def plot_xdop_histogram(dfDopsDist: pd.DataFrame, xdop: str, color: tuple, axis,
 
     # create the histogram plot
     axis.bar(ind, dfDopsDist[xdop], alpha=0.5, color=color, edgecolor='none')
-    # change and rotate the ticks on this axis
-    # tickList = dfDopsDist.index.tolist()
-    # tickList = [''] + tickList
-    # axis.set_xticklabels(tickList, rotation='vertical')
-    # set th etitle for sub-plot
+    # set the title for sub-plot
     axis.set_title(label=xdop, color=color, fontsize='large')
 
     start, end = axis.get_xlim()

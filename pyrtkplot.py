@@ -240,6 +240,8 @@ def main(argv):
     logger.info('{func:s}: creating CN0 plots based on dict {dict!s}'.format(func=cFuncName, dict=dCN0Info))
     plot_sats_column.plotRTKLibSatsColumn(dCol=dCN0Info, dRtk=amc.dRTK, dfSVs=dfSats, logger=logger, showplot=showPlots)
 
+    # create plots for elevation distribution of CN0 and PRres
+
     # # plot elevation
     dElevInfo = {'name': 'Elev', 'yrange': [0, 90], 'title': 'Elevation', 'unit': 'Deg', 'linestyle': '-'}
     logger.info('{func:s}: creating Elev plots based on dict {dict!s}'.format(func=cFuncName, dict=dElevInfo))
