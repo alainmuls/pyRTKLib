@@ -47,7 +47,7 @@ def plot_enu_distribution(dRtk: dict, dfENUdist: pd.DataFrame, dfENUstat: pd.Dat
         axis.bar(ind, dfENUdist[crd], alpha=0.5, color=color, edgecolor='none')
         # rotate the ticks on this axis
         axis.set_xticklabels(dfENUdist.index.tolist(), rotation='vertical')
-        # set th etitle for sub-plot
+        # set the title for sub-plot
         axis.set_title(label=crd, color=color, fontsize='large')
 
         # annotate the plot with the statistics calculated

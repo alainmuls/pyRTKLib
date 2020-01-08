@@ -166,7 +166,9 @@ def main(argv):
     store_to_cvs(df=dfDistPRres, ext='PRres.dist', dInfo=amc.dRTK, logger=logger)
 
     # BEGIN DEBUG PLOT
-    plot_distributions_elev.plot_elev_distribution(dRtk=amc.dRTK, df=dfDistCN0, obsName='CN0', logger=logger, showplot=showPlots)
+    plot_distributions_elev.plot_elev_distribution(dRtk=amc.dRTK, df=dfDistCN0, obs_name='CN0', logger=logger, showplot=showPlots)
+    plot_distributions_elev.plot_elev_distribution(dRtk=amc.dRTK, df=dfDistPRres, obs_name='PRres', logger=logger, showplot=showPlots)
+    sys.exit(77)
     # END DEBUG PLOT
 
 
@@ -208,7 +210,7 @@ def main(argv):
     store_to_cvs(df=dfCLKs, ext='clks', dInfo=amc.dRTK, logger=logger)
 
     # BEGIN debug
-    dfs = (dfPosn, dfSats, dfCLKs, dfCrd, dfDOPs, dfStatENU, dfDistENU, dfDistXDOP)
+    dfs = (dfPosn, dfSats, dfCLKs, dfCrd, dfDOPs, dfStatENU, dfDistENU, dfDistXDOP, dfDistPRres, dfDistCN0)
     dfsNames = ('dfPosn', 'dfSats', 'dfCLKs', 'dfCrd', 'dfDOPs', 'dfStatENU', 'dfDistENU', 'dfDistXDOP')
     for df, dfName in zip(dfs, dfsNames):
         amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df, dfName=dfName)
