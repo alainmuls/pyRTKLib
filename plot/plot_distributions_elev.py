@@ -56,7 +56,11 @@ def plot_elev_distribution(dRtk: dict, df: pd.DataFrame, obs_name: str, logger: 
     else:
         nrRows = int(tmpValue[0]) + 1
 
+    # get the elevation bins used
     elev_bins = list(set([col[3:] for col in df.columns]))
+    elev_bins.sort()
+    logger.info('{func:s}: elevation bins {bins!s}'.format(bins=elev_bins, func=cFuncName))
+    logger.info('{func:s}: elevation bins sorted {bins!s}'.format(bins=elev_bins.sort(), func=cFuncName))
 
     fig, ax = plt.subplots(nrows=nrRows, ncols=nrCols, sharex=True, sharey=True, figsize=(20.0, 12.0))
     fig.suptitle('{syst:s} - {posf:s} - {date:s}: {obs:s} Statistics'.format(posf=dRtk['info']['rtkPosFile'], syst=syst_names, date=dRtk['Time']['date'], obs=obs_name), fontsize='xx-large')
@@ -71,7 +75,12 @@ def plot_elev_distribution(dRtk: dict, df: pd.DataFrame, obs_name: str, logger: 
             ind = np.arange(len(df.index))
             logger.info('{func:s}: ind = {ind!s}'.format(ind=ind, func=cFuncName))
 
+            # columns of this system
             gnss_cols = ['{gnss:s}{bin:s}'.format(gnss=gnss, bin=elev_bin) for elev_bin in elev_bins]
+
+            # calculate the total number of observations per system
+            obs_per_bin = df.loc[:, gnss_cols].sum()
+            logger.info('{func:s}: obs_per_bin = {nrobs!s}'.format(nrobs=obs_per_bin, func=cFuncName))
 
             if obs_name == 'PRres':
                 # get index numbers for PRres between -2 and +2
@@ -87,12 +96,12 @@ def plot_elev_distribution(dRtk: dict, df: pd.DataFrame, obs_name: str, logger: 
                     axis.axvspan(mid_prres - 2, mid_prres + 2, alpha=0.1, color='green')
 
                 # draw a bar plot
-                axis.bar(ind + (i * col_move), df[col], alpha=0.5, color=color, edgecolor='none')
+                axis.bar(ind + (i * col_move), df[col] / obs_per_bin[col] * 100, alpha=0.5, color=color, edgecolor='none')
 
                 # rotate the ticks on this axis
                 idx = np.asarray([i for i in range(len(df.index))])
                 axis.set_xticks(idx)
-                axis.set_xticklabels(df.index.tolist(), rotation=65)
+                axis.set_xticklabels(df.index.tolist(), rotation='vertical')
 
                 # set the title for sub-plot
                 axis.set_title(label='Elevation bin {bin:s}'.format(bin=col[3:]), fontsize='x-large')
@@ -106,66 +115,3 @@ def plot_elev_distribution(dRtk: dict, df: pd.DataFrame, obs_name: str, logger: 
         plt.show(block=True)
     else:
         plt.close(fig)
-
-
-    # sys.exit(234)
-
-
-
-    # # go over the sat systems
-    # for gnss_name in gnss_names:
-    #     gnss_cols = [col for col in df if col.startswith(gnss_name)]
-    #     logger.debug('{func:s}: gnss_cols = {cols!s}'.format(cols=gnss_cols, func=cFuncName))
-
-    #     # check whether this sat system is in the df
-    #     if len(gnss_cols):
-    #         logger.info('{func:s}: creating {obs:s} distribution plot for {syst:s}'.format(obs=obs_name, syst=gnss_name, func=cFuncName))
-    #         # determine number of rows/cols for subplots
-    #         nrCols = 3
-    #         tmpValue = divmod(len(gnss_cols), nrCols)
-
-    #         if (tmpValue[1] == 0):
-    #             nrRows = tmpValue[0]
-    #         else:
-    #             nrRows = tmpValue[0] + 1
-
-    #         fig, ax = plt.subplots(nrows=nrRows, ncols=nrCols, sharex=True, sharey=True, figsize=(20.0, 12.0))
-    #         fig.suptitle('{syst:s} - {posf:s} - {date:s}: {obs:s} Statistics'.format(posf=dRtk['info']['rtkPosFile'], syst=gnss_name, date=dRtk['Time']['date'], obs=obs_name), fontsize='xx-large')
-
-    #         # the indexes on the x-axis
-    #         ind = np.arange(len(df.index))
-    #         logger.debug('{func:s}: ind = {ind!s}'.format(ind=ind, func=cFuncName))
-
-    #         for axis, col in zip(ax.flat, gnss_cols):
-    #             # create a filled area for domain [-1, 1] if PRres plot
-    #             if obs_name == 'PRres':
-    #                 # get index numbers for PRres between -2 and +2
-    #                 tmpValue = divmod(df.shape[0], 2)
-    #                 if tmpValue[1] == 0:
-    #                     mid_prres = tmpValue[0] - 0.5
-    #                 else:
-    #                     mid_prres = tmpValue
-
-    #                 axis.axvspan(mid_prres - 2, mid_prres + 2, alpha=0.2, color='green')
-
-    #             # draw a bar plot
-    #             axis.bar(ind, df[col], alpha=0.5, color='blue', edgecolor='none')
-
-    #             # rotate the ticks on this axis
-    #             idx = np.asarray([i for i in range(len(df.index))])
-    #             axis.set_xticks(idx)
-    #             axis.set_xticklabels(df.index.tolist(), rotation=65)
-
-    #             # set the title for sub-plot
-    #             axis.set_title(label='Elevation bin {bin:s}'.format(bin=col[3:]), fontsize='x-large')
-
-    #         # save the plot in subdir png of GNSSSystem
-    #         amutils.mkdir_p(os.path.join(dRtk['info']['dir'], 'png'))
-    #         pngName = os.path.join(dRtk['info']['dir'], 'png', os.path.splitext(dRtk['info']['rtkPosFile'])[0] + '-{syst:s}-{obs:s}-dist.png'.format(syst=gnss_name, obs=obs_name))
-    #         fig.savefig(pngName, dpi=fig.dpi)
-
-
-    #         if showplot:
-    #             plt.show(block=True)
-    #         else:
-    #             plt.close(fig)
