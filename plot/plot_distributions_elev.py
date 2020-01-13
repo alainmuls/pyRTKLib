@@ -106,6 +106,9 @@ def plot_elev_distribution(dRtk: dict, df: pd.DataFrame, obs_name: str, logger: 
                 # set the title for sub-plot
                 axis.set_title(label='Elevation bin {bin:s}'.format(bin=col[3:]), fontsize='x-large')
 
+                # set the title for the Y axis
+                axis.set_ylabel('{obs:s} statistics in [%]'.format(obs=obs_name))
+
     # save the plot in subdir png of GNSSSystem
     amutils.mkdir_p(os.path.join(dRtk['info']['dir'], 'png'))
     pngName = os.path.join(dRtk['info']['dir'], 'png', os.path.splitext(dRtk['info']['rtkPosFile'])[0] + '-{syst:s}-{obs:s}-dist.png'.format(syst=syst_names.replace(" ", ""), obs=obs_name))

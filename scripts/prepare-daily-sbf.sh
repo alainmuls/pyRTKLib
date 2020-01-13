@@ -2,7 +2,7 @@
 
 usage()
 {
-    echo "usage: $0 -v pyenv-s startDOY -e endDOY -y YYYY -r RxType [-h]"
+    echo "usage: $0 -v pyenv -s startDOY -e endDOY -y YYYY -r RxType [-h]"
 }
 
 if [ $# -ne 10 ]; then
