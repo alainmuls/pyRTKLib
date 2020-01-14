@@ -237,8 +237,8 @@ def main(argv):
     plot_sats_column.plotRTKLibSatsColumn(dCol=dCN0Info, dRtk=amc.dRTK, dfSVs=dfSats, logger=logger, showplot=showPlots)
 
     # create plots for elevation distribution of CN0 and PRres
-    plot_distributions_elev.plot_elev_distribution(dRtk=amc.dRTK, df=dfDistCN0, obs_name='CN0', logger=logger, showplot=showPlots)
-    plot_distributions_elev.plot_elev_distribution(dRtk=amc.dRTK, df=dfDistPRres, obs_name='PRres', logger=logger, showplot=showPlots)
+    plot_distributions_elev.plot_elev_distribution(dRtk=amc.dRTK, df=dfDistCN0, ds=dsDistCN0, obs_name='CN0', logger=logger, showplot=showPlots)
+    plot_distributions_elev.plot_elev_distribution(dRtk=amc.dRTK, df=dfDistPRres, ds=dsDistPRRes, obs_name='PRres', logger=logger, showplot=showPlots)
 
     # # plot elevation
     dElevInfo = {'name': 'Elev', 'yrange': [0, 90], 'title': 'Elevation', 'unit': 'Deg', 'linestyle': '-'}
