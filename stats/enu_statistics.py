@@ -23,7 +23,6 @@ def enu_statistics(dRtk: dict, dfENU: pd.DataFrame, logger: logging.Logger) -> p
     # add statistics for UTM coordinate differences
     dENUStats = {}
     for col in ('dUTM.E', 'dUTM.N', 'dEllH'):
-        print('col = {:s}'.format(col))
         dCol = {}
         for index, row in dfENUStats.iterrows():
             dCol[index] = row[col]

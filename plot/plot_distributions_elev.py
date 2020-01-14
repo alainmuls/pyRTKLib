@@ -19,7 +19,7 @@ register_matplotlib_converters()
 __author__ = 'amuls'
 
 
-def plot_elev_distribution(dRtk: dict, df: pd.DataFrame, obs_name: str, logger: logging.Logger, showplot: bool = False):
+def plot_elev_distribution(dRtk: dict, df: pd.DataFrame, ds:pd.Series, obs_name: str, logger: logging.Logger, showplot: bool = False):
     """
     plot_elev_distribution plots the distribution of CN0 or PRres as function of elevation bins
     """
@@ -96,12 +96,14 @@ def plot_elev_distribution(dRtk: dict, df: pd.DataFrame, obs_name: str, logger: 
                     axis.axvspan(mid_prres - 2, mid_prres + 2, alpha=0.1, color='green')
 
                 # draw a bar plot
-                axis.bar(ind + (i * col_move), df[col] / obs_per_bin[col] * 100, alpha=0.5, color=color, edgecolor='none')
+                axis.bar(ind + (i * col_move), df[col] / obs_per_bin.sum() * 100, alpha=0.5, color=color, edgecolor='none')
 
                 # rotate the ticks on this axis
                 idx = np.asarray([i for i in range(len(df.index))])
                 axis.set_xticks(idx)
                 axis.set_xticklabels(df.index.tolist(), rotation='vertical')
+
+                axis.annotate('# = {:.0f} ({:.2f}%)'.format(ds[col], ds[col] / ds.sum() * 100), xy=(1, 1), xycoords='axes fraction', xytext=(0, -25), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='large')
 
                 # set the title for sub-plot
                 axis.set_title(label='Elevation bin {bin:s}'.format(bin=col[3:]), fontsize='x-large')
