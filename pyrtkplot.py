@@ -161,14 +161,12 @@ def main(argv):
     store_to_cvs(df=dfSats, ext='sats', dInfo=amc.dRTK, logger=logger)
 
     # determine statistics on PR residuals for all satellites per elevation bin
-    dfDistCN0, dfDistPRres = parse_rtk_files.parse_elevation_distribution(dRtk=amc.dRTK, dfSat=dfSats, logger=logger)
+    dfDistCN0, dsDistCN0, dfDistPRres, dsDistPRRes = parse_rtk_files.parse_elevation_distribution(dRtk=amc.dRTK, dfSat=dfSats, logger=logger)
     store_to_cvs(df=dfDistCN0, ext='CN0.dist', dInfo=amc.dRTK, logger=logger)
     store_to_cvs(df=dfDistPRres, ext='PRres.dist', dInfo=amc.dRTK, logger=logger)
 
-    # BEGIN DEBUG PLOT
-    # sys.exit(77)
-    # END DEBUG PLOT
-
+    # BEGIN DEBUG
+    # END DEBUG
 
     # determine statistics of PR residuals for each satellite
     amc.dRTK['PRres'] = parse_rtk_files.parse_sv_residuals(dfSat=dfSats, logger=logger)
@@ -239,8 +237,8 @@ def main(argv):
     plot_sats_column.plotRTKLibSatsColumn(dCol=dCN0Info, dRtk=amc.dRTK, dfSVs=dfSats, logger=logger, showplot=showPlots)
 
     # create plots for elevation distribution of CN0 and PRres
-    plot_distributions_elev.plot_elev_distribution(dRtk=amc.dRTK, df=dfDistCN0, obs_name='CN0', logger=logger, showplot=showPlots)
-    plot_distributions_elev.plot_elev_distribution(dRtk=amc.dRTK, df=dfDistPRres, obs_name='PRres', logger=logger, showplot=showPlots)
+    plot_distributions_elev.plot_elev_distribution(dRtk=amc.dRTK, df=dfDistCN0, ds=dsDistCN0, obs_name='CN0', logger=logger, showplot=showPlots)
+    plot_distributions_elev.plot_elev_distribution(dRtk=amc.dRTK, df=dfDistPRres, ds=dsDistPRRes, obs_name='PRres', logger=logger, showplot=showPlots)
 
     # # plot elevation
     dElevInfo = {'name': 'Elev', 'yrange': [0, 90], 'title': 'Elevation', 'unit': 'Deg', 'linestyle': '-'}

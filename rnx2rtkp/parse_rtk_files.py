@@ -203,7 +203,7 @@ def parse_sv_residuals(dfSat: pd.DataFrame, logger: logging.Logger) -> dict:
     return dSVList
 
 
-def parse_elevation_distribution(dRtk: dict, dfSat: pd.DataFrame, logger: logging.Logger) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def parse_elevation_distribution(dRtk: dict, dfSat: pd.DataFrame, logger: logging.Logger) -> Tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
     """
     parse_elevation_distribution parses the observed resiudals per constellation and per elevation bin of 10 degrees
     """
@@ -252,11 +252,23 @@ def parse_elevation_distribution(dRtk: dict, dfSat: pd.DataFrame, logger: loggin
                 # create a distribution for CN0
                 dfCN0dist['{syst:s}[{min:d}..{max:d}]'.format(syst=gnssName, min=elev_min, max=elev_max)] = pd.cut(dfGNSS.loc[dfGNSS['elevbin']]['CN0'], bins=CN0_bins).value_counts(sort=False)
 
+            # reduce the values to percentage based on observations taken over all bins
+            dsPRres_per_bin = dfPRresdist.loc[:, dfPRresdist.columns].sum()
+            PRres_total = dsPRres_per_bin.sum() / 100
+
+            dsCN0_per_bin = dfCN0dist.loc[:, dfCN0dist.columns].sum()
+            CN0_total = dsCN0_per_bin.sum() / 100
+
             # report the distibutions of CN0 and PRres to the user
             amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPRresdist, dfName='dfPRresdist')
-            amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfCN0dist, dfName='dfCN0dist')
+            amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPRresdist / PRres_total, dfName='dfPRresdist in percentage')
+            logger.info('{func:s}: PRres totals per elev bin = \n{bins!s}'.format(bins=dsPRres_per_bin, func=cFuncName))
 
-    return dfCN0dist, dfPRresdist
+            amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfCN0dist, dfName='dfCN0dist')
+            amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfCN0dist / CN0_total, dfName='dfCN0dist in percentage')
+            logger.info('{func:s}: CN0 totals per elev bin = \n{bins!s}'.format(bins=dsCN0_per_bin, func=cFuncName))
+
+    return dfCN0dist, dsCN0_per_bin, dfPRresdist, dsPRres_per_bin
 
 
 def calcDOPs(dfSats: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
