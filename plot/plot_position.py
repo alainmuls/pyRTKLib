@@ -161,7 +161,7 @@ def plotUTMOffset(dRtk: dict, dfPos: pd.DataFrame, dfCrd: pd.DataFrame, dCrdLim:
 
         if dtFormat['minutes']:
             # axis.xaxis.set_major_locator(dates.MinuteLocator(byminute=range(10, 60, 10), interval=1))
-            break
+            pass
         else:
             axis.xaxis.set_major_locator(dates.HourLocator(interval=dtFormat['hourInterval']))   # every 4 hours
         axis.xaxis.set_major_formatter(dates.DateFormatter('%H:%M'))  # hours and minutes
