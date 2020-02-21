@@ -167,7 +167,8 @@ def plot_xdop_svs(dfDops: pd.DataFrame, colors: tuple, axis, logger: logging.Log
     dtFormat = plot_utils.determine_datetime_ticks(startDT=dfDops['DT'].iloc[0], endDT=dfDops['DT'].iloc[-1])
 
     if dtFormat['minutes']:
-        axis.xaxis.set_major_locator(dates.MinuteLocator(byminute=range[1, 60, 5], interval=1))
+        # axis.xaxis.set_major_locator(dates.MinuteLocator(byminute=range(10, 60, 10), interval=1))
+        pass
     else:
         axis.xaxis.set_major_locator(dates.HourLocator(interval=dtFormat['hourInterval']))   # every 4 hours
     axis.xaxis.set_major_formatter(dates.DateFormatter('%H:%M'))  # hours and minutes

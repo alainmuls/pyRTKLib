@@ -178,7 +178,10 @@ def parse_sv_residuals(dfSat: pd.DataFrame, logger: logging.Logger) -> dict:
         dSV['PRstd'] = dfSat.PRres[dfSat['SV'] == sv].std()
         s = dfSat.PRres[dfSat['SV'] == sv].between(-2, +2, inclusive=True)
         dSV['PRlt2'] = int(s.sum())
-        dSV['PRlt2%'] = dSV['PRlt2'] / dSV['count'] * 100
+        if dSV['count']:
+            dSV['PRlt2%'] = dSV['PRlt2'] / dSV['count'] * 100
+        else:
+            dSV['PRlt2%'] = 0
 
         if sv.startswith('E'):
             nrGAL += 1
