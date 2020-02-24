@@ -1,7 +1,7 @@
 astroid==2.3.3
 astropy==4.0
 attrs==19.3.0
-bleach==3.1.0
+bleach==3.1.1
 confuse==1.0.0
 cycler==0.10.0
 decorator==4.4.1
