@@ -5,7 +5,7 @@ import numpy as np
 import os
 import logging
 from datetime import datetime
-import utm as UTM
+import utm
 
 from ampyutils import amutils
 from GNSS import gpstime
@@ -42,7 +42,7 @@ def parsePosFile(logger: logging.Logger) -> pd.DataFrame:
         rec = line.strip()
         if rec.startswith('% ref pos'):
             amc.dRTK['RefPos'] = [float(x) for x in rec.split(':')[1].split()]
-            amc.dRTK['RefPosUTM'] = UTM.from_latlon(amc.dRTK['RefPos'][0], amc.dRTK['RefPos'][1])
+            amc.dRTK['RefPosUTM'] = utm.from_latlon(amc.dRTK['RefPos'][0], amc.dRTK['RefPos'][1])
             logger.info('{func:s}: reference station coordinates are LLH={llh!s} UTM={utm!s}'.format(func=cFuncName, llh=amc.dRTK['RefPos'], utm=amc.dRTK['RefPosUTM']))
             foundRefPos = True
             break
@@ -74,7 +74,7 @@ def parsePosFile(logger: logging.Logger) -> pd.DataFrame:
     dfPos['DT'] = dfPos.apply(lambda x: gpstime.UTCFromWT(x['WNC'], x['TOW']), axis=1)
 
     # add UTM coordinates
-    dfPos['UTM.E'], dfPos['UTM.N'], dfPos['UTM.Z'], dfPos['UTM.L'] = UTM.from_latlon(dfPos['lat'].to_numpy(), dfPos['lon'].to_numpy())
+    dfPos['UTM.E'], dfPos['UTM.N'], dfPos['UTM.Z'], dfPos['UTM.L'] = utm.from_latlon(dfPos['lat'].to_numpy(), dfPos['lon'].to_numpy())
 
     amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfPos, dfName='{posf:s}'.format(posf=posFilePath))
 

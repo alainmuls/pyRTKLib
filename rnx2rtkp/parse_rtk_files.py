@@ -4,7 +4,7 @@ import sys
 import numpy as np
 import os
 import logging
-import utm as UTM
+import utm
 import tempfile
 from typing import Tuple
 
@@ -39,7 +39,7 @@ def parseRTKLibPositionFile(logger: logging.Logger) -> pd.DataFrame:
     amc.dRTK['Time'] = dTime
 
     # add UTM coordinates
-    dfPos['UTM.E'], dfPos['UTM.N'], dfPos['UTM.Z'], dfPos['UTM.L'] = UTM.from_latlon(dfPos['lat'].to_numpy(), dfPos['lon'].to_numpy())
+    dfPos['UTM.E'], dfPos['UTM.N'], dfPos['UTM.Z'], dfPos['UTM.L'] = utm.from_latlon(dfPos['lat'].to_numpy(), dfPos['lon'].to_numpy())
     logger.info('{func:s}: added UTM coordiantes'.format(func=cFuncName))
 
     # inform user

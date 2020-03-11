@@ -8,7 +8,7 @@ import json
 import pandas as pd
 import numpy as np
 import math
-import utm as UTM
+import utm
 # import pandas_profiling as pp
 import logging
 
@@ -128,7 +128,7 @@ def main(argv):
         dMarker['UTM.E'] = dMarker['UTM.N'] = np.NaN
         dMarker['UTM.Z'] = dMarker['UTM.L'] = ''
     else:
-        dMarker['UTM.E'], dMarker['UTM.N'], dMarker['UTM.Z'], dMarker['UTM.L'] = UTM.from_latlon(dMarker['lat'], dMarker['lon'])
+        dMarker['UTM.E'], dMarker['UTM.N'], dMarker['UTM.Z'], dMarker['UTM.L'] = utm.from_latlon(dMarker['lat'], dMarker['lon'])
 
     logger.info('{func:s}: marker coordinates = {crd!s}'.format(func=cFuncName, crd=dMarker))
     amc.dRTK['marker'] = dMarker
