@@ -40,14 +40,30 @@ do
 	YYDOY=${YY}${DOY}
 	# printf ${YY}' '${DOY}' '${YYDOY}
 
-	DIRRAW=${RXTURPROOT}/${RXTYPE}/${YYDOY}
-	DIRRIN=${RXTURPROOT}/${RXTYPE}/rinex/${YYDOY}
-	DIRIGS=${RXTURPROOT}/${RXTYPE}/igs/
+	DIRRX=${RXTURPROOT}/${RXTYPE}
+	DIRRAW=${DIRRX}/${YYDOY}
+	DIRRIN=${DIRRX}/rinex/${YYDOY}
+	DIRIGS=${DIRRX}/igs/
+
+	echo 'DIRRX = '${DIRRX}
+	echo 'DIRRAW = '${DIRRAW}
+	echo 'DIRRIN = '${DIRRIN}
+	echo 'DIRIGS = '${DIRIGS}
+
+	# file with directories containing Raw SBF data
+	DIRSRAWSBF=${DIRRX}/dirs_sbf.t
+	DIRSNOSBF=${DIRRX}/dirs_no_sbf.t
 
 	printf '\nCreating daily SBF file for '${YYDOY}'\n'
-	cd ${DIRRAW}
+	if [ -d ${DIRRAW} ]
+	then
+		echo ${DIRRAW} >> ${DIRSRAWSBF}
+		cd ${DIRRAW}
 
-	${NICE} ${PYSBFDAILY} --dir=${DIRRAW}  # --overwrite
+		${NICE} ${PYSBFDAILY} --dir=${DIRRAW}  # --overwrite
+	else
+		echo ${DIRRAW} >> ${DIRSNOSBF}
+	fi
 done
 
 # return to git branch we had in original shell
