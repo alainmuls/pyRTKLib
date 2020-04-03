@@ -36,7 +36,6 @@ def treatCmdOpts(argv: list):
     parser.add_argument('-n', '--naming', help='Enter MARKER DOY YY for naming RINEX output files', nargs=3, required=True)
     # parser.add_argument('-c', '--convfile', help='Converted name of RINEX file (default named by converter program)', required=False, default=None)
 
-
     parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default {:s})'.format(colored('False', 'green')), action='store_true', required=False)
 
     parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'])

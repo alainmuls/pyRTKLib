@@ -11,7 +11,7 @@ function cleanup()
 	printf '\n'
 	if [[ '${CURBRANCH}' != 'master' ]]
 	then
-		${GIT} checkout ${CURBRANCH}
+		${GIT} checkout ${CURBRANCH}  --quiet
 	fi
 	cd ${OLDPWD}
 }
@@ -32,6 +32,8 @@ NICE='/usr/bin/nice -n 19'
 TOUCH=/usr/bin/touch
 SED=/bin/sed
 CP=/bin/cp
+RM=/bin/rm
+SORT=/usr/bin/sort
 
 # pythonscripts
 PYSBFDAILY=${PYHOMEDIR}/pySBFDaily.py
@@ -57,9 +59,10 @@ igsNavNameExt=([0]='E' [1]='G' [2]='M')
 OLDPWD=`pwd`
 cd ${PYHOMEDIR}
 CURBRANCH=`${GIT} branch | ${GREP} ^* | ${TR} -d '*'`
-if [ '${CURBRANCH}' != 'master' ]
+if [ '${CURBRANCH}' != 'devam' ]
 then
-	${GIT} checkout master
+	${GIT} checkout devam --quiet
+	WORKBRANCH=`${GIT} branch | ${GREP} ^* | ${TR} -d '*'`
 fi
 
 # source for activating the selected python virtual environment
@@ -71,6 +74,7 @@ echo '-------------------------------------------------'
 echo 'VIRTUAL_ENV = '${VIRTUAL_ENV}
 echo 'PROJECT_NAME = '${PROJECT_NAME}
 echo 'CURBRANCH = '${CURBRANCH}
+echo 'WORKBRANCH = '${WORKBRANCH}
 echo
 echo 'PYHOMEDIR = '${PYHOMEDIR}
 echo 'PYSBFDAILY = '${PYSBFDAILY}

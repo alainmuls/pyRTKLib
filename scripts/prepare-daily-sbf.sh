@@ -45,26 +45,46 @@ do
 	DIRRIN=${DIRRX}/rinex/${YYDOY}
 	DIRIGS=${DIRRX}/igs/
 
-	echo 'DIRRX = '${DIRRX}
-	echo 'DIRRAW = '${DIRRAW}
-	echo 'DIRRIN = '${DIRRIN}
-	echo 'DIRIGS = '${DIRIGS}
+	# echo 'DIRRX = '${DIRRX}
+	# echo 'DIRRAW = '${DIRRAW}
+	# echo 'DIRRIN = '${DIRRIN}
+	# echo 'DIRIGS = '${DIRIGS}
 
 	# file with directories containing Raw SBF data
-	DIRSRAWSBF=${DIRRX}/dirs_sbf.t
-	DIRSNOSBF=${DIRRX}/dirs_no_sbf.t
+	GNSSRAWDATA=${RXTURPROOT}/gnss_raw_data.t
+
+	# create logging infor for current GNSS raw data
+	gnss_log_msg=${RXTYPE}','${YY}','${DOY}','${YYDOY}','${DIRRAW}
+	# echo 'gnss_log_msg = '${gnss_log_msg}
 
 	printf '\nCreating daily SBF file for '${YYDOY}'\n'
-	if [ -d ${DIRRAW} ]
-	then
-		echo ${DIRRAW} >> ${DIRSRAWSBF}
-		cd ${DIRRAW}
+	# echo ${NICE} ${PYSBFDAILY} --dir=${DIRRAW}  # --overwrite
+	${NICE} ${PYSBFDAILY} --dir=${DIRRAW}  # --overwrite
+	rc=$?
 
-		${NICE} ${PYSBFDAILY} --dir=${DIRRAW}  # --overwrite
+	# examine return code to determine whether data is present
+	if [[ $rc == 0 ]]
+	then
+		gnss_log_msg_bool=',true'
 	else
-		echo ${DIRRAW} >> ${DIRSNOSBF}
+		gnss_log_msg_bool=',false'
+	fi
+	# echo ${gnss_log_msg}${gnss_log_msg_bool}
+
+	# add/replace information within the GNSSRAWDATA file
+	if ${GREP} --quiet ${gnss_log_msg} ${GNSSRAWDATA}
+	then
+		${SED} --quiet 's/^${gnss_log_msg}*/${gnss_log_msg}${gnss_log_msg_bool}/g' ${GNSSRAWDATA}
+	else
+		echo ${gnss_log_msg}${gnss_log_msg_bool} >> ${GNSSRAWDATA}
 	fi
 done
+
+# sort the file based on first 3 fields
+temp_file=$(mktemp)
+${SORT} --key=1,3 ${GNSSRAWDATA} > ${temp_file}
+${CP} ${temp_file} ${GNSSRAWDATA}
+${RM} ${temp_file}
 
 # return to git branch we had in original shell
 cd ${PYHOMEDIR}
