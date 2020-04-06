@@ -23,17 +23,20 @@ PYHOMEDIR=${PROJECT_HOME}/${PROJECT_NAME}
 
 # set the start directory
 RXTURPROOT=${HOME}/RxTURP/BEGPIOS
+# file with directories containing Raw SBF data
+GNSSRAWDATA=${RXTURPROOT}/gnss_raw_data.t
 
 # commands
+AWK=/usr/bin/awk
+CP=/bin/cp
 GIT=/usr/bin/git
 GREP=/bin/grep
-TR=/usr/bin/tr
 NICE='/usr/bin/nice -n 19'
-TOUCH=/usr/bin/touch
-SED=/bin/sed
-CP=/bin/cp
 RM=/bin/rm
+SED=/bin/sed
 SORT=/usr/bin/sort
+TOUCH=/usr/bin/touch
+TR=/usr/bin/tr
 
 # pythonscripts
 PYSBFDAILY=${PYHOMEDIR}/pySBFDaily.py
@@ -69,7 +72,6 @@ fi
 source ${VIRTUAL_ENV}/bin/activate
 printf '\nActivated python virtual environment '${PROJECT_HOME}/${PROJECT_NAME}'\n'
 
-
 echo '-------------------------------------------------'
 echo 'VIRTUAL_ENV = '${VIRTUAL_ENV}
 echo 'PROJECT_NAME = '${PROJECT_NAME}
@@ -84,4 +86,6 @@ echo 'PYFTPOSNAV = '${PYFTPOSNAV}
 echo 'PYRTKPROC = '${PYRTKPROC}
 echo 'PYRTKPLOT = '${PYRTKPLOT}
 echo 'PYPOS2MAVG = '${PYPOS2MAVG}
+echo
+echo 'GNSSRAWDATA = '${GNSSRAWDATA}
 echo '-------------------------------------------------'

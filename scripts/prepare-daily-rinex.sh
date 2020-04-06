@@ -40,45 +40,67 @@ do
 	YYDOY=${YY}${DOY}
 	# printf ${YY}' '${DOY}' '${YYDOY}
 
-	DIRRAW=${RXTURPROOT}/${RXTYPE}/${YYDOY}
-	DIRRIN=${RXTURPROOT}/${RXTYPE}/rinex/${YYDOY}
-	DIRIGS=${RXTURPROOT}/${RXTYPE}/igs/
+	DIRRX=${RXTURPROOT}/${RXTYPE}
+	DIRRAW=${DIRRX}/${YYDOY}
+	DIRRIN=${DIRRX}/rinex/${YYDOY}
+	DIRIGS=${DIRRX}/igs/
 
-	cd ${DIRRAW}
+	# echo 'DIRRX = '${DIRRX}
+	# echo 'DIRRAW = '${DIRRAW}
+	# echo 'DIRRIN = '${DIRRIN}
+	# echo 'DIRIGS = '${DIRIGS}
 
-	printf '\nCreating RINEX files for '${YYDOY}'\n'
-	if [ ${RXTYPE} = 'ASTX' ]
+	# create logging info text found in ${GNSSRAWDATA} and check whether we have TRUE or FALSE
+	gnss_log_msg=${RXTYPE}','${YY}','${DOY}','${YYDOY}','${DIRRAW}
+	# echo 'gnss_log_msg = '${gnss_log_msg}
+
+	# check whether a raw daily GNSS file is present to convert to RINEX
+	${GREP} "${gnss_log_msg}" ${GNSSRAWDATA} | ${GREP} true
+	rc=$?
+	# echo ${rc}
+
+	# process if return code is 0
+	if [[ ${rc} == 0 ]]
 	then
-		MARKER=SEPT
+		printf '\nCreating RINEX files for '${RXTYPE}' @ '${YYDOY}'\n'
 
-		for i in "${!gnss[@]}"
-		do
+		if [ ${RXTYPE} = 'ASTX' ]
+		then
+			MARKER=SEPT
+
+			for i in "${!gnss[@]}"
+			do
+				${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
+					--rinexdir=${DIRRIN} --rinexver=R3 --binary=SBF --gnss=${gnss[i]} \
+					-n ${gnssMarker[i]} ${DOY} ${YY}
+			done
+
+		elif [ ${RXTYPE} = 'BEGP' ]
+		then
+			MARKER=BEGP
+
 			${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
-				--rinexdir=${DIRRIN} --rinexver=R3 --binary=SBF --gnss=${gnss[i]} \
-				-n ${gnssMarker[i]} ${DOY} ${YY}
-		done
+				--rinexdir=${DIRRIN} --rinexver=R3 --binary=SBF --gnss=gal \
+				-n BEGP ${DOY} ${YY}
+
+			# check existence of OBS file
+			BEGPOBS=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'O'
+			BEGPNAV=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'E'
+			echo ${BEGPOBS}
+
+			# correct in observation file the PRNs for E33 (from E28) and E36 (from E29)
+			OLDPRN33='E28'
+			OLDPRN36='E29'
+			NEWPRN33='E33'
+			NEWPRN36='E36'
+
+			${SED} -i "s/${OLDPRN33}/${NEWPRN33}/g" ${BEGPOBS}
+			${SED} -i "s/${OLDPRN36}/${NEWPRN36}/g" ${BEGPOBS}
+			${SED} -i "s/${OLDPRN33}/${NEWPRN33}/g" ${BEGPNAV}
+			${SED} -i "s/${OLDPRN36}/${NEWPRN36}/g" ${BEGPNAV}
+		fi
 	else
-		MARKER=BEGP
-
-		${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
-			--rinexdir=${DIRRIN} --rinexver=R3 --binary=SBF --gnss=gal \
-			-n BEGP ${DOY} ${YY}
-
-		# check existence of OBS file
-		BEGPOBS=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'O'
-		BEGPNAV=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'E'
-		echo ${BEGPOBS}
-
-		# correct in observation file the PRNs for E33 (from E28) and E36 (from E29)
-		OLDPRN33='E28'
-		OLDPRN36='E29'
-		NEWPRN33='E33'
-		NEWPRN36='E36'
-
-		${SED} -i "s/${OLDPRN33}/${NEWPRN33}/g" ${BEGPOBS}
-		${SED} -i "s/${OLDPRN36}/${NEWPRN36}/g" ${BEGPOBS}
-		${SED} -i "s/${OLDPRN33}/${NEWPRN33}/g" ${BEGPNAV}
-		${SED} -i "s/${OLDPRN36}/${NEWPRN36}/g" ${BEGPNAV}
+		echo 'No raw data available for '${RXTYPE}' @ '${YY}' '${DOY}
 	fi
 done
 

@@ -50,9 +50,6 @@ do
 	# echo 'DIRRIN = '${DIRRIN}
 	# echo 'DIRIGS = '${DIRIGS}
 
-	# file with directories containing Raw SBF data
-	GNSSRAWDATA=${RXTURPROOT}/gnss_raw_data.t
-
 	# create logging infor for current GNSS raw data
 	gnss_log_msg=${RXTYPE}','${YY}','${DOY}','${YYDOY}','${DIRRAW}
 	# echo 'gnss_log_msg = '${gnss_log_msg}
@@ -63,7 +60,7 @@ do
 	rc=$?
 
 	# examine return code to determine whether data is present
-	if [[ $rc == 0 ]]
+	if [[ ${rc} == 0 ]]
 	then
 		gnss_log_msg_bool=',true'
 	else
