@@ -29,7 +29,10 @@ def rnx_header_info(dTmpRnx: dict, logger: logging.Logger):
     with open(dTmpRnx['obs'] + '.json', 'r') as f:
         amc.dRTK['rnxchk']['obshdr'] = json.load(f)
 
-    # gfzrnx -finp BEGP0110.19P -meta basic:json -fout
+    # report information to user
+    logger.info('{func:s}: RINEX observation basic information'.format(func=cFuncName))
+    logger.info('{func:s}:    Satellite systems: {satsys:s}'.format(satsys=amc.dRTK['rnxchk']['obshdr']['file']['satsys'], func=cFuncName))
+
     pass
 
 

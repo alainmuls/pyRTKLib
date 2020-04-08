@@ -274,7 +274,7 @@ def main(argv):
         ubx2rinex(dGnssSysts=dGNSSSysts, logger=logger)
 
     # report to the user
-    logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
+    # logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
 
 
 if __name__ == "__main__":  # Only run if this file is called directly

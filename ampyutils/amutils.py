@@ -324,7 +324,7 @@ def run_subprocess(sub_proc: list, logger: logging.Logger):
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     try:
-        logger.info('{func:s}: running {proc:s}'.format(proc=' '.join(sub_proc), func=cFuncName))
+        logger.info('{func:s}: running {proc:s}'.format(proc=colored(' '.join(sub_proc), 'blue'), func=cFuncName))
         subprocess.check_call(sub_proc)
     except subprocess.CalledProcessError as e:
         # handle errors in the called executable
