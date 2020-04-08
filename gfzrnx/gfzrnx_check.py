@@ -29,28 +29,13 @@ def rnxobs_header_info(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger) -> d
     # store the usefull info
     amc.dRTK['rnx'] = {}
     dTimes = {}
-    # date_time_str = '2018-06-29 08:15:27.243860'
-    # print(date_time_str)
-    # date_time_obj = datetime.strptime(date_time_str, '%Y-%m-%d %H:%M:%S.%f')
+    dTimes['DT'] = datetime.strptime(dObsHdr['data']['epoch']['first'][:-1], '%Y %m %d %H %M %S.%f')
 
-    # print('Date:', date_time_obj.date())
-    # print('Time:', date_time_obj.time())
-    # print('Date-time:', date_time_obj)
-
-    # date_time_str = '2019-01-11 00:00:00.0000000'
-    # print(date_time_str)
-    # date_time_obj = datetime.strptime(date_time_str[:-1], '%Y-%m-%d %H:%M:%S.%f')
-
-    # print('Date:', date_time_obj.date())
-    # print('Time:', date_time_obj.time())
-    # print('Date-time:', date_time_obj)
-
-    print(dObsHdr['data']['epoch']['first'])
-    DT = datetime.strptime(dObsHdr['data']['epoch']['first'][:-1], '%Y %m %d %H %M %S.%f')
-
-    print('DT: ', DT)
-    print('Date: ', DT.date())
-    print('Time: ', DT.time())
+    print('dTimes[DT]: ', dTimes['DT'])
+    print('Date: ', dTimes['DT'].date())
+    print('Time: ', dTimes['DT'].time())
+    print('DOY: ', dTimes['DT'].timetuple().tm_yday)
+    print('Year: ', dTimes['DT'].timetuple().tm_year)
 
     sys.exit(44)
 
