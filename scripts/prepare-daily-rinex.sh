@@ -68,19 +68,19 @@ do
 		then
 			MARKER=SEPT
 
-			for i in "${!gnss[@]}"
-			do
-				${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
-					--rinexdir=${DIRRIN} --rinexver=R3 --binary=SBF --gnss=${gnss[i]} \
-					-n ${gnssMarker[i]} ${DOY} ${YY}
-			done
+			# for i in "${!gnss[@]}"
+			# do
+			${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
+				--rinexdir=${DIRRIN} --binary=SBF --gnss=${gnss[2]} \
+				-n ${gnssMarker[2]} ${DOY} ${YY}
+			# done
 
 		elif [ ${RXTYPE} = 'BEGP' ]
 		then
 			MARKER=BEGP
 
 			${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
-				--rinexdir=${DIRRIN} --rinexver=R3 --binary=SBF --gnss=gal \
+				--rinexdir=${DIRRIN} --binary=SBF --gnss=gal \
 				-n BEGP ${DOY} ${YY}
 
 			# check existence of OBS file
