@@ -7,11 +7,11 @@ from termcolor import colored
 import json
 from json import encoder
 import logging
-import subprocess
 import tempfile
 
 from ampyutils import amutils, location
 import am_config as amc
+from gfzrnx import gfzrnx_check
 
 __author__ = 'amuls'
 
@@ -31,9 +31,6 @@ def treatCmdOpts(argv: list):
     parser.add_argument('-f', '--file', help='Binary SBF or UBlox file', required=True, type=str)
     parser.add_argument('-b', '--binary', help='Select binary format (default {:s})'.format(colored('SBF', 'green')), required=False, type=str, choices=['SBF', 'UBlox'], default='SBF')
     parser.add_argument('-r', '--rinexdir', help='Directory for RINEX output (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
-    parser.add_argument('-g', '--gnss', help='GNSS systems to process (default={:s})'.format(colored('gal', 'green')), required=False, default='gal', choices=['gal', 'gps', 'com'])
-    parser.add_argument('-n', '--naming', help='Enter MARKER DOY YY for naming RINEX output files', nargs=3, required=True)
-    # parser.add_argument('-c', '--convfile', help='Converted name of RINEX file (default named by converter program)', required=False, default=None)
 
     parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default {:s})'.format(colored('False', 'green')), action='store_true', required=False)
 
@@ -43,7 +40,7 @@ def treatCmdOpts(argv: list):
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.file, args.binary, args.rinexdir, args.gnss, args.naming, args.overwrite, args.logging
+    return args.dir, args.file, args.binary, args.rinexdir, args.overwrite, args.logging
 
 
 def checkValidityArgs(logger: logging.Logger) -> bool:
@@ -71,93 +68,45 @@ def checkValidityArgs(logger: logging.Logger) -> bool:
     # amc.dRTK['rinexDir'] = os.path.join(amc.dRTK['rootDir'], amc.dRTK['rinexDir'])
     amutils.mkdir_p(amc.dRTK['rinexDir'])
 
-    # check whether the rinexNaming arguments are correctly formatted
-    amc.dRTK['marker'] = amc.dRTK['rinexNaming'][0]
-    amc.dRTK['doy'] = amc.dRTK['rinexNaming'][1]
-    amc.dRTK['yy'] = amc.dRTK['rinexNaming'][2]
-
-    if (len(amc.dRTK['marker']) < 4) or (len(amc.dRTK['doy']) != 3) or (len(amc.dRTK['yy']) != 2):
-        logger.error('{func:s}: Please enter rinexNaming as follows'.format(func=cFuncName))
-        logger.error('{func:s}: ... marker {marker:s} at least 4 chars'.format(func=cFuncName, marker=amc.dRTK['marker']))
-        logger.error('{func:s}: ... doy {doy:s} exact 3 chars'.format(func=cFuncName, doy=amc.dRTK['doy']))
-        logger.error('{func:s}: ... yy {yy:s} exact 2   chars'.format(func=cFuncName, yy=amc.dRTK['yy']))
-        return amc.E_INVALID_ARGS
-
     return amc.E_SUCCESS
 
 
-def run_subprocess(sub_proc: list, logger: logging.Logger):
-    """
-    run_subprocess runs the program with arguments in the sub_proc list
-    """
-    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
-
-    try:
-        print('running {:s}'.format(sub_proc[0]))
-        subprocess.check_call(sub_proc)
-    except subprocess.CalledProcessError as e:
-        # handle errors in the called executable
-        logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=sub_proc[0], err=e))
-        sys.exit(amc.E_SBF2RIN_ERRCODE)
-    except OSError as e:
-        # executable not found
-        logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=sub_proc[0], err=e))
-        sys.exit(amc.E_OSERROR)
-
-
-def sbf2rinex(dGnssSysts: dict, logger: logging.Logger):
+def sbf2rinex(dGnssSysts: dict, logger: logging.Logger) -> dict:
     """
     sbf2rinex converts a SBF file to rinex according to the GNSS systems selected
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     # convert to RINEX for selected GNSS system
-    logger.info('{func:s}: RINEX conversion for {gnss:s}'.format(func=cFuncName, gnss=colored(amc.dRTK['gnssSyst'], 'green')))
+    logger.info('{func:s}: RINEX conversion from SBF binary'.format(func=cFuncName))
 
-    # determine systems to exclude, adjust when COM is asked meaning use GAL+GPS
-    typeNav = 'P'
+    # we'll convert always by for only GPS & Galileo, excluding other GNSSs
     excludeGNSSs = 'RSCJI'
-    # if amc.dRTK['gnssSyst'].lower() == 'com':
-    #     excludeGNSSs = [key for key, value in dGnssSysts.items() if not (value.lower().startswith('gal') or value.lower().startswith('gps'))]
-    #     typeNav = 'P'
-    # else:
-    #     excludeGNSSs = [key for key, value in dGnssSysts.items() if not value.lower().startswith(amc.dRTK['gnssSyst'].lower())]
-    #     if amc.dRTK['gnssSyst'].lower() == 'gps':
-    #         typeNav = 'N'
-    #     elif amc.dRTK['gnssSyst'].lower() == 'gal':
-    #         typeNav = 'E'
 
-    logger.info('{func:s}: excluding GNSS systems {excl!s}'.format(func=cFuncName, excl=excludeGNSSs))
+    # dict with the name of the temporary created RINEX obs/nav files for later checking by GFZRNX
+    dTmpRnx = {}
 
-    # convert to RINEX observables file
+    # convert to RINEX observable file
     args4SBF2RIN = [amc.dRTK['bin2rnx']['SBF2RIN'], '-f', amc.dRTK['binFile'], '-x', excludeGNSSs, '-s', '-D', '-v', '-R3']
-
     # create the output RINEX obs file name
-    amc.dRTK['obs'] = '{marker:s}{doy:s}0.{yy:s}O'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'])
-    amc.dRTK['obs_full'] = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['obs'])
-    # args4SBF2RIN.extend(['-o', amc.dRTK['obs']])
-    args4SBF2RIN.extend(['-o', os.path.join(tempfile.gettempdir(), amc.dRTK['obs'])])
-
-    logger.info('{func:s}: creating RINEX observation file\n{opts!s}'.format(func=cFuncName, opts=' '.join(args4SBF2RIN)))
+    dTmpRnx['obs'] = os.path.join(tempfile.gettempdir(), 'COMBdoyS.yyO')
+    args4SBF2RIN.extend(['-o', dTmpRnx['obs']])
 
     # run the sbf2rin program
-    run_subprocess(sub_proc=args4SBF2RIN, logger=logger)
+    logger.info('{func:s}: creating RINEX observation file'.format(func=cFuncName))
+    amutils.run_subprocess(sub_proc=args4SBF2RIN, logger=logger)
 
     # convert to RINEX NAVIGATION file
-    args4SBF2RIN = [amc.dRTK['bin2rnx']['SBF2RIN'], '-f', amc.dRTK['binFile'], '-x', excludeGNSSs, '-s', '-D', '-v', '-n', typeNav, '-R3']
-
+    args4SBF2RIN = [amc.dRTK['bin2rnx']['SBF2RIN'], '-f', amc.dRTK['binFile'], '-x', excludeGNSSs, '-s', '-D', '-v', '-n', 'P', '-R3']
     # create the output RINEX obs file name
-    amc.dRTK['nav'] = '{marker:s}{doy:s}0.{yy:s}{typenav:s}'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'], typenav=typeNav)
-    amc.dRTK['nav_full'] = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['nav'])
-    # args4SBF2RIN.extend(['-o', amc.dRTK['nav']])
-    args4SBF2RIN.extend(['-o', os.path.join(tempfile.gettempdir(), amc.dRTK['nav'])])
-
-    logger.info('{func:s}: creating RINEX navigation file\n{opts!s}'.format(func=cFuncName, opts=' '.join(args4SBF2RIN)))
+    dTmpRnx['nav'] = os.path.join(tempfile.gettempdir(), 'COMBdoyS.yyP')
+    args4SBF2RIN.extend(['-o', dTmpRnx['nav']])
 
     # run the sbf2rin program
-    run_subprocess(sub_proc=args4SBF2RIN, logger=logger)
+    logger.info('{func:s}: creating RINEX navigation file'.format(func=cFuncName))
+    amutils.run_subprocess(sub_proc=args4SBF2RIN, logger=logger)
 
-    pass
+    return dTmpRnx
 
 
 def ubx2rinex(logger: logging.Logger):
@@ -166,91 +115,91 @@ def ubx2rinex(logger: logging.Logger):
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    # convert to RINEX for selected GNSS system
-    logger.info('{func:s}: RINEX conversion for {gnss:s}'.format(func=cFuncName, gnss=amc.dRTK['gnssSyst']))
+    # # convert to RINEX for selected GNSS system
+    # logger.info('{func:s}: RINEX conversion for {gnss:s}'.format(func=cFuncName, gnss=amc.dRTK['gnssSyst']))
 
-    # dictionary of GNSS systems
-    dGNSSSysts = {'G': 'GPS', 'R': 'GLO', 'E': 'GAL', 'S': 'SBS', 'C': 'BDS', 'J': 'QZS', 'I': 'IRN'}
+    # # dictionary of GNSS systems
+    # dGNSSSysts = {'G': 'GPS', 'R': 'GLO', 'E': 'GAL', 'S': 'SBS', 'C': 'BDS', 'J': 'QZS', 'I': 'IRN'}
 
-    # determine systems to exclude, adjust when COM is asked meaning use GAL+GPS
-    typeNav = ''
-    if amc.dRTK['gnssSyst'].lower() == 'com':
-        excludeGNSSs = [key for key, value in dGNSSSysts.items() if not (value.lower().startswith('gal') or value.lower().startswith('gps'))]
-    else:
-        excludeGNSSs = [key for key, value in dGNSSSysts.items() if not value.lower().startswith(amc.dRTK['gnssSyst'].lower())]
-        if amc.dRTK['gnssSyst'].lower() == 'gps':
-            typeNav = 'N'
-        elif amc.dRTK['gnssSyst'].lower() == 'gal':
-            typeNav = 'E'
-
-    logger.info('{func:s}: excluding GNSS systems {excl!s}'.format(func=cFuncName, excl=excludeGNSSs))
-
-    # convert to RINEX observables file
-    args4UBX2RIN = [amc.dRTK['bin2rnx']['UBX2RIN'], 'file', amc.dRTK['binFile'], '-os', '-od']
-
-    for deniedGNSS in excludeGNSSs:
-        print(deniedGNSS)
-        args4UBX2RIN.extend(['-y', deniedGNSS])
-
-    print(args4UBX2RIN)
-
-    # if amc.dRTK['rinexVersion'] == 'R3':
-    #     args4UBX2RIN.extend(['-v', '3.01'])
+    # # determine systems to exclude, adjust when COM is asked meaning use GAL+GPS
+    # typeNav = ''
+    # if amc.dRTK['gnssSyst'].lower() == 'com':
+    #     excludeGNSSs = [key for key, value in dGNSSSysts.items() if not (value.lower().startswith('gal') or value.lower().startswith('gps'))]
     # else:
-    #     args4UBX2RIN.extend(['-v', '2.11'])
+    #     excludeGNSSs = [key for key, value in dGNSSSysts.items() if not value.lower().startswith(amc.dRTK['gnssSyst'].lower())]
+    #     if amc.dRTK['gnssSyst'].lower() == 'gps':
+    #         typeNav = 'N'
+    #     elif amc.dRTK['gnssSyst'].lower() == 'gal':
+    #         typeNav = 'E'
 
-    # create the output RINEX obs file name
-    amc.dRTK['obs'] = '{marker:s}{doy:s}0.{yy:s}O'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'])
-    amc.dRTK['obs'] = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['obs'])
-    args4UBX2RIN.extend(['-o', amc.dRTK['obs']])
+    # logger.info('{func:s}: excluding GNSS systems {excl!s}'.format(func=cFuncName, excl=excludeGNSSs))
 
-    logger.info('{func:s}: creating RINEX observation file\n{opts!s}'.format(func=cFuncName, opts=' '.join(args4UBX2RIN)))
+    # # convert to RINEX observables file
+    # args4UBX2RIN = [amc.dRTK['bin2rnx']['UBX2RIN'], 'file', amc.dRTK['binFile'], '-os', '-od']
 
-    # run the ubx2rin program
-    try:
-        subprocess.check_call(args4UBX2RIN)
-    except subprocess.CalledProcessError as e:
-        # handle errors in the called executable
-        logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=amc.dRTK['bin2rnx']['UBX2RIN'], err=e))
-        sys.exit(amc.E_UBX2RIN_ERRCODE)
-    except OSError as e:
-        # executable not found
-        logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=amc.dRTK['bin2rnx']['UBX2RIN'], err=e))
-        sys.exit(amc.E_OSERROR)
+    # for deniedGNSS in excludeGNSSs:
+    #     print(deniedGNSS)
+    #     args4UBX2RIN.extend(['-y', deniedGNSS])
 
-    # convert to RINEX NAVIGATION file
-    args4UBX2RIN = [amc.dRTK['bin2rnx']['UBX2RIN'], 'file', amc.dRTK['binFile'], '-os', '-od', '-n', typeNav]
+    # print(args4UBX2RIN)
 
-    print(args4UBX2RIN)
+    # # if amc.dRTK['rinexVersion'] == 'R3':
+    # #     args4UBX2RIN.extend(['-v', '3.01'])
+    # # else:
+    # #     args4UBX2RIN.extend(['-v', '2.11'])
 
-    # if amc.dRTK['rinexVersion'] == 'R3':
-    #     args4UBX2RIN.extend(['-v', '3.01'])
-    # else:
-    #     args4UBX2RIN.extend(['-v', '2.11'])
+    # # create the output RINEX obs file name
+    # amc.dRTK['obs'] = '{marker:s}{doy:s}0.{yy:s}O'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'])
+    # amc.dRTK['obs'] = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['obs'])
+    # args4UBX2RIN.extend(['-o', amc.dRTK['obs']])
 
-    # create the output RINEX obs file name
-    print(typeNav)
-    amc.dRTK['nav'] = '{marker:s}{doy:s}0.{yy:s}{typenav:s}'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'], typenav=typeNav)
-    amc.dRTK['nav'] = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['nav'])
-    args4UBX2RIN.extend(['-n', amc.dRTK['nav']])
+    # logger.info('{func:s}: creating RINEX observation file\n{opts!s}'.format(func=cFuncName, opts=' '.join(args4UBX2RIN)))
 
-    for deniedGNSS in excludeGNSSs:
-        print(deniedGNSS)
-        args4UBX2RIN.extend(['-y', deniedGNSS])
+    # # run the ubx2rin program
+    # try:
+    #     subprocess.check_call(args4UBX2RIN)
+    # except subprocess.CalledProcessError as e:
+    #     # handle errors in the called executable
+    #     logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=amc.dRTK['bin2rnx']['UBX2RIN'], err=e))
+    #     sys.exit(amc.E_UBX2RIN_ERRCODE)
+    # except OSError as e:
+    #     # executable not found
+    #     logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=amc.dRTK['bin2rnx']['UBX2RIN'], err=e))
+    #     sys.exit(amc.E_OSERROR)
 
-    # logger.info('{func:s}: creating RINEX navigation file\n{opts!s}'.format(func=cFuncName, opts=' '.join(args4UBX2RIN)))
+    # # convert to RINEX NAVIGATION file
+    # args4UBX2RIN = [amc.dRTK['bin2rnx']['UBX2RIN'], 'file', amc.dRTK['binFile'], '-os', '-od', '-n', typeNav]
 
-    # run the ubx2rin program
-    try:
-        subprocess.check_call(args4UBX2RIN)
-    except subprocess.CalledProcessError as e:
-        # handle errors in the called executable
-        logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=amc.dRTK['bin2rnx']['UBX2RIN'], err=e))
-        sys.exit(amc.E_UBX2RIN_ERRCODE)
-    except OSError as e:
-        # executable not found
-        logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=amc.dRTK['bin2rnx']['UBX2RIN'], err=e))
-        sys.exit(amc.E_OSERROR)
+    # print(args4UBX2RIN)
+
+    # # if amc.dRTK['rinexVersion'] == 'R3':
+    # #     args4UBX2RIN.extend(['-v', '3.01'])
+    # # else:
+    # #     args4UBX2RIN.extend(['-v', '2.11'])
+
+    # # create the output RINEX obs file name
+    # print(typeNav)
+    # amc.dRTK['nav'] = '{marker:s}{doy:s}0.{yy:s}{typenav:s}'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'], typenav=typeNav)
+    # amc.dRTK['nav'] = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['nav'])
+    # args4UBX2RIN.extend(['-n', amc.dRTK['nav']])
+
+    # for deniedGNSS in excludeGNSSs:
+    #     print(deniedGNSS)
+    #     args4UBX2RIN.extend(['-y', deniedGNSS])
+
+    # # logger.info('{func:s}: creating RINEX navigation file\n{opts!s}'.format(func=cFuncName, opts=' '.join(args4UBX2RIN)))
+
+    # # run the ubx2rin program
+    # try:
+    #     subprocess.check_call(args4UBX2RIN)
+    # except subprocess.CalledProcessError as e:
+    #     # handle errors in the called executable
+    #     logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=amc.dRTK['bin2rnx']['UBX2RIN'], err=e))
+    #     sys.exit(amc.E_UBX2RIN_ERRCODE)
+    # except OSError as e:
+    #     # executable not found
+    #     logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=amc.dRTK['bin2rnx']['UBX2RIN'], err=e))
+    #     sys.exit(amc.E_OSERROR)
 
     pass
 
@@ -290,7 +239,7 @@ def main(argv):
     dGNSSSysts = {'G': 'GPS', 'R': 'Glonass', 'E': 'Galileo', 'S': 'SBAS', 'C': 'Beidou', 'J': 'QZSS', 'I': 'IRNSS'}
 
     # treat command line options
-    rootDir, binFile, binType, rinexDir, gnssSyst, rinexNaming, overwrite, logLevels = treatCmdOpts(argv)
+    rootDir, binFile, binType, rinexDir, overwrite, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger = amc.createLoggers(os.path.basename(__file__), dir=rootDir, logLevels=logLevels)
@@ -301,8 +250,6 @@ def main(argv):
     amc.dRTK['binFile'] = binFile
     amc.dRTK['binType'] = binType
     amc.dRTK['rinexDir'] = rinexDir
-    amc.dRTK['gnssSyst'] = gnssSyst
-    amc.dRTK['rinexNaming'] = rinexNaming
 
     logger.info('{func:s}: arguments processed: amc.dRTK = {drtk!s}'.format(func=cFuncName, drtk=amc.dRTK))
 
@@ -321,7 +268,8 @@ def main(argv):
     # convert binary file to rinex
     logger.info('{func:s}: convert binary file to rinex'.format(func=cFuncName))
     if amc.dRTK['binType'] == 'SBF':
-        sbf2rinex(dGnssSysts=dGNSSSysts, logger=logger)
+        dRnxTmp = sbf2rinex(dGnssSysts=dGNSSSysts, logger=logger)
+        gfzrnx_check.rnx_header_info(dTmpRnx=dRnxTmp, logger=logger)
     else:
         ubx2rinex(dGnssSysts=dGNSSSysts, logger=logger)
 

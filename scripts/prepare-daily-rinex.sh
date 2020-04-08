@@ -71,8 +71,7 @@ do
 			# for i in "${!gnss[@]}"
 			# do
 			${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
-				--rinexdir=${DIRRIN} --binary=SBF --gnss=${gnss[2]} \
-				-n ${gnssMarker[2]} ${DOY} ${YY}
+				--rinexdir=${DIRRIN} --binary=SBF
 			# done
 
 		elif [ ${RXTYPE} = 'BEGP' ]
@@ -80,24 +79,23 @@ do
 			MARKER=BEGP
 
 			${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
-				--rinexdir=${DIRRIN} --binary=SBF --gnss=gal \
-				-n BEGP ${DOY} ${YY}
+				--rinexdir=${DIRRIN} --binary=SBF
 
-			# check existence of OBS file
-			BEGPOBS=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'O'
-			BEGPNAV=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'E'
-			echo ${BEGPOBS}
+			# # check existence of OBS file
+			# BEGPOBS=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'O'
+			# BEGPNAV=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'E'
+			# echo ${BEGPOBS}
 
-			# correct in observation file the PRNs for E33 (from E28) and E36 (from E29)
-			OLDPRN33='E28'
-			OLDPRN36='E29'
-			NEWPRN33='E33'
-			NEWPRN36='E36'
+			# # correct in observation file the PRNs for E33 (from E28) and E36 (from E29)
+			# OLDPRN33='E28'
+			# OLDPRN36='E29'
+			# NEWPRN33='E33'
+			# NEWPRN36='E36'
 
-			${SED} -i "s/${OLDPRN33}/${NEWPRN33}/g" ${BEGPOBS}
-			${SED} -i "s/${OLDPRN36}/${NEWPRN36}/g" ${BEGPOBS}
-			${SED} -i "s/${OLDPRN33}/${NEWPRN33}/g" ${BEGPNAV}
-			${SED} -i "s/${OLDPRN36}/${NEWPRN36}/g" ${BEGPNAV}
+			# ${SED} -i "s/${OLDPRN33}/${NEWPRN33}/g" ${BEGPOBS}
+			# ${SED} -i "s/${OLDPRN36}/${NEWPRN36}/g" ${BEGPOBS}
+			# ${SED} -i "s/${OLDPRN33}/${NEWPRN33}/g" ${BEGPNAV}
+			# ${SED} -i "s/${OLDPRN36}/${NEWPRN36}/g" ${BEGPNAV}
 		fi
 	else
 		echo 'No raw data available for '${RXTYPE}' @ '${YY}' '${DOY}

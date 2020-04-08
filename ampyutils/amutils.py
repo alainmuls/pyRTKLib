@@ -9,6 +9,7 @@ import gzip
 import shutil
 import logging
 from pandas import DataFrame
+import subprocess
 
 from GNSS import gpstime
 
@@ -314,3 +315,22 @@ def make_rgb_transparent(rgb, bg_rgb, alpha):
     """
     return [alpha * c1 + (1 - alpha) * c2
             for (c1, c2) in zip(rgb, bg_rgb)]
+
+
+def run_subprocess(sub_proc: list, logger: logging.Logger):
+    """
+    run_subprocess runs the program with arguments in the sub_proc list
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    try:
+        logger.info('{func:s}: running {proc:s}'.format(proc=' '.join(sub_proc), func=cFuncName))
+        subprocess.check_call(sub_proc)
+    except subprocess.CalledProcessError as e:
+        # handle errors in the called executable
+        logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=sub_proc[0], err=e))
+        sys.exit(amc.E_SBF2RIN_ERRCODE)
+    except OSError as e:
+        # executable not found
+        logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=sub_proc[0], err=e))
+        sys.exit(amc.E_OSERROR)
