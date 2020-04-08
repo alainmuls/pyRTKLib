@@ -12,6 +12,7 @@ from pandas import DataFrame
 import subprocess
 
 from GNSS import gpstime
+import am_config as amc
 
 __author__ = 'amuls'
 
@@ -325,7 +326,7 @@ def run_subprocess(sub_proc: list, logger: logging.Logger):
 
     try:
         logger.info('{func:s}: running {proc:s}'.format(proc=colored(' '.join(sub_proc), 'blue'), func=cFuncName))
-        subprocess.check_call(sub_proc)
+        subprocess.check_call(sub_proc, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError as e:
         # handle errors in the called executable
         logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=sub_proc[0], err=e))
