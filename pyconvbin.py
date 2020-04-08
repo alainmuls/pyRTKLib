@@ -9,7 +9,7 @@ from json import encoder
 import logging
 import subprocess
 
-from ampyutils import exeprogram, amutils, location
+from ampyutils import amutils, location
 import am_config as amc
 
 __author__ = 'amuls'
@@ -21,7 +21,6 @@ def treatCmdOpts(argv: list):
     """
     baseName = os.path.basename(__file__)
     amc.cBaseName = colored(baseName, 'yellow')
-    cFuncName = amc.cBaseName + ': ' + colored(sys._getframe().f_code.co_name, 'green')
 
     helpTxt = baseName + ' convert binary raw data from SBF or UBlox to RINEX Obs & Nav files'
 
@@ -81,13 +80,13 @@ def checkValidityArgs(logger: logging.Logger) -> bool:
         logger.error('{func:s}: Please enter rinexNaming as follows'.format(func=cFuncName))
         logger.error('{func:s}: ... marker {marker:s} at least 4 chars'.format(func=cFuncName, marker=amc.dRTK['marker']))
         logger.error('{func:s}: ... doy {doy:s} exact 3 chars'.format(func=cFuncName, doy=amc.dRTK['doy']))
-        logger.error('{func:s}: ... yy {yy:s} exact 2 chars'.format(func=cFuncName, yy=amc.dRTK['yy']))
+        logger.error('{func:s}: ... yy {yy:s} exact 2   chars'.format(func=cFuncName, yy=amc.dRTK['yy']))
         return amc.E_INVALID_ARGS
 
     return amc.E_SUCCESS
 
 
-def sbf2rinex(logger: logging.Logger, dGnssSysts: dict):
+def sbf2rinex(dGnssSysts: dict, logger: logging.Logger):
     """
     sbf2rinex converts a SBF file to rinex according to the GNSS systems selected
     """
@@ -324,13 +323,14 @@ def main(argv):
     amc.dRTK['bin2rnx'] = {}
     amc.dRTK['bin2rnx']['CONVBIN'] = location.locateProg('convbin', logger)
     amc.dRTK['bin2rnx']['SBF2RIN'] = location.locateProg('sbf2rin', logger)
+    amc.dRTK['bin2rnx']['GFZRNX'] = location.locateProg('gfzrnx', logger)
 
     # convert binary file to rinex
     logger.info('{func:s}: convert binary file to rinex'.format(func=cFuncName))
     if amc.dRTK['binType'] == 'SBF':
         sbf2rinex(logger=logger, dGnssSysts=dGNSSSysts)
     else:
-        ublox2rinex(logger=logger, dGnssSysts=dGNSSSysts)
+        ubx2rinex(logger=logger, dGnssSysts=dGNSSSysts)
 
     # report to the user
     logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
