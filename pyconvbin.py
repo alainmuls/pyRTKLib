@@ -269,8 +269,8 @@ def main(argv):
     logger.info('{func:s}: convert binary file to rinex'.format(func=cFuncName))
     if amc.dRTK['binType'] == 'SBF':
         dRnxTmp = sbf2rinex(dGnssSysts=dGNSSSysts, logger=logger)
-        gfzrnx_check.rnxobs_header_info(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
-        gfzrnx_check.rnxobs_statistics(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
+        dHdrObs = gfzrnx_check.rnxobs_header_info(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
+        gfzrnx_check.rnxobs_statistics(dObsHdr=dHdrObs, dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
     else:
         ubx2rinex(dGnssSysts=dGNSSSysts, logger=logger)
 
