@@ -10,6 +10,7 @@ import shutil
 import logging
 from pandas import DataFrame
 import subprocess
+from datetime import datetime
 
 from GNSS import gpstime
 import am_config as amc
@@ -335,3 +336,8 @@ def run_subprocess(sub_proc: list, logger: logging.Logger):
         # executable not found
         logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=sub_proc[0], err=e))
         sys.exit(amc.E_OSERROR)
+
+
+def DT_convertor(o):
+    if isinstance(o, datetime):
+        return o.__str__()
