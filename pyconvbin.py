@@ -65,8 +65,11 @@ def checkValidityArgs(logger: logging.Logger) -> bool:
 
     # check existence of rinexdir and create if needed
     logger.info('{func:s}: check existence of rinexdir {rinex:s} and create if needed'.format(func=cFuncName, rinex=amc.dRTK['rinexDir']))
-    # amc.dRTK['rinexDir'] = os.path.join(amc.dRTK['rootDir'], amc.dRTK['rinexDir'])
     amutils.mkdir_p(amc.dRTK['rinexDir'])
+
+    # check existence of rinexdir and create if needed
+    logger.info('{func:s}: check existence of gfzrnxdir {gfzrnx:s} and create if needed'.format(func=cFuncName, gfzrnx=amc.dRTK['gfzrnxDir']))
+    amutils.mkdir_p(amc.dRTK['gfzrnxDir'])
 
     return amc.E_SUCCESS
 
@@ -236,7 +239,7 @@ def main(argv):
     encoder.FLOAT_REPR = lambda o: format(o, '.3f')
 
     # dictionary of GNSS systems
-    dGNSSSysts = {'G': 'GPS NavSTAR', 'R': 'Glonass', 'E': 'Galileo', 'S': 'SBAS', 'C': 'Beidou', 'J': 'QZSS', 'I': 'IRNSS'}
+    dGNSSSysts = {'G': 'GPS NavSTAR', 'R': 'Glonass', 'E': 'Galileo', 'S': 'SBAS', 'C': 'Beidou', 'J': 'QZSS', 'I': 'IRNSS', 'M': 'Combined EG'}
 
     # treat command line options
     rootDir, binFile, binType, rinexDir, overwrite, logLevels = treatCmdOpts(argv)
@@ -250,6 +253,7 @@ def main(argv):
     amc.dRTK['binFile'] = binFile
     amc.dRTK['binType'] = binType
     amc.dRTK['rinexDir'] = rinexDir
+    amc.dRTK['gfzrnxDir'] = os.path.join(rinexDir, 'gfzrnx')
 
     logger.info('{func:s}: arguments processed: amc.dRTK = {drtk!s}'.format(func=cFuncName, drtk=amc.dRTK))
 
@@ -269,13 +273,13 @@ def main(argv):
     logger.info('{func:s}: convert binary file to rinex'.format(func=cFuncName))
     if amc.dRTK['binType'] == 'SBF':
         dRnxTmp = sbf2rinex(dGnssSysts=dGNSSSysts, logger=logger)
-        dHdrObs = gfzrnx_check.rnxobs_header_info(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
-        gfzrnx_check.rnxobs_statistics(dObsHdr=dHdrObs, dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
+        gfzrnx_check.rnxobs_header_info(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
+        gfzrnx_check.rnxobs_statistics(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
     else:
         ubx2rinex(dGnssSysts=dGNSSSysts, logger=logger)
 
     # report to the user
-    logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
+    logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
 
 if __name__ == "__main__":  # Only run if this file is called directly
