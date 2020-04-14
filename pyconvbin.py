@@ -11,7 +11,7 @@ import tempfile
 
 from ampyutils import amutils, location
 import am_config as amc
-from gfzrnx import gfzrnx_check
+from gfzrnx import gfzrnx_ops
 
 __author__ = 'amuls'
 
@@ -273,8 +273,9 @@ def main(argv):
     logger.info('{func:s}: convert binary file to rinex'.format(func=cFuncName))
     if amc.dRTK['binType'] == 'SBF':
         dRnxTmp = sbf2rinex(dGnssSysts=dGNSSSysts, logger=logger)
-        gfzrnx_check.rnxobs_header_info(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
-        gfzrnx_check.rnxobs_statistics(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
+        gfzrnx_ops.rnxobs_header_info(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
+        gfzrnx_ops.rnxobs_statistics(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
+        gfzrnx_ops.rnxobs_creation(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
     else:
         ubx2rinex(dGnssSysts=dGNSSSysts, logger=logger)
 
