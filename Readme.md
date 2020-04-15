@@ -308,7 +308,7 @@ INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COM
 INFO: pyconvbin.py - main: amc.dRTK =
 {
     "rootDir": "/home/amuls/RxTURP/BEGPIOS/ASTX/19134/",
-    "binFile": "/home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_",
+    "binFile": "SEPT1340.19_",
     "binType": "SBF",
     "rinexDir": "/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/",
     "ant_crds": [
