@@ -18,6 +18,7 @@ function cleanup()
 
 # set the python virtual environment
 PROJECT_NAME=${PYVENV}
+GIT_BRANCH=${BRANCH}
 VIRTUAL_ENV=${WORKON_HOME}/${PROJECT_NAME}
 PYHOMEDIR=${PROJECT_HOME}/${PROJECT_NAME}
 
@@ -61,16 +62,18 @@ igsNavNameExt=([0]='E' [1]='G' [2]='M')
 # make sure to be on the master branch
 OLDPWD=`pwd`
 cd ${PYHOMEDIR}
+
 CURBRANCH=`${GIT} branch | ${GREP} ^* | ${TR} -d '*'`
-if [ '${CURBRANCH}' != 'devam' ]
+if [ '${CURBRANCH}' != ${GIT_BRANCH} ]
 then
-	${GIT} checkout devam --quiet
+	${GIT} checkout ${GIT_BRANCH} --quiet
 	WORKBRANCH=`${GIT} branch | ${GREP} ^* | ${TR} -d '*'`
 fi
 
 # source for activating the selected python virtual environment
 source ${VIRTUAL_ENV}/bin/activate
 printf '\nActivated python virtual environment '${PROJECT_HOME}/${PROJECT_NAME}'\n'
+printf '            git branch '${GIT_BRANCH}'\n'
 
 echo '-------------------------------------------------'
 echo 'VIRTUAL_ENV = '${VIRTUAL_ENV}
@@ -82,6 +85,7 @@ echo 'PYHOMEDIR = '${PYHOMEDIR}
 echo 'PYSBFDAILY = '${PYSBFDAILY}
 echo 'RXTURPROOT = '${RXTURPROOT}
 echo 'PYCONVBIN = '${PYCONVBIN}
+
 echo 'PYFTPOSNAV = '${PYFTPOSNAV}
 echo 'PYRTKPROC = '${PYRTKPROC}
 echo 'PYRTKPLOT = '${PYRTKPLOT}
