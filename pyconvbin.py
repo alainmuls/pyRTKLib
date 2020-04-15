@@ -69,9 +69,8 @@ def checkValidityArgs(logger: logging.Logger) -> bool:
         return amc.E_INVALID_ARGS
 
     # make the coplete filename by adding to rootdir and check existence of binary file to convert
-    amc.dRTK['binFile'] = os.path.join(amc.dRTK['rootDir'], amc.dRTK['binFile'])
-    logger.info('{func:s}: check existence of binary file {bin:s} to convert'.format(func=cFuncName, bin=amc.dRTK['binFile']))
-    if not os.access(amc.dRTK['binFile'], os.R_OK):
+    logger.info('{func:s}: check existence of binary file {bin:s} to convert'.format(func=cFuncName, bin=os.path.join(amc.dRTK['rootDir'], amc.dRTK['binFile'])))
+    if not os.access(os.path.join(amc.dRTK['rootDir'], amc.dRTK['binFile']), os.R_OK):
         logger.error('{func:s}   !!! binary observation file {bin:s} not accessible.'.format(func=cFuncName, bin=amc.dRTK['binFile']))
         return amc.E_FILE_NOT_EXIST
 
@@ -102,7 +101,7 @@ def sbf2rinex(dGnssSysts: dict, logger: logging.Logger) -> dict:
     dTmpRnx = {}
 
     # convert to RINEX observable file
-    args4SBF2RIN = [amc.dRTK['bin']['SBF2RIN'], '-f', amc.dRTK['binFile'], '-x', excludeGNSSs, '-s', '-D', '-v', '-R3']
+    args4SBF2RIN = [amc.dRTK['bin']['SBF2RIN'], '-f', os.path.join(amc.dRTK['rootDir'], amc.dRTK['binFile']), '-x', excludeGNSSs, '-s', '-D', '-v', '-R3']
     # create the output RINEX obs file name
     dTmpRnx['obs'] = os.path.join(tempfile.gettempdir(), 'COMBdoyS.yyO')
     args4SBF2RIN.extend(['-o', dTmpRnx['obs']])
@@ -112,7 +111,7 @@ def sbf2rinex(dGnssSysts: dict, logger: logging.Logger) -> dict:
     amutils.run_subprocess(sub_proc=args4SBF2RIN, logger=logger)
 
     # convert to RINEX NAVIGATION file
-    args4SBF2RIN = [amc.dRTK['bin']['SBF2RIN'], '-f', amc.dRTK['binFile'], '-x', excludeGNSSs, '-s', '-D', '-v', '-n', 'P', '-R3']
+    args4SBF2RIN = [amc.dRTK['bin']['SBF2RIN'], '-f', os.path.join(amc.dRTK['rootDir'], amc.dRTK['binFile']), '-x', excludeGNSSs, '-s', '-D', '-v', '-n', 'P', '-R3']
     # create the output RINEX obs file name
     dTmpRnx['nav'] = os.path.join(tempfile.gettempdir(), 'COMBdoyS.yyP')
     args4SBF2RIN.extend(['-o', dTmpRnx['nav']])
@@ -296,6 +295,7 @@ def main(argv):
     logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
     # store the json structure
     jsonName = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['binFile'].replace('.', '-') + '.json')
+    print('jsonName {!s}'.format(jsonName))
     with open(jsonName, 'w') as f:
         json.dump(amc.dRTK, f, ensure_ascii=False, indent=4, default=amutils.DT_convertor)
 
