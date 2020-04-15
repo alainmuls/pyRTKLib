@@ -4,6 +4,7 @@ from termcolor import colored
 import json
 import logging
 from datetime import datetime
+import tempfile
 
 import am_config as amc
 from ampyutils import amutils
@@ -94,7 +95,7 @@ def rnxobs_header_info(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
         logger.info('{func:s}:       system types: {systypes!s}'.format(systypes=dObsHdr['file']['systyp'][satsys], func=cFuncName))
         logger.info('{func:s}:        observables: {obs!s}'.format(obs=dObsHdr['file']['sysobs'][satsys], func=cFuncName))
 
-    logger.info('{func:s}: dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
+    # logger.info('{func:s}: dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
     pass
 
@@ -151,8 +152,6 @@ def rnxobs_creation(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    # logger.info('{func:s}: dTmpRnx =\n{json!s}'.format(func=cFuncName, json=json.dumps(dTmpRnx, sort_keys=False, indent=4, default=amutils.DT_convertor)))
-
     dRnx_ext = {'E': {'obs': 'O', 'nav': 'E'}, \
                 'G': {'obs': 'O', 'nav': 'N'},
                 'M': {'obs': 'O', 'nav': 'P'}}
@@ -163,11 +162,60 @@ def rnxobs_creation(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
             # determin ethe name of the RINEX file to be created
             amc.dRTK['rnx']['gnss'][satsys][rnx_type] = '{marker:s}{doy:03d}0.{yy:02d}{ext:s}'.format(marker=amc.dRTK['rnx']['gnss'][satsys]['marker'], doy=amc.dRTK['rnx']['times']['doy'], yy=amc.dRTK['rnx']['times']['yy'], ext=dRnx_ext[satsys][rnx_type])
 
-            # create the corresponding RINEX file in the rinexDir
-            args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', dTmpRnx[rnx_type], '-fout', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-satsys', amc.dRTK['rnx']['gnss'][satsys]['satsys'], '-f', '-chk', '-kv']
+            if rnx_type == 'obs':
+                out_dir = tempfile.gettempdir()
+                dTmpRnx[amc.dRTK['rnx']['gnss'][satsys]['marker']] = os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type])
+            else:
+                out_dir = amc.dRTK['rinexDir']
+
+            # create the RINEX file for this satsys in temporay directory
+            args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', dTmpRnx[rnx_type], '-fout', os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-satsys', amc.dRTK['rnx']['gnss'][satsys]['satsys'], '-f', '-chk', '-kv']
             logger.info('{func:s}: creating RINEX file {name:s}'.format(name=colored(amc.dRTK['rnx']['gnss'][satsys][rnx_type], 'green'), func=cFuncName))
 
             # perform the RINEX creation
             amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
 
+            if rnx_type == 'obs':
+                # create a CRUX file to correct the header info for this satsys
+                crux_file = create_crux(satsys=satsys, logger=logger)
+
+                args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-f', '-fout', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-crux', crux_file]
+
+                # perform the RINEX creation
+                amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+
+                os.remove(crux_file)
+
     pass
+
+
+def create_crux(satsys: str, logger: logging.Logger) -> str:
+    """
+    create_crux creates a crux file to use for editing the RINEX observation header
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    crux_name = os.path.join(tempfile.gettempdir(), 'convbin.crux')
+
+    logger.info('{func:s}: creating crux-file {crux:s}'.format(crux=colored(crux_name, 'green'), func=cFuncName))
+    with open(crux_name, 'w') as fcrux:
+        fcrux.write('update_insert:\n\n')
+        fcrux.write('O - ALL:\n\n')  # update is for Observation file
+
+        fcrux.write('"APPROX POSITION XYZ" : {')
+        for i, crd in enumerate(amc.dRTK['ant_crds']):
+            fcrux.write(' {nr:d}:"{crd:.4f}"'.format(nr=i, crd=crd))
+            if i < 2:
+                fcrux.write(',')
+        fcrux.write('}\n')
+
+        fcrux.write('"MARKER NAME" : { ')
+        fcrux.write('0:"{marker:s}"'.format(marker=amc.dRTK['rnx']['gnss'][satsys]['marker']))
+        fcrux.write('}\n')
+
+        fcrux.write('"MARKER NUMBER" : { 0:"ERM01"}\n')
+        fcrux.write('"OBSERVER / AGENCY" : { 0:"amuls", 1:"RMA"}\n')
+
+    fcrux.close()
+
+    return crux_name

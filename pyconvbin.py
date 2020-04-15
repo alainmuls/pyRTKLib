@@ -16,6 +16,16 @@ from gfzrnx import gfzrnx_ops
 __author__ = 'amuls'
 
 
+
+class logging_action(argparse.Action):
+    def __call__(self, parser, namespace, log_actions, option_string=None):
+        choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']
+        for log_action in log_actions:
+            if log_action not in choices:
+                raise argparse.ArgumentError(self, "log_actions must be in {!s}".format(choices))
+        setattr(namespace, self.dest, log_actions)
+
+
 def treatCmdOpts(argv: list):
     """
     Treats the command line options
@@ -29,18 +39,20 @@ def treatCmdOpts(argv: list):
     parser = argparse.ArgumentParser(description=helpTxt)
     parser.add_argument('-d', '--dir', help='Root directory (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
     parser.add_argument('-f', '--file', help='Binary SBF or UBlox file', required=True, type=str)
-    parser.add_argument('-b', '--binary', help='Select binary format (default {:s})'.format(colored('SBF', 'green')), required=False, type=str, choices=['SBF', 'UBlox'], default='SBF')
+    parser.add_argument('-b', '--binary', help='Select binary format (default {:s})'.format(colored('SBF', 'green')), required=False, type=str, choices=['SBF', 'UBX'], default='SBF')
     parser.add_argument('-r', '--rinexdir', help='Directory for RINEX output (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
-
+    parser.add_argument('-c', '--cart', help='cartesian coordinates of antenna (default RMA)', required=False, type=float, nargs=3, default=[4023741.3045, 309110.4584, 4922723.1945])
     parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default {:s})'.format(colored('False', 'green')), action='store_true', required=False)
 
-    parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'])
+    parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], action=logging_action)
+
+    # parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'])
 
     # drop argv[0]
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.file, args.binary, args.rinexdir, args.overwrite, args.logging
+    return args.dir, args.file, args.binary, args.rinexdir, args.cart, args.overwrite, args.logging
 
 
 def checkValidityArgs(logger: logging.Logger) -> bool:
@@ -242,7 +254,7 @@ def main(argv):
     dGNSSSysts = {'G': 'GPS NavSTAR', 'R': 'Glonass', 'E': 'Galileo', 'S': 'SBAS', 'C': 'Beidou', 'J': 'QZSS', 'I': 'IRNSS', 'M': 'Combined EG'}
 
     # treat command line options
-    rootDir, binFile, binType, rinexDir, overwrite, logLevels = treatCmdOpts(argv)
+    rootDir, binFile, binType, rinexDir, crd_cart, overwrite, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger = amc.createLoggers(os.path.basename(__file__), dir=rootDir, logLevels=logLevels)
@@ -253,6 +265,7 @@ def main(argv):
     amc.dRTK['binFile'] = binFile
     amc.dRTK['binType'] = binType
     amc.dRTK['rinexDir'] = rinexDir
+    amc.dRTK['ant_crds'] = crd_cart
     amc.dRTK['gfzrnxDir'] = os.path.join(rinexDir, 'gfzrnx')
 
     logger.info('{func:s}: arguments processed: amc.dRTK = {drtk!s}'.format(func=cFuncName, drtk=amc.dRTK))
@@ -281,7 +294,14 @@ def main(argv):
 
     # report to the user
     logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
+    # store the json structure
+    jsonName = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['binFile'].replace('.', '-') + '.json')
+    with open(jsonName, 'w') as f:
+        json.dump(amc.dRTK, f, ensure_ascii=False, indent=4, default=amutils.DT_convertor)
 
+    # remove the temporar files
+    for file in dRnxTmp.values():
+        os.remove(file)
 
 if __name__ == "__main__":  # Only run if this file is called directly
     main(sys.argv)

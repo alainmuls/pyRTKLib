@@ -13,6 +13,8 @@ The `pyRTKLib` repository processes `RINEX` observation / navigation files for G
 
 The repository is based on the following directory structure[^1] for the binary receiver data:
 
+\scriptsize 
+
 ```bash
 ${HOME}/RxTURP
     BEGPIOS
@@ -35,6 +37,8 @@ ${HOME}/RxTURP
             19135
             ...
 ```
+
+\normalsize
 
 where `YYDDD` represents 2 digits for the year and 3 digits for the day of year.
 
@@ -68,6 +72,8 @@ Each script uses pythons logging facility and creates in the directory from whic
 
 ### Getting help
 
+\scriptsize 
+
 ```bash
 $ pySBFDaily.py --help
 usage: pySBFDaily.py [-h] [-d DIR] [-o]
@@ -85,7 +91,11 @@ optional arguments:
                         DEBUG)
 ```
 
+\normalsize
+
 ### Processing example
+
+\scriptsize 
 
 ```bash
 $ pySBFDaily.py --dir ~/RxTURP/BEGPIOS/ASTX/19134 -o -l INFO DEBUG
@@ -95,7 +105,11 @@ INFO: pySBFDaily.py - main: combine SBF (six-)hourly files to daily SBF file
 INFO: pySBFDaily.py - main: creating daily SBF file SEPT1340.19_
 ```
 
+\normalsize
+
 yields the following raw binary data directory:
+
+\scriptsize 
 
 ```bash
 $ ll /home/amuls/RxTURP/BEGPIOS/ASTX/19134 -rt
@@ -111,16 +125,93 @@ total 853200
 -rw-r--r-- 1 amuls amuls 413147820 Oct 28 14:53 SEPT1340.19_
 ```
 
+\normalsize
+
 ##  __`pyconvbin.py`__
+
+'pyconvbin.py' is based on several programs to convert binary (proprietary) formats to `RINEX`: 
+
+- `sbf2rin` for converting binary `SBF` data to `RINEX v3.x` format,
+- `convbin` for converting binary `u-Blox` data to `RINEX v3.x` format,
+- the open source program `gfzrnx`[^4] used for checking the `RINEX` files and for separating according to the data of satellite systems
+
+Using the proprietary conversion programs temporary `RINEX` observation and navigation files are created. The observation header information is extracted yielding:
+
+- storing the header information in a `json` structure
+- a report similar to the console
+
+From this header information, the `pyconvbin.py` determines the date of data collection, used for creating the `RINEX` files for the satellite systems from the global temporary `RINEX` files:
+
+- __Galileo__ ('E'), marker name `GALI` for open source navigation services, marker name `GPRS` when PRS is detected,
+- __GPS__ ('G'), marker name `GPSN`,
+- if possible, __Combined EG__ ('M') marker name `COMB`
+
+During the final `RINEX` files creation, the above mentioned marker names replace the original marker name and the approximate coordinates, marker name and number and observer/agency header lines are replaced.[^3]
+
+\tiny
+
+```
+INFO: gfzrnx_ops.py - rnxobs_header_info: extracting RINEX observation header
+INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyO -meta basic:json -fout /tmp/COMBdoyS.yyO.json -f
+INFO: gfzrnx_ops.py - rnxobs_header_info: RINEX observation basic information
+INFO: gfzrnx_ops.py - rnxobs_header_info:    marker: TURX
+INFO: gfzrnx_ops.py - rnxobs_header_info:    times:
+INFO: gfzrnx_ops.py - rnxobs_header_info:          first: 2019 01 11 00 00 00.0000000
+INFO: gfzrnx_ops.py - rnxobs_header_info:           last: 2019 01 11 23 59 59.0000000
+INFO: gfzrnx_ops.py - rnxobs_header_info:       interval: 1.00
+INFO: gfzrnx_ops.py - rnxobs_header_info:         DOY/YY: 011/19
+INFO: gfzrnx_ops.py - rnxobs_header_info:    satellite system: E (Galileo)
+INFO: gfzrnx_ops.py - rnxobs_header_info:        frequencies: ['1', '6']
+INFO: gfzrnx_ops.py - rnxobs_header_info:       system types: ['C', 'D', 'L', 'S']
+INFO: gfzrnx_ops.py - rnxobs_header_info:        observables: ['C1A', 'C6A', 'D1A', 'D6A', 'L1A', 'L6A', 'S1A', 'S6A']
+```
+
+\normalsize
+
+The `RINEX` files are stored in the corresponding directories explained above. 
+
+A observation statistics file is created in the sub-directory `gfzrnx\MARKER`. These files report for each satellite the number of observables in the `RINEX` observation file in tabular format. 
+
+Example:
+
+\scriptsize
+
+```bash
+$ cat /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx/GALI/GALI1340-19O.obsstat 
+STP GALI E TYP   C1C   C5Q   D1C   D5Q   L1C   L5Q   S1C   S5Q
+STO GALI E E01 34685 34837 34685 34837 34685 34837 34685 34837
+STO GALI E E02 27443 27459 27443 27459 27443 27459 27443 27459
+STO GALI E E03 33499 33550 33499 33550 33499 33550 33499 33550
+STO GALI E E04 42628 42671 42628 42671 42628 42671 42628 42671
+STO GALI E E05 45416 45416 45416 45416 45416 45416 45416 45416
+STO GALI E E07 16376 16566 16376 16566 16376 16566 16376 16566
+STO GALI E E08 22419 22430 22419 22430 22419 22430 22419 22430
+STO GALI E E09 46114 46215 46114 46215 46114 46215 46114 46215
+STO GALI E E11 43915 44002 43915 44002 43915 44002 43915 44002
+STO GALI E E12 36791 36861 36791 36861 36791 36861 36791 36861
+STO GALI E E13 24574 24647 24574 24647 24574 24647 24574 24647
+STO GALI E E14 24527 24716 24527 24716 24527 24716 24527 24716
+STO GALI E E15 30125 30133 30125 30133 30125 30133 30125 30133
+STO GALI E E18 27383 27418 27383 27418 27383 27418 27383 27418
+STO GALI E E19 33384 33887 33384 33887 33384 33887 33384 33887
+STO GALI E E20 16425     0 16425     0 16425     0 16425     0
+STO GALI E E21 33893 33933 33893 33933 33893 33933 33893 33933
+STO GALI E E22 39056 39425 39056 39425 39056 39425 39056 39425
+STO GALI E E24 37383 37418 37383 37418 37383 37418 37383 37418
+STO GALI E E25 31310 31563 31310 31563 31310 31563 31310 31563
+STO GALI E E26 21440 21322 21440 21322 21440 21322 21440 21322
+STO GALI E E27 32958 33110 32958 33110 32958 33110 32958 33110
+STO GALI E E30 30260 30266 30260 30266 30260 30266 30260 30266
+```
 
 ### Getting help
 
+\scriptsize 
+
 ```bash
 $ pyconvbin.py --help
-usage: pyconvbin.py [-h] [-d DIR] -f FILE [-b {SBF,UBlox}] [-r RINEXDIR]
-                    [-v {R3,R2}] [-g {gal,gps,com}] -n NAMING NAMING NAMING
-                    [-o]
-                    [-l {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET} {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}]
+usage: pyconvbin.py [-h] [-d DIR] -f FILE [-b {SBF,UBX}] [-r RINEXDIR]
+                    [-c CART CART CART] [-o] [-l LOGGING LOGGING]
 
 pyconvbin.py convert binary raw data from SBF or UBlox to RINEX Obs & Nav
 files
@@ -129,79 +220,256 @@ optional arguments:
   -h, --help            show this help message and exit
   -d DIR, --dir DIR     Root directory (default .)
   -f FILE, --file FILE  Binary SBF or UBlox file
-  -b {SBF,UBlox}, --binary {SBF,UBlox}
+  -b {SBF,UBX}, --binary {SBF,UBX}
                         Select binary format (default SBF)
   -r RINEXDIR, --rinexdir RINEXDIR
                         Directory for RINEX output (default .)
-  -v {R3,R2}, --rinexver {R3,R2}
-                        Select RINEX version (default R3)
-  -g {gal,gps,com}, --gnss {gal,gps,com}
-                        GNSS systems to process (default=gal)
-  -n NAMING NAMING NAMING, --naming NAMING NAMING NAMING
-                        Enter MARKER DOY YY for naming RINEX output files
+  -c CART CART CART, --cart CART CART CART
+                        cartesian coordinates of antenna (default RMA)
   -o, --overwrite       overwrite intermediate files (default False)
-  -l {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET} {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}, --logging {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET} {CRITICAL,ERROR,WARNING,INFO,DEBUG,NOTSET}
+  -l LOGGING LOGGING, --logging LOGGING LOGGING
                         specify logging level console/file (default INFO
                         DEBUG)
 ```
 
+\normalsize
+
 ### Processing example
 
+\tiny 
+
 ```bash
-$ 19134-gal-conv.sh 
-INFO: pyconvbin.py - main: arguments processed: amc.dRTK = {'rootDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/19134/', 'binFile': 'SEPT1340.19_', 'binType': 'SBF', 'rinexDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/', 'rinexVersion': 'R3', 'gnssSyst': 'gal', 'rinexNaming': ['GALI', '134', '19']}
+$ pyconvbin.py -d ~/RxTURP/BEGPIOS/ASTX/19134/ -f SEPT1340.19_ -b SBF -r ~/RxTURP/BEGPIOS/ASTX/rinex/19134/
+
+INFO: pyconvbin.py - main: arguments processed: amc.dRTK = {'rootDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/19134/', \
+'binFile': 'SEPT1340.19_', 'binType': 'SBF', \
+'rinexDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/', \
+'ant_crds': [4023741.3045, 309110.4584, 4922723.1945], \
+'gfzrnxDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx'}
 INFO: pyconvbin.py - checkValidityArgs: check existence of rootDir /home/amuls/RxTURP/BEGPIOS/ASTX/19134/
 INFO: pyconvbin.py - checkValidityArgs: check existence of binary file /home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_ to convert
 INFO: pyconvbin.py - checkValidityArgs: check existence of rinexdir /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/ and create if needed
+INFO: pyconvbin.py - checkValidityArgs: check existence of gfzrnxdir /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx and create if needed
 INFO: location.py - locateProg: locate programs convbin
-INFO: location.py - locateProg: convbin is /home/amuls/bin/convbin
+INFO: location.py - locateProg: convbin is /usr/bin/convbin
 INFO: location.py - locateProg: locate programs sbf2rin
-INFO: location.py - locateProg: sbf2rin is /home/amuls/bin/sbf2rin
+INFO: location.py - locateProg: sbf2rin is /opt/Septentrio/RxTools/bin/sbf2rin
+INFO: location.py - locateProg: locate programs gfzrnx
+INFO: location.py - locateProg: gfzrnx is /home/amuls/bin/gfzrnx
 INFO: pyconvbin.py - main: convert binary file to rinex
-INFO: pyconvbin.py - sbf2rinex: RINEX conversion for gal
-INFO: pyconvbin.py - sbf2rinex: excluding GNSS systems ['G', 'R', 'S', 'C', 'J', 'I']
+INFO: pyconvbin.py - sbf2rinex: RINEX conversion from SBF binary
 INFO: pyconvbin.py - sbf2rinex: creating RINEX observation file
-/home/amuls/bin/sbf2rin -f /home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_ -x GRSCJI -s -D -v -R3 -o /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19O
+INFO: amutils.py - run_subprocess: running /opt/Septentrio/RxTools/bin/sbf2rin -f /home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_ -x RSCJI -s -D -v -R3 -o /tmp/COMBdoyS.yyO
 
 Creating RINEX file: done                                                       
 INFO: pyconvbin.py - sbf2rinex: creating RINEX navigation file
-/home/amuls/bin/sbf2rin -f /home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_ -x GRSCJI -s -D -v -n E -R3 -o /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19E
+INFO: amutils.py - run_subprocess: running /opt/Septentrio/RxTools/bin/sbf2rin -f /home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_ -x RSCJI -s -D -v -n P -R3 -o /tmp/COMBdoyS.yyP
 
 Creating RINEX file: done                                                       
+INFO: gfzrnx_ops.py - rnxobs_header_info: extracting RINEX observation header
+INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyO -meta basic:json -fout /tmp/COMBdoyS.yyO.json -f
+INFO: gfzrnx_ops.py - rnxobs_header_info: RINEX observation basic information
+INFO: gfzrnx_ops.py - rnxobs_header_info:    marker: SEPT
+INFO: gfzrnx_ops.py - rnxobs_header_info:    times:
+INFO: gfzrnx_ops.py - rnxobs_header_info:          first: 2019 05 14 00 00 00.0000000
+INFO: gfzrnx_ops.py - rnxobs_header_info:           last: 2019 05 14 23 59 59.0000000
+INFO: gfzrnx_ops.py - rnxobs_header_info:       interval: 1.00
+INFO: gfzrnx_ops.py - rnxobs_header_info:         DOY/YY: 134/19
+INFO: gfzrnx_ops.py - rnxobs_header_info:    satellite system: E (Galileo)
+INFO: gfzrnx_ops.py - rnxobs_header_info:        frequencies: ['1', '5']
+INFO: gfzrnx_ops.py - rnxobs_header_info:       system types: ['C', 'D', 'L', 'S']
+INFO: gfzrnx_ops.py - rnxobs_header_info:        observables: ['C1C', 'C5Q', 'D1C', 'D5Q', 'L1C', 'L5Q', 'S1C', 'S5Q']
+INFO: gfzrnx_ops.py - rnxobs_header_info:    satellite system: G (GPS NavSTAR)
+INFO: gfzrnx_ops.py - rnxobs_header_info:        frequencies: ['1', '2', '5']
+INFO: gfzrnx_ops.py - rnxobs_header_info:       system types: ['C', 'D', 'L', 'S']
+INFO: gfzrnx_ops.py - rnxobs_header_info:        observables: ['C1C', 'C1W', 'C2L', 'C2W', 'C5Q', 'D1C', 'D2L', 'D2W', 'D5Q', 'L1C', 'L2L', 'L2W', 'L5Q', 'S1C', 'S1W', 'S2L', 'S2W', 'S5Q']
+INFO: gfzrnx_ops.py - rnxobs_statistics: extracting RINEX observation statistics
+INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyO -stk_obs -satsys EG -fout /tmp/COMBdoyS.yyO.obsstat -f
+INFO: gfzrnx_ops.py - rnxobs_statistics: creating observation statistics GALI1340-19O.obsstat
+INFO: gfzrnx_ops.py - rnxobs_statistics: creating observation statistics GPSN1340-19O.obsstat
+INFO: gfzrnx_ops.py - rnxobs_creation: creating RINEX file GALI1340.19O
+INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyO -fout /tmp/GALI1340.19O -satsys E -f -chk -kv
+INFO: gfzrnx_ops.py - create_crux: creating crux-file /tmp/convbin.crux
+INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/GALI1340.19O -f -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19O -crux /tmp/convbin.crux
+INFO: gfzrnx_ops.py - rnxobs_creation: creating RINEX file GPSN1340.19O
+INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyO -fout /tmp/GPSN1340.19O -satsys G -f -chk -kv
+  INFO: gfzrnx_ops.py - create_crux: creating crux-file /tmp/convbin.crux
+INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/GPSN1340.19O -f -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GPSN1340.19O -crux /tmp/convbin.crux
+INFO: gfzrnx_ops.py - rnxobs_creation: creating RINEX file COMB1340.19O
+INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyO -fout /tmp/COMB1340.19O -satsys EG -f -chk -kv
+INFO: gfzrnx_ops.py - create_crux: creating crux-file /tmp/convbin.crux
+INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMB1340.19O -f -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/COMB1340.19O -crux /tmp/convbin.crux
+INFO: gfzrnx_ops.py - rnxobs_creation: creating RINEX file GALI1340.19E
+INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyP -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19E -satsys E -f -chk -kv
+INFO: gfzrnx_ops.py - rnxobs_creation: creating RINEX file GPSN1340.19N
+INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyP -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GPSN1340.19N -satsys G -f -chk -kv
+INFO: gfzrnx_ops.py - rnxobs_creation: creating RINEX file COMB1340.19P
+INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyP -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/COMB1340.19P -satsys EG -f -chk -kv
 INFO: pyconvbin.py - main: amc.dRTK =
 {
     "rootDir": "/home/amuls/RxTURP/BEGPIOS/ASTX/19134/",
     "binFile": "/home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_",
     "binType": "SBF",
     "rinexDir": "/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/",
-    "rinexVersion": "R3",
-    "gnssSyst": "gal",
-    "rinexNaming": [
-        "GALI",
-        "134",
-        "19"
+    "ant_crds": [
+        4023741.3045,
+        309110.4584,
+        4922723.1945
     ],
-    "marker": "GALI",
-    "doy": "134",
-    "yy": "19",
-    "bin2rnx": {
-        "CONVBIN": "/home/amuls/bin/convbin",
-        "SBF2RIN": "/home/amuls/bin/sbf2rin"
+    "gfzrnxDir": "/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx",
+    "bin": {
+        "CONVBIN": "/usr/bin/convbin",
+        "SBF2RIN": "/opt/Septentrio/RxTools/bin/sbf2rin",
+        "GFZRNX": "/home/amuls/bin/gfzrnx"
     },
-    "obs": "/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19O",
-    "nav": "/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19E"
+    "rnx": {
+        "times": {
+            "DT": "2019-05-14 00:00:00",
+            "date": null,
+            "doy": 134,
+            "year": 2019,
+            "yy": 19
+        },
+        "gnss": {
+            "select": [
+                "E",
+                "G",
+                "M"
+            ],
+            "E": {
+                "name": "Galileo",
+                "satsys": "E",
+                "sysfrq": [
+                    "1",
+                    "5"
+                ],
+                "systyp": [
+                    "C",
+                    "D",
+                    "L",
+                    "S"
+                ],
+                "sysobs": [
+                    "C1C",
+                    "C5Q",
+                    "D1C",
+                    "D5Q",
+                    "L1C",
+                    "L5Q",
+                    "S1C",
+                    "S5Q"
+                ],
+                "marker": "GALI",
+                "obsstat": "GALI1340-19O.obsstat",
+                "obs": "GALI1340.19O",
+                "nav": "GALI1340.19E"
+            },
+            "G": {
+                "name": "GPS NavSTAR",
+                "satsys": "G",
+                "sysfrq": [
+                    "1",
+                    "2",
+                    "5"
+                ],
+                "systyp": [
+                    "C",
+                    "D",
+                    "L",
+                    "S"
+                ],
+                "sysobs": [
+                    "C1C",
+                    "C1W",
+                    "C2L",
+                    "C2W",
+                    "C5Q",
+                    "D1C",
+                    "D2L",
+                    "D2W",
+                    "D5Q",
+                    "L1C",
+                    "L2L",
+                    "L2W",
+                    "L5Q",
+                    "S1C",
+                    "S1W",
+                    "S2L",
+                    "S2W",
+                    "S5Q"
+                ],
+                "marker": "GPSN",
+                "obsstat": "GPSN1340-19O.obsstat",
+                "obs": "GPSN1340.19O",
+                "nav": "GPSN1340.19N"
+            },
+            "M": {
+                "name": "Combined EG",
+                "satsys": "EG",
+                "sysfrq": [
+                    "1",
+                    "2",
+                    "5"
+                ],
+                "systyp": [
+                    "C",
+                    "D",
+                    "L",
+                    "S"
+                ],
+                "sysobs": [
+                    "C1C",
+                    "C1W",
+                    "C2L",
+                    "C2W",
+                    "C5Q",
+                    "D1C",
+                    "D2L",
+                    "D2W",
+                    "D5Q",
+                    "L1C",
+                    "L2L",
+                    "L2W",
+                    "L5Q",
+                    "S1C",
+                    "S1W",
+                    "S2L",
+                    "S2W",
+                    "S5Q"
+                ],
+                "marker": "COMB",
+                "obs": "COMB1340.19O",
+                "nav": "COMB1340.19P"
+            }
+        },
+        "marker": "SEPT"
+    }
 }
 ```
 
+\normalsize
+
 creates the following directories and files:[^2]
 
+\scriptsize 
+
 ```bash
-$ ll /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/ -R
-/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/:
-total 95808
--rw-r--r-- 1 amuls amuls   565703 Oct 28 15:04 GALI1340.19E
--rw-r--r-- 1 amuls amuls 97537766 Oct 28 15:04 GALI1340.19O
+$ tree -hD /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/
+/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/
+--- [349M Apr 15 15:19]  COMB1340.19O
+--- [718K Apr 15 15:20]  COMB1340.19P
+--- [567K Apr 15 15:20]  GALI1340.19E
+--- [ 94M Apr 15 15:15]  GALI1340.19O
+--- [4.0K Apr 15 11:52]  gfzrnx
+--- --- [4.0K Apr 15 11:52]  GALI
+--- --- --- [1.5K Apr 15 15:14]  GALI1340-19O.obsstat
+--- --- [4.0K Apr 15 11:52]  GPSN
+---     --- [3.8K Apr 15 15:14]  GPSN1340-19O.obsstat
+--- [152K Apr 15 15:20]  GPSN1340.19N
+--- [259M Apr 15 15:17]  GPSN1340.19O
 ```
+
+\normalsize
 
 ### Remark
 
@@ -215,6 +483,8 @@ The conversion for `u-Blox` receivers is still to be done.
 
 
 ### Getting help
+
+\scriptsize 
 
 ```bash
 $ pyftposnav.py -h
@@ -236,7 +506,12 @@ optional arguments:
                         specify logging level console/file (default INFO
                         DEBUG)
 ```
+
+\normalsize
+
 ### Processing example
+
+\scriptsize 
 
 ```bash
 $  pyftposnav.py -r ~/RxTURP/BEGPIOS/igs/ -d 255 -y 2019
@@ -288,9 +563,13 @@ INFO: pyftposnav.py - main: amc.dRTK =
 }
 ```
 
+\normalsize
+
 ##  __`pyrtkproc.py`__
 
 ### Getting help
+
+\scriptsize 
 
 ```bash
 $ pyrtkproc.py --help
@@ -340,7 +619,11 @@ optional arguments:
                         DEBUG)
 ```
 
+\normalsize
+
 ### Processing example
+
+\scriptsize 
 
 ```bash
 $ pyrtkproc.py -d ~/RxTURP/BEGPIOS/ASTX/rinex/19134/ -r GALI1340.19O -f 4 -m single -c 5 -e GALI1340.19E -g gal  -t ~/amPython/pyRTKLib/rnx2rtkp.tmpl -i brdc -a saas -s brdc -o -l INFO DEBUG 
@@ -400,7 +683,11 @@ INFO: pyrtkproc.py - main: Created position file: rtkp/gal/GALI1340-19O.pos
 INFO: pyrtkproc.py - main: Created statistics file: rtkp/gal/GALI1340-19O.pos.stat
 ```
 
+\normalsize
+
 creates the following directories and files:[^2]
+
+\scriptsize 
 
 ```bash
 $ ll /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/ -R
@@ -421,10 +708,14 @@ total 68404
 -rw-r--r-- 1 amuls amuls     5548 Oct 28 15:15 GALI1340-GAL.conf
 ```
 
+\normalsize
+
 
 ## __`pyrtkplot.py`__
 
 ### Getting help
+
+\scriptsize 
 
 ```bash
 $ pyrtkplot.py --help
@@ -451,7 +742,11 @@ optional arguments:
                         DEBUG)
 ```
 
+\normalsize
+
 ### Processing example
+
+\scriptsize 
 
 ```bash
 $ pyrtkplot.py -d /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/rtkp/gal/ -f GALI1340-19O.pos -p -o -l INFO DEBUG 
@@ -1163,7 +1458,11 @@ INFO: pyrtkplot.py - main: final amc.dRTK =
 INFO: pyrtkplot.py - main: created json file GALI1340-19O.pos.json
 ```
 
+\normalsize
+
 and creates following additional directories and files:
+
+\scriptsize 
 
 ```bash
 $ ll /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/ -R
@@ -1200,6 +1499,8 @@ total 1948
 -rw-r--r-- 1 amuls amuls 305778 Oct 28 15:27 GALI1340-19O-scatter.png
 ```
 
+\normalsize
+
 ### Plots created
 
 ![UTM East, North, Up and DOP, NsSVs vs time](./png/GALI1340-19O-ENU.png "Optional title")
@@ -1211,5 +1512,9 @@ total 1948
 ![Pseudo-range residuals](./png/GALI1340-19O-PRres.png "Optional title")
 
 ![Carrier-to-Noise ratio](./png/GALI1340-19O-CN0.png "Optional title")
-
+²
 ![Elevation](./png/GALI1340-19O-Elev.png "Optional title")
+
+[^3]: By editing the observation file using a `crux`file.
+
+[^4]: `gfzrnx` is a symbolic link to the program `gfzrnx_lx`
