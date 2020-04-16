@@ -325,16 +325,19 @@ def run_subprocess(sub_proc: list, logger: logging.Logger):
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
+    # convert all arguments to str
+    strargs = [str(arg) for arg in sub_proc if arg is not str]
+
     try:
-        logger.info('{func:s}: running {proc:s}'.format(proc=colored(' '.join(sub_proc), 'blue'), func=cFuncName))
-        subprocess.check_call(sub_proc, stderr=subprocess.DEVNULL)
+        logger.info('{func:s}: running {proc:s}'.format(proc=colored(' '.join(strargs), 'blue'), func=cFuncName))
+        subprocess.check_call(strargs, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError as e:
         # handle errors in the called executable
-        logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=sub_proc[0], err=e))
+        logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=strargs[0], err=e))
         sys.exit(amc.E_SBF2RIN_ERRCODE)
     except OSError as e:
         # executable not found
-        logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=sub_proc[0], err=e))
+        logger.error('{func:s}: subprocess {proc:s} returned error code {err!s}'.format(func=cFuncName, proc=strargs[0], err=e))
         sys.exit(amc.E_OSERROR)
 
 

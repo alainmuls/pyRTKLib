@@ -16,6 +16,12 @@ from gfzrnx import gfzrnx_ops
 __author__ = 'amuls'
 
 
+class interval_action(argparse.Action):
+    def __call__(self, parser, namespace, interval, option_string=None):
+        if not 5 <= int(interval) <= 60:
+            raise argparse.ArgumentError(self, "interval must be in 5..60 minutes")
+        setattr(namespace, self.dest, interval)
+
 
 class logging_action(argparse.Action):
     def __call__(self, parser, namespace, log_actions, option_string=None):
@@ -42,7 +48,8 @@ def treatCmdOpts(argv: list):
     parser.add_argument('-b', '--binary', help='Select binary format (default {:s})'.format(colored('SBF', 'green')), required=False, type=str, choices=['SBF', 'UBX'], default='SBF')
     parser.add_argument('-r', '--rinexdir', help='Directory for RINEX output (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
     parser.add_argument('-c', '--cart', help='cartesian coordinates of antenna (default RMA)', required=False, type=float, nargs=3, default=[4023741.3045, 309110.4584, 4922723.1945])
-    parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default {:s})'.format(colored('False', 'green')), action='store_true', required=False)
+
+    parser.add_argument('-i', '--interval', help='interval for ASCII display of SVs ([5..60] minutes)', default=10, type=int, required=False, action=interval_action)
 
     parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], action=logging_action)
 
@@ -52,7 +59,7 @@ def treatCmdOpts(argv: list):
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.file, args.binary, args.rinexdir, args.cart, args.overwrite, args.logging
+    return args.dir, args.file, args.binary, args.rinexdir, args.cart, args.interval, args.logging
 
 
 def checkValidityArgs(logger: logging.Logger) -> bool:
@@ -253,7 +260,7 @@ def main(argv):
     dGNSSSysts = {'G': 'GPS NavSTAR', 'R': 'Glonass', 'E': 'Galileo', 'S': 'SBAS', 'C': 'Beidou', 'J': 'QZSS', 'I': 'IRNSS', 'M': 'Combined EG'}
 
     # treat command line options
-    rootDir, binFile, binType, rinexDir, crd_cart, overwrite, logLevels = treatCmdOpts(argv)
+    rootDir, binFile, binType, rinexDir, crd_cart, interval, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger = amc.createLoggers(os.path.basename(__file__), dir=rootDir, logLevels=logLevels)
@@ -265,6 +272,7 @@ def main(argv):
     amc.dRTK['binType'] = binType
     amc.dRTK['rinexDir'] = rinexDir
     amc.dRTK['ant_crds'] = crd_cart
+    amc.dRTK['interval'] = interval * 60
     amc.dRTK['gfzrnxDir'] = os.path.join(rinexDir, 'gfzrnx')
 
     logger.info('{func:s}: arguments processed: amc.dRTK = {drtk!s}'.format(func=cFuncName, drtk=amc.dRTK))
@@ -287,7 +295,7 @@ def main(argv):
         dRnxTmp = sbf2rinex(dGnssSysts=dGNSSSysts, logger=logger)
         gfzrnx_ops.rnxobs_header_info(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
         gfzrnx_ops.rnxobs_statistics(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
-        gfzrnx_ops.rnxobs_creation(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
+        gfzrnx_ops.rinex_gnss_creation(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
     else:
         ubx2rinex(dGnssSysts=dGNSSSysts, logger=logger)
 

@@ -146,9 +146,9 @@ def rnxobs_statistics(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
     pass
 
 
-def rnxobs_creation(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
+def rinex_gnss_creation(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
     """
-    rnxobs_creation creates the RINEX observation/navigation files per satsys
+    rinex_gnss_creation creates the RINEX observation/navigation files per satsys
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
@@ -168,13 +168,14 @@ def rnxobs_creation(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
             else:
                 out_dir = amc.dRTK['rinexDir']
 
-            # create the RINEX file for this satsys in temporay directory
+            # create the RINEX OBS or NAV file for this satsys in final dir for NAV and temporay dir for OBS
             args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', dTmpRnx[rnx_type], '-fout', os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-satsys', amc.dRTK['rnx']['gnss'][satsys]['satsys'], '-f', '-chk', '-kv']
             logger.info('{func:s}: creating RINEX file {name:s}'.format(name=colored(amc.dRTK['rnx']['gnss'][satsys][rnx_type], 'green'), func=cFuncName))
 
             # perform the RINEX creation
             amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
 
+            # when RINEX OBS adjust the headers by editing via CRUX file
             if rnx_type == 'obs':
                 # create a CRUX file to correct the header info for this satsys
                 crux_file = create_crux(satsys=satsys, logger=logger)
@@ -185,6 +186,24 @@ def rnxobs_creation(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
                 amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
 
                 os.remove(crux_file)
+
+                if satsys is not 'M':
+                    # create e ASCII display of visibility of the SVs in the observation file
+                    amc.dRTK['rnx']['gnss'][satsys]['prns'] = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.prns'
+
+                    args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-stk_epo', amc.dRTK['interval'], '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['prns'])]
+
+                    logger.info('{func:s}: Creating ASCII SVs display {prns:s}'.format(prns=amc.dRTK['rnx']['gnss'][satsys]['prns'], func=cFuncName))
+
+                    # run the program
+                    # gfzrnx -stk_epo 300-finp data/P1710171.20O
+                    amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+
+                    # display the ASCII SVs overview
+                    with open(os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['prns'])) as f:
+                        for line in f:
+                            if line.startswith(' ST'):
+                                logger.info(line[:-1])
 
     pass
 
