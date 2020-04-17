@@ -2,10 +2,10 @@
 
 usage()
 {
-    echo "usage: $0 -v pyenv -s startDOY -e endDOY -y YYYY -r RxType [-h]"
+    echo "usage: $0 -v pyenv -b git-bracnh -s startDOY -e endDOY -y YYYY -r RxType [-h]"
 }
 
-if [ $# -ne 10 ]; then
+if [ $# -ne 12 ]; then
     usage
     exit 1
 fi
@@ -15,6 +15,8 @@ do
     case $1 in
 		-v)	shift
         	PYVENV=$1 ;;
+        -b) shift
+			BRANCH=$1;;
 		-s)	shift
         	STDOY=$1 ;;
         -e) shift

@@ -1,17 +1,24 @@
 #!/usr/bin/env python
 
-import csv
 import os
 import argparse
 import sys
 import glob
 import shutil
-import logging
 from termcolor import colored
 
 import am_config as amc
 
 __author__ = 'amuls'
+
+
+class logging_action(argparse.Action):
+    def __call__(self, parser, namespace, log_actions, option_string=None):
+        choices = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']
+        for log_action in log_actions:
+            if log_action not in choices:
+                raise argparse.ArgumentError(self, "log_actions must be in {!s}".format(choices))
+        setattr(namespace, self.dest, log_actions)
 
 
 def treatCmdOpts(argv):
@@ -29,7 +36,7 @@ def treatCmdOpts(argv):
     parser.add_argument('-d', '--dir', help='Directory of SBF file (defaults to .)', required=False, default='.')
     parser.add_argument('-o', '--overwrite', help='overwrite daily SBF file (default False)', action='store_true', required=False)
 
-    parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'])
+    parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], action=logging_action)
 
     args = parser.parse_args()
 
