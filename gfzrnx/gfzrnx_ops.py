@@ -152,7 +152,7 @@ def rinex_gnss_creation(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    dRnx_ext = {'E': {'obs': 'O', 'nav': 'E'}, \
+    dRnx_ext = {'E': {'obs': 'O', 'nav': 'E'},
                 'G': {'obs': 'O', 'nav': 'N'},
                 'M': {'obs': 'O', 'nav': 'P'}}
 
@@ -187,7 +187,7 @@ def rinex_gnss_creation(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
 
                 os.remove(crux_file)
 
-                if satsys is not 'M':
+                if satsys != 'M':
                     # create e ASCII display of visibility of the SVs in the observation file
                     amc.dRTK['rnx']['gnss'][satsys]['prns'] = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.prns'
 
@@ -204,6 +204,18 @@ def rinex_gnss_creation(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
                         for line in f:
                             if line.startswith(' ST'):
                                 logger.info(line[:-1])
+
+                    # create a tabular output file containing the observables for this satsys
+                    amc.dRTK['rnx']['gnss'][satsys]['obstab'] = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.obstab'
+
+                    args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['obstab']), '-tab_obs', '-satsys', satsys]
+                    print(args4GFZRNX)
+
+                    logger.info('{func:s}: Creating observation tabular output {obstab:s}'.format(obstab=amc.dRTK['rnx']['gnss'][satsys]['obstab'], func=cFuncName))
+
+                    # run the program
+                    # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
+                    amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
 
     pass
 
