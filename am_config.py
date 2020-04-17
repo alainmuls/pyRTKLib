@@ -1,6 +1,4 @@
 import logging
-from termcolor import colored
-import sys
 import os
 import io
 import pandas as pd
@@ -13,6 +11,9 @@ dSettings = {}  # dict containing the values to be used in the template
 dConv = {}  # dict for the conversion from Binary to RINEX
 cBaseName = ''  # colored version of main script
 dLogLevel = {'CRITICAL': 50, 'ERROR': 40, 'WARNING': 30, 'INFO': 20, 'DEBUG': 10, 'NOTSET': 0}
+
+# dictionary of GNSS systems
+dGNSSs = {'G': 'GPS NavSTAR', 'R': 'Glonass', 'E': 'Galileo', 'S': 'SBAS', 'C': 'Beidou', 'J': 'QZSS', 'I': 'IRNSS', 'M': 'Combined EG'}
 
 # exit codes
 E_SUCCESS = 0

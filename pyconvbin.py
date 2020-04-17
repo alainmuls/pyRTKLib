@@ -25,7 +25,7 @@ class interval_action(argparse.Action):
 
 class logging_action(argparse.Action):
     def __call__(self, parser, namespace, log_actions, option_string=None):
-        choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']
+        choices = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']
         for log_action in log_actions:
             if log_action not in choices:
                 raise argparse.ArgumentError(self, "log_actions must be in {!s}".format(choices))
@@ -92,7 +92,7 @@ def checkValidityArgs(logger: logging.Logger) -> bool:
     return amc.E_SUCCESS
 
 
-def sbf2rinex(dGnssSysts: dict, logger: logging.Logger) -> dict:
+def sbf2rinex(logger: logging.Logger) -> dict:
     """
     sbf2rinex converts a SBF file to rinex according to the GNSS systems selected
     """
@@ -140,14 +140,14 @@ def ubx2rinex(logger: logging.Logger):
     # logger.info('{func:s}: RINEX conversion for {gnss:s}'.format(func=cFuncName, gnss=amc.dRTK['gnssSyst']))
 
     # # dictionary of GNSS systems
-    # dGNSSSysts = {'G': 'GPS', 'R': 'GLO', 'E': 'GAL', 'S': 'SBS', 'C': 'BDS', 'J': 'QZS', 'I': 'IRN'}
+    # amc.dGNSSs = {'G': 'GPS', 'R': 'GLO', 'E': 'GAL', 'S': 'SBS', 'C': 'BDS', 'J': 'QZS', 'I': 'IRN'}
 
     # # determine systems to exclude, adjust when COM is asked meaning use GAL+GPS
     # typeNav = ''
     # if amc.dRTK['gnssSyst'].lower() == 'com':
-    #     excludeGNSSs = [key for key, value in dGNSSSysts.items() if not (value.lower().startswith('gal') or value.lower().startswith('gps'))]
+    #     excludeGNSSs = [key for key, value in amc.dGNSSs.items() if not (value.lower().startswith('gal') or value.lower().startswith('gps'))]
     # else:
-    #     excludeGNSSs = [key for key, value in dGNSSSysts.items() if not value.lower().startswith(amc.dRTK['gnssSyst'].lower())]
+    #     excludeGNSSs = [key for key, value in amc.dGNSSs.items() if not value.lower().startswith(amc.dRTK['gnssSyst'].lower())]
     #     if amc.dRTK['gnssSyst'].lower() == 'gps':
     #         typeNav = 'N'
     #     elif amc.dRTK['gnssSyst'].lower() == 'gal':
@@ -225,7 +225,7 @@ def ubx2rinex(logger: logging.Logger):
     pass
 
 
-# def ublox2rinex(logger: logging.Logger, dGnssSysts: dict):
+# def ublox2rinex(logger: logging.Logger, amc.dGNSSs: dict):
 #     """
 #     ublox2rinex converts a uBLOX file to rinex according to the GNSS systems selected
 #     """
@@ -236,9 +236,9 @@ def ubx2rinex(logger: logging.Logger):
 
 #     # determine systems to exclude, adjust when COM is asked meaning use GAL+GPS
 #     if amc.dRTK['gnssSyst'].lower() == 'com':
-#         excludeGNSSs = [key for key, value in dGnssSysts.items() if not (value.lower().startswith('gal') or value.lower().startswith('gps'))]
+#         excludeGNSSs = [key for key, value in amc.dGNSSs.items() if not (value.lower().startswith('gal') or value.lower().startswith('gps'))]
 #     else:
-#         excludeGNSSs = [key for key, value in dGnssSysts.items() if not value.lower().startswith(amc.dRTK['gnssSyst'].lower())]
+#         excludeGNSSs = [key for key, value in amc.dGNSSs.items() if not value.lower().startswith(amc.dRTK['gnssSyst'].lower())]
 
 #     logger.info('{func:s}: excluding GNSS systems {excl!s}'.format(func=cFuncName, excl=excludeGNSSs))
 
@@ -255,9 +255,6 @@ def main(argv):
 
     # limit float precision
     encoder.FLOAT_REPR = lambda o: format(o, '.3f')
-
-    # dictionary of GNSS systems
-    dGNSSSysts = {'G': 'GPS NavSTAR', 'R': 'Glonass', 'E': 'Galileo', 'S': 'SBAS', 'C': 'Beidou', 'J': 'QZSS', 'I': 'IRNSS', 'M': 'Combined EG'}
 
     # treat command line options
     rootDir, binFile, binType, rinexDir, crd_cart, interval, logLevels = treatCmdOpts(argv)
@@ -292,12 +289,12 @@ def main(argv):
     # convert binary file to rinex
     logger.info('{func:s}: convert binary file to rinex'.format(func=cFuncName))
     if amc.dRTK['binType'] == 'SBF':
-        dRnxTmp = sbf2rinex(dGnssSysts=dGNSSSysts, logger=logger)
-        gfzrnx_ops.rnxobs_header_info(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
-        gfzrnx_ops.rnxobs_statistics(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
-        gfzrnx_ops.rinex_gnss_creation(dTmpRnx=dRnxTmp, dGNSSs=dGNSSSysts, logger=logger)
+        dRnxTmp = sbf2rinex(logger=logger)
+        gfzrnx_ops.rnxobs_header_info(dTmpRnx=dRnxTmp, logger=logger)
+        gfzrnx_ops.rnxobs_statistics(dTmpRnx=dRnxTmp, logger=logger)
+        gfzrnx_ops.rinex_gnss_creation(dTmpRnx=dRnxTmp, logger=logger)
     else:
-        ubx2rinex(dGnssSysts=dGNSSSysts, logger=logger)
+        ubx2rinex(logger=logger)
 
     # report to the user
     logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
@@ -310,6 +307,7 @@ def main(argv):
     # remove the temporar files
     for file in dRnxTmp.values():
         os.remove(file)
+
 
 if __name__ == "__main__":  # Only run if this file is called directly
     main(sys.argv)

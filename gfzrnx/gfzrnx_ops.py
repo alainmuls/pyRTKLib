@@ -12,7 +12,7 @@ from ampyutils import amutils
 __author__ = 'amuls'
 
 
-def rnxobs_header_info(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
+def rnxobs_header_info(dTmpRnx: dict, logger: logging.Logger):
     """
     rnxobs_header_info extracts the basic hedaer info from the rinex file
     and stores it in a JSON structure
@@ -45,16 +45,16 @@ def rnxobs_header_info(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
     for _, satsys in enumerate(dObsHdr['file']['satsys']):
         dSatSyst = {}
 
-        dSatSyst['name'] = dGNSSs.get(satsys)
+        dSatSyst['name'] = amc.dGNSSs.get(satsys)
         dSatSyst['satsys'] = satsys
         dSatSyst['sysfrq'] = dObsHdr['file']['sysfrq'][satsys]
         dSatSyst['systyp'] = dObsHdr['file']['systyp'][satsys]
         dSatSyst['sysobs'] = dObsHdr['file']['sysobs'][satsys]
-        # create the station name for this GNSS from dGNSSs and replace the current station name by 'marker'
+        # create the station name for this GNSS from amc.dGNSSs and replace the current station name by 'marker'
         if (satsys == 'E') and (dSatSyst['sysfrq'] == ['1', '6']):
             marker = 'GPRS'
         else:
-            marker = ''.join(dGNSSs[satsys].split())[:4].upper()
+            marker = ''.join(amc.dGNSSs[satsys].split())[:4].upper()
         dSatSyst['marker'] = marker
 
         dSatSysts[satsys] = dSatSyst
@@ -64,12 +64,12 @@ def rnxobs_header_info(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
         dSatSyst = {}
 
         satsys = 'M'
-        dSatSyst['name'] = dGNSSs.get(satsys)
+        dSatSyst['name'] = amc.dGNSSs.get(satsys)
         dSatSyst['satsys'] = 'EG'
         dSatSyst['sysfrq'] = list(sorted(set(dObsHdr['file']['sysfrq']['E'] + dObsHdr['file']['sysfrq']['G'])))
         dSatSyst['systyp'] = list(sorted(set(dObsHdr['file']['systyp']['E'] + dObsHdr['file']['systyp']['G'])))
         dSatSyst['sysobs'] = list(sorted(set(dObsHdr['file']['sysobs']['E'] + dObsHdr['file']['sysobs']['G'])))
-        dSatSyst['marker'] = ''.join(dGNSSs[satsys].split())[:4].upper()
+        dSatSyst['marker'] = ''.join(amc.dGNSSs[satsys].split())[:4].upper()
 
         dSatSysts[satsys] = dSatSyst
 
@@ -90,7 +90,7 @@ def rnxobs_header_info(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
     logger.info('{func:s}:         DOY/YY: {DOY:03d}/{YY:02d}'.format(DOY=dTimes['doy'], YY=dTimes['yy'], func=cFuncName))
 
     for _, satsys in enumerate(dObsHdr['file']['satsys']):
-        logger.info('{func:s}:    satellite system: {satsys:s} ({gnss:s})'.format(satsys=satsys, gnss=dGNSSs.get(satsys), func=cFuncName))
+        logger.info('{func:s}:    satellite system: {satsys:s} ({gnss:s})'.format(satsys=satsys, gnss=amc.dGNSSs.get(satsys), func=cFuncName))
         logger.info('{func:s}:        frequencies: {freqs!s}'.format(freqs=dObsHdr['file']['sysfrq'][satsys], func=cFuncName))
         logger.info('{func:s}:       system types: {systypes!s}'.format(systypes=dObsHdr['file']['systyp'][satsys], func=cFuncName))
         logger.info('{func:s}:        observables: {obs!s}'.format(obs=dObsHdr['file']['sysobs'][satsys], func=cFuncName))
@@ -100,7 +100,7 @@ def rnxobs_header_info(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
     pass
 
 
-def rnxobs_statistics(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
+def rnxobs_statistics(dTmpRnx: dict, logger: logging.Logger):
     """
     rnxobs_statistics creates the observation statistics per satellite system
     """
@@ -146,7 +146,7 @@ def rnxobs_statistics(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
     pass
 
 
-def rinex_gnss_creation(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
+def rinex_gnss_creation(dTmpRnx: dict, logger: logging.Logger):
     """
     rinex_gnss_creation creates the RINEX observation/navigation files per satsys
     """
@@ -193,7 +193,7 @@ def rinex_gnss_creation(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
 
                     args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-stk_epo', amc.dRTK['interval'], '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['prns'])]
 
-                    logger.info('{func:s}: Creating ASCII SVs display {prns:s}'.format(prns=amc.dRTK['rnx']['gnss'][satsys]['prns'], func=cFuncName))
+                    logger.info('{func:s}: Creating ASCII SVs display {prns:s}'.format(prns=colored(amc.dRTK['rnx']['gnss'][satsys]['prns'], 'green'), func=cFuncName))
 
                     # run the program
                     # gfzrnx -stk_epo 300-finp data/P1710171.20O
@@ -211,7 +211,7 @@ def rinex_gnss_creation(dTmpRnx: dict, dGNSSs: dict, logger: logging.Logger):
                     args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['obstab']), '-tab_obs', '-satsys', satsys]
                     print(args4GFZRNX)
 
-                    logger.info('{func:s}: Creating observation tabular output {obstab:s}'.format(obstab=amc.dRTK['rnx']['gnss'][satsys]['obstab'], func=cFuncName))
+                    logger.info('{func:s}: Creating observation tabular output {obstab:s}'.format(obstab=colored(amc.dRTK['rnx']['gnss'][satsys]['obstab'], 'green'), func=cFuncName))
 
                     # run the program
                     # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
