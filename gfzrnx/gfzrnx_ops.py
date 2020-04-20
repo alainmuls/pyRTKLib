@@ -185,6 +185,7 @@ def rinex_gnss_creation(dTmpRnx: dict, logger: logging.Logger):
                 # perform the RINEX creation
                 amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
 
+                # remove temporary file created
                 os.remove(crux_file)
 
                 if satsys != 'M':
@@ -209,7 +210,6 @@ def rinex_gnss_creation(dTmpRnx: dict, logger: logging.Logger):
                     amc.dRTK['rnx']['gnss'][satsys]['obstab'] = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.obstab'
 
                     args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['obstab']), '-tab_obs', '-satsys', satsys]
-                    print(args4GFZRNX)
 
                     logger.info('{func:s}: Creating observation tabular output {obstab:s}'.format(obstab=colored(amc.dRTK['rnx']['gnss'][satsys]['obstab'], 'green'), func=cFuncName))
 
@@ -226,7 +226,7 @@ def create_crux(satsys: str, logger: logging.Logger) -> str:
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    crux_name = os.path.join(tempfile.gettempdir(), 'convbin.crux')
+    crux_name = os.path.join(tempfile.gettempdir(), tempfile.NamedTemporaryFile(prefix="gfzrnx_", suffix=".crux").name)
 
     logger.info('{func:s}: creating crux-file {crux:s}'.format(crux=colored(crux_name, 'green'), func=cFuncName))
     with open(crux_name, 'w') as fcrux:

@@ -64,17 +64,37 @@ do
 	# process if return code is 0
 	if [[ ${rc} == 0 ]]
 	then
+		gnss_log_msg=${gnss_log_msg}',true'
+
 		printf '\nCreating RINEX files for '${RXTYPE}' @ '${YYDOY}'\n'
 
 		if [ ${RXTYPE} = 'ASTX' ]
 		then
 			MARKER=SEPT
 
-			# for i in "${!gnss[@]}"
-			# do
 			${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
 				--rinexdir=${DIRRIN} --binary=SBF
+
+			# info_txt=''
+			# for i in "${!gnss[@]}"
+			# do
+			# 	echo ${i}
+			# 	echo ${gnssMarker[i]}
+			# 	obs_name=${gnssMarker[i]}${DOY}0.${YY}O
+			# 	echo ${obs_name}
+			# 	obs_size=`${DU} -h ${DIRRIN}/${obs_name} | ${CUT} -f1`
+			# 	echo ${obs_size}
+			# 	info_txt=${info_txt}','${obs_name},${obs_size}
 			# done
+			# echo ${info_txt}
+			# echo ${gnss_log_msg}
+			# echo ${gnss_log_msg}${info_txt}
+			# ${GREP} 19134  ${GNSSRAWDATA}
+			# echo $?
+			# ${SED} --quiet 's|^${gnss_log_msg}*|${gnss_log_msg}${info_txt}|g' ${GNSSRAWDATA}
+			# echo $?
+			# ${GREP} 19134  ${GNSSRAWDATA}
+			# echo $?
 
 		elif [ ${RXTYPE} = 'BEGP' ]
 		then

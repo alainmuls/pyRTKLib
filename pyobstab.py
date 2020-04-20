@@ -8,7 +8,7 @@ import logging
 
 import am_config as amc
 from gfzrnx import rnxobs_tabular
-from ampyutils import amutils, location
+from ampyutils import location
 
 __author__ = 'amuls'
 

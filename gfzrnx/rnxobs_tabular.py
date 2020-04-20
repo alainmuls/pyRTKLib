@@ -20,7 +20,7 @@ def rnxobs_header_info(logger: logging.Logger):
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     rnx_obs_file = os.path.join(amc.dRTK['rnx_dir'], amc.dRTK['rnx_obs'])
-    json_file = os.path.join(tempfile.gettempdir(), 'rnx_obs.json')
+    json_file = os.path.join(tempfile.gettempdir(), tempfile.NamedTemporaryFile(prefix="rnxobs_", suffix=".json").name)
 
     args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', rnx_obs_file, '-meta', 'basic:json', '-fout', json_file, '-f']
     logger.info('{func:s}: extracting RINEX observation header from {rnx_obs:s}'.format(rnx_obs=rnx_obs_file, func=cFuncName))

@@ -71,12 +71,18 @@ do
 	# echo ${gnss_log_msg}${gnss_log_msg_bool}
 
 	# add/replace information within the GNSSRAWDATA file
-	if ${GREP} --quiet ${gnss_log_msg} ${GNSSRAWDATA}
+	if [[ -f ${GNSSRAWDATA} ]]
 	then
-		${SED} --quiet 's/^${gnss_log_msg}*/${gnss_log_msg}${gnss_log_msg_bool}/g' ${GNSSRAWDATA}
+		if ${GREP} --quiet ${gnss_log_msg} ${GNSSRAWDATA}
+		then
+			${SED} --quiet 's|^${gnss_log_msg}*|${gnss_log_msg}${gnss_log_msg_bool}|g' ${GNSSRAWDATA}
+		else
+			echo ${gnss_log_msg}${gnss_log_msg_bool} >> ${GNSSRAWDATA}
+		fi
 	else
-		echo ${gnss_log_msg}${gnss_log_msg_bool} >> ${GNSSRAWDATA}
+		echo ${gnss_log_msg}${gnss_log_msg_bool} > ${GNSSRAWDATA}
 	fi
+
 done
 
 # sort the file based on first 3 fields

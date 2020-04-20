@@ -25,11 +25,13 @@ PYHOMEDIR=${PROJECT_HOME}/${PROJECT_NAME}
 # set the start directory
 RXTURPROOT=${HOME}/RxTURP/BEGPIOS
 # file with directories containing Raw SBF data
-GNSSRAWDATA=${RXTURPROOT}/gnss_raw_data.t
+GNSSRAWDATA=${RXTURPROOT}/${RXTYPE}_data.t
 
 # commands
 AWK=/usr/bin/awk
 CP=/bin/cp
+CUT=/usr/bin/cut
+DU=/usr/bin/du
 GIT=/usr/bin/git
 GREP=/bin/grep
 NICE='/usr/bin/nice -n 19'
@@ -53,8 +55,9 @@ LOGPYRTKPLOT=${PYHOMEDIR}/pyrtkplot.log
 
 # the gnss and corresponding marker name lists
 gnss=([0]='gal' [1]='gps' [2]='com')
-gnssMarker=([0]='GALI' [1]='GPSS' [2]='COMB')
+gnssMarker=([0]='GALI' [1]='GPSN' [2]='COMB')
 gnssNavExt=([0]='E' [1]='N' [2]='P')
+# for IGS downloaded data
 igsNavName=([0]='BRUX' [1]='BRUX' [2]='BRDC')
 igsNavCountry=([0]='BEL' [1]='BEL' [2]='IGS')
 igsNavNameExt=([0]='E' [1]='G' [2]='M')

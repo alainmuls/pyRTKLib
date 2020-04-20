@@ -110,7 +110,7 @@ def sbf2rinex(logger: logging.Logger) -> dict:
     # convert to RINEX observable file
     args4SBF2RIN = [amc.dRTK['bin']['SBF2RIN'], '-f', os.path.join(amc.dRTK['rootDir'], amc.dRTK['binFile']), '-x', excludeGNSSs, '-s', '-D', '-v', '-R3']
     # create the output RINEX obs file name
-    dTmpRnx['obs'] = os.path.join(tempfile.gettempdir(), 'COMBdoyS.yyO')
+    dTmpRnx['obs'] = os.path.join(tempfile.gettempdir(), tempfile.NamedTemporaryFile(prefix="COMB_", suffix=".obs").name)
     args4SBF2RIN.extend(['-o', dTmpRnx['obs']])
 
     # run the sbf2rin program
@@ -120,7 +120,7 @@ def sbf2rinex(logger: logging.Logger) -> dict:
     # convert to RINEX NAVIGATION file
     args4SBF2RIN = [amc.dRTK['bin']['SBF2RIN'], '-f', os.path.join(amc.dRTK['rootDir'], amc.dRTK['binFile']), '-x', excludeGNSSs, '-s', '-D', '-v', '-n', 'P', '-R3']
     # create the output RINEX obs file name
-    dTmpRnx['nav'] = os.path.join(tempfile.gettempdir(), 'COMBdoyS.yyP')
+    dTmpRnx['nav'] = os.path.join(tempfile.gettempdir(), tempfile.NamedTemporaryFile(prefix="COMB_", suffix=".nav").name)
     args4SBF2RIN.extend(['-o', dTmpRnx['nav']])
 
     # run the sbf2rin program
