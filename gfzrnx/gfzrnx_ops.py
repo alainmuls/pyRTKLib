@@ -100,9 +100,9 @@ def rnxobs_header_info(dTmpRnx: dict, logger: logging.Logger):
     pass
 
 
-def rnxobs_statistics(dTmpRnx: dict, logger: logging.Logger):
+def rnxobs_statistics_file(dTmpRnx: dict, logger: logging.Logger):
     """
-    rnxobs_statistics creates the observation statistics per satellite system
+    rnxobs_statistics_file creates the observation statistics per satellite system
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
@@ -146,21 +146,17 @@ def rnxobs_statistics(dTmpRnx: dict, logger: logging.Logger):
     pass
 
 
-def rinex_gnss_creation(dTmpRnx: dict, logger: logging.Logger):
+def gnss_rinex_creation(dTmpRnx: dict, logger: logging.Logger):
     """
-    rinex_gnss_creation creates the RINEX observation/navigation files per satsys
+    gnss_rinex_creation creates the RINEX observation/navigation files per satsys
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
-
-    dRnx_ext = {'E': {'obs': 'O', 'nav': 'E'},
-                'G': {'obs': 'O', 'nav': 'N'},
-                'M': {'obs': 'O', 'nav': 'P'}}
 
     for rnx_type in ('obs', 'nav'):
         # create the corresponding RINEX Obs/Nav file for each individual satellite system
         for _, satsys in enumerate(amc.dRTK['rnx']['gnss']['select']):
             # determin ethe name of the RINEX file to be created
-            amc.dRTK['rnx']['gnss'][satsys][rnx_type] = '{marker:s}{doy:03d}0.{yy:02d}{ext:s}'.format(marker=amc.dRTK['rnx']['gnss'][satsys]['marker'], doy=amc.dRTK['rnx']['times']['doy'], yy=amc.dRTK['rnx']['times']['yy'], ext=dRnx_ext[satsys][rnx_type])
+            amc.dRTK['rnx']['gnss'][satsys][rnx_type] = '{marker:s}{doy:03d}0.{yy:02d}{ext:s}'.format(marker=amc.dRTK['rnx']['gnss'][satsys]['marker'], doy=amc.dRTK['rnx']['times']['doy'], yy=amc.dRTK['rnx']['times']['yy'], ext=amc.dRnx_ext[satsys][rnx_type])
 
             if rnx_type == 'obs':
                 out_dir = tempfile.gettempdir()
@@ -190,32 +186,27 @@ def rinex_gnss_creation(dTmpRnx: dict, logger: logging.Logger):
 
                 if satsys != 'M':
                     # create e ASCII display of visibility of the SVs in the observation file
-                    amc.dRTK['rnx']['gnss'][satsys]['prns'] = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.prns'
+                    # amc.dRTK['rnx']['gnss'][satsys]['prns'] = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.prns'
 
-                    args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-stk_epo', amc.dRTK['interval'], '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['prns'])]
+                    # args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-stk_epo', amc.dRTK['interval'], '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['prns'])]
 
-                    logger.info('{func:s}: Creating ASCII SVs display {prns:s}'.format(prns=colored(amc.dRTK['rnx']['gnss'][satsys]['prns'], 'green'), func=cFuncName))
+                    # logger.info('{func:s}: Creating ASCII SVs display {prns:s}'.format(prns=colored(amc.dRTK['rnx']['gnss'][satsys]['prns'], 'green'), func=cFuncName))
 
-                    # run the program
-                    # gfzrnx -stk_epo 300-finp data/P1710171.20O
-                    amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+                    # # run the program
+                    # # gfzrnx -stk_epo 300-finp data/P1710171.20O
+                    # amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
 
-                    # display the ASCII SVs overview
-                    with open(os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['prns'])) as f:
-                        for line in f:
-                            if line.startswith(' ST'):
-                                logger.info(line[:-1])
+                    # # display the ASCII SVs overview
+                    # with open(os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['prns'])) as f:
+                    #     for line in f:
+                    #         if line.startswith(' ST'):
+                    #             logger.info(line[:-1])
 
-                    # create a tabular output file containing the observables for this satsys
-                    amc.dRTK['rnx']['gnss'][satsys]['obstab'] = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.obstab'
+                    # create e ASCII display of visibility of the SVs in the observation file
+                    amc.dRTK['rnx']['gnss'][satsys]['prns'] = create_svs_ascii_plot(satsys=satsys, rnx_type=rnx_type, logger=logger)
 
-                    args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['obstab']), '-tab_obs', '-satsys', satsys]
-
-                    logger.info('{func:s}: Creating observation tabular output {obstab:s}'.format(obstab=colored(amc.dRTK['rnx']['gnss'][satsys]['obstab'], 'green'), func=cFuncName))
-
-                    # run the program
-                    # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
-                    amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+                    # create the tabular observation file
+                    amc.dRTK['rnx']['gnss'][satsys]['obstab'] = create_tabular_observation(satsys=satsys, rnx_type=rnx_type, logger=logger)
 
     pass
 
@@ -250,3 +241,49 @@ def create_crux(satsys: str, logger: logging.Logger) -> str:
     fcrux.close()
 
     return crux_name
+
+
+def create_tabular_observation(satsys: str, rnx_type:str, logger: logging.Logger) -> str:
+    """
+    create_tabular_observation creates a tabular view of all observables for all SVs in RINEX obs file
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    # create a tabular output file containing the observables for this satsys
+    obs_tabular = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.obstab'
+
+    args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], obs_tabular), '-tab_obs', '-satsys', satsys]
+
+    logger.info('{func:s}: Creating observation tabular output {obstab:s}'.format(obstab=colored(obs_tabular, 'green'), func=cFuncName))
+
+    # run the program
+    # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
+    amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+
+    # return the created file name
+    return obs_tabular
+
+
+def create_svs_ascii_plot(satsys: str, rnx_type:str, logger: logging.Logger) -> str:
+    """
+    create_svs_ascii_plot creates a ASCII plot of SVs visibility according to RINEX observation file
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    prns_visibility = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.prns'
+
+    args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-stk_epo', amc.dRTK['interval'], '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], prns_visibility)]
+
+    logger.info('{func:s}: Creating ASCII SVs display {prns:s}'.format(prns=colored(prns_visibility, 'green'), func=cFuncName))
+
+    # run the program
+    # gfzrnx -stk_epo 300-finp data/P1710171.20O
+    amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+
+    # display the ASCII SVs overview
+    with open(os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], prns_visibility)) as f:
+        for line in f:
+            if line.startswith(' ST'):
+                logger.info(line[:-1])
+
+    return prns_visibility

@@ -291,8 +291,8 @@ def main(argv):
     if amc.dRTK['binType'] == 'SBF':
         dRnxTmp = sbf2rinex(logger=logger)
         gfzrnx_ops.rnxobs_header_info(dTmpRnx=dRnxTmp, logger=logger)
-        gfzrnx_ops.rnxobs_statistics(dTmpRnx=dRnxTmp, logger=logger)
-        gfzrnx_ops.rinex_gnss_creation(dTmpRnx=dRnxTmp, logger=logger)
+        gfzrnx_ops.rnxobs_statistics_file(dTmpRnx=dRnxTmp, logger=logger)
+        gfzrnx_ops.gnss_rinex_creation(dTmpRnx=dRnxTmp, logger=logger)
     else:
         ubx2rinex(logger=logger)
 

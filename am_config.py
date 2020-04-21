@@ -10,10 +10,26 @@ dGNSSs = {}  # dict with SatSyst and numeric value for lookup
 dSettings = {}  # dict containing the values to be used in the template
 dConv = {}  # dict for the conversion from Binary to RINEX
 cBaseName = ''  # colored version of main script
-dLogLevel = {'CRITICAL': 50, 'ERROR': 40, 'WARNING': 30, 'INFO': 20, 'DEBUG': 10, 'NOTSET': 0}
+dLogLevel = {'CRITICAL': 50,
+             'ERROR': 40,
+             'WARNING': 30,
+             'INFO': 20,
+             'DEBUG': 10,
+             'NOTSET': 0}
 
 # dictionary of GNSS systems
-dGNSSs = {'G': 'GPS NavSTAR', 'R': 'Glonass', 'E': 'Galileo', 'S': 'SBAS', 'C': 'Beidou', 'J': 'QZSS', 'I': 'IRNSS', 'M': 'Combined EG'}
+dGNSSs = {'G': 'GPS NavSTAR',
+          'R': 'Glonass',
+          'E': 'Galileo',
+          'S': 'SBAS',
+          'C': 'Beidou',
+          'J': 'QZSS',
+          'I': 'IRNSS',
+          'M': 'Combined EG'}
+
+dRnx_ext = {'E': {'obs': 'O', 'nav': 'E'},
+            'G': {'obs': 'O', 'nav': 'N'},
+            'M': {'obs': 'O', 'nav': 'P'}}
 
 # exit codes
 E_SUCCESS = 0
