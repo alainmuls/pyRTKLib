@@ -68,6 +68,10 @@ do
 
 		printf '\nCreating RINEX files for '${RXTYPE}' @ '${YYDOY}'\n'
 
+		# add info about processing to the ${GNSSRAWDATA} file
+		info_txt=${RXTYPE}','${YY}','${DOY}','${YYDOY}','${DIRRAW}',true'  # OLD text
+		new_info_txt=${info_txt}  # NEW text
+
 		if [ ${RXTYPE} = 'ASTX' ]
 		then
 			MARKER=SEPT
@@ -75,26 +79,23 @@ do
 			${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
 				--rinexdir=${DIRRIN} --binary=SBF
 
-			# info_txt=''
-			# for i in "${!gnss[@]}"
-			# do
-			# 	echo ${i}
-			# 	echo ${gnssMarker[i]}
-			# 	obs_name=${gnssMarker[i]}${DOY}0.${YY}O
-			# 	echo ${obs_name}
-			# 	obs_size=`${DU} -h ${DIRRIN}/${obs_name} | ${CUT} -f1`
-			# 	echo ${obs_size}
-			# 	info_txt=${info_txt}','${obs_name},${obs_size}
-			# done
-			# echo ${info_txt}
-			# echo ${gnss_log_msg}
-			# echo ${gnss_log_msg}${info_txt}
-			# ${GREP} 19134  ${GNSSRAWDATA}
-			# echo $?
-			# ${SED} --quiet 's|^${gnss_log_msg}*|${gnss_log_msg}${info_txt}|g' ${GNSSRAWDATA}
-			# echo $?
-			# ${GREP} 19134  ${GNSSRAWDATA}
-			# echo $?
+			for i in "${!gnss[@]}"
+			do
+				obs_name=${gnssMarker[i]}${DOY}0.${YY}O
+				if [[ -f ${DIRRIN}'/'${obs_name} ]]
+				then
+					nav_name=${gnssMarker[i]}${DOY}0.${YY}${gnssNavExt[i]}
+					obs_size=`${DU} -h ${DIRRIN}/${obs_name} | ${CUT} -f1`
+					nav_size=`${DU} -h ${DIRRIN}/${nav_name} | ${CUT} -f1`
+					new_info_txt=${new_info_txt}','${obs_name}','${obs_size}','${nav_name}','${nav_size}
+					# echo ${i}' => '${new_info_txt}
+				fi
+			done
+			# echo 'info_txt = '${info_txt}
+			# echo 'new_info_txt = '${new_info_txt}
+
+			# change_line "TEXT_TO_BE_REPLACED" "This line is removed by the admin." yourFile
+			change_line ${info_txt} ${new_info_txt} ${GNSSRAWDATA}
 
 		elif [ ${RXTYPE} = 'BEGP' ]
 		then
@@ -102,6 +103,22 @@ do
 
 			${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
 				--rinexdir=${DIRRIN} --binary=SBF
+
+			# check whether RINEX obs/nav files are created and put in ${GNSSRAWDATA}
+			obs_name='GPRS'${DOY}0.${YY}O
+
+			if [[ -f ${DIRRIN}'/'${obs_name} ]]
+			then
+				nav_name='GPRS'${DOY}0.${YY}E
+				obs_size=`${DU} -h ${DIRRIN}/${obs_name} | ${CUT} -f1`
+				nav_size=`${DU} -h ${DIRRIN}/${nav_name} | ${CUT} -f1`
+				new_info_txt=${new_info_txt}','${obs_name}','${obs_size}','${nav_name}','${nav_size}
+			fi
+			# echo 'info_txt = '${info_txt}
+			# echo 'new_info_txt = '${new_info_txt}
+
+			# change_line "TEXT_TO_BE_REPLACED" "This line is removed by the admin." yourFile
+			change_line ${info_txt} ${new_info_txt} ${GNSSRAWDATA}
 
 			# # check existence of OBS file
 			# BEGPOBS=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'O'

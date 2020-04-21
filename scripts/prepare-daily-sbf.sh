@@ -58,7 +58,7 @@ do
 
 	printf '\nCreating daily SBF file for '${YYDOY}'\n'
 	# echo ${NICE} ${PYSBFDAILY} --dir=${DIRRAW}  # --overwrite
-	${NICE} ${PYSBFDAILY} --dir=${DIRRAW}  # --overwrite
+	${NICE} ${PYSBFDAILY} --dir=${DIRRAW} --overwrite
 	rc=$?
 
 	# examine return code to determine whether data is present
@@ -75,7 +75,8 @@ do
 	then
 		if ${GREP} --quiet ${gnss_log_msg} ${GNSSRAWDATA}
 		then
-			${SED} --quiet 's|^${gnss_log_msg}*|${gnss_log_msg}${gnss_log_msg_bool}|g' ${GNSSRAWDATA}
+			${SED} --quiet "s|^${gnss_log_msg}*|${gnss_log_msg}${gnss_log_msg_bool}|g" ${GNSSRAWDATA}
+			change_line ${gnss_log_msg} ${gnss_log_msg}${gnss_log_msg_bool} ${GNSSRAWDATA}
 		else
 			echo ${gnss_log_msg}${gnss_log_msg_bool} >> ${GNSSRAWDATA}
 		fi

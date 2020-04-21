@@ -1,32 +1,3 @@
-# print DOY with leading zeros if needed
-function leading_zero()
-{
-    local num=$1
-    local zeroos=000
-    echo ${zeroos:${#num}:${#zeroos}}${num}
-}
-
-function cleanup()
-{
-	printf '\n'
-	if [[ '${CURBRANCH}' != 'master' ]]
-	then
-		${GIT} checkout ${CURBRANCH}  --quiet
-	fi
-	cd ${OLDPWD}
-}
-
-# set the python virtual environment
-PROJECT_NAME=${PYVENV}
-GIT_BRANCH=${BRANCH}
-VIRTUAL_ENV=${WORKON_HOME}/${PROJECT_NAME}
-PYHOMEDIR=${PROJECT_HOME}/${PROJECT_NAME}
-
-# set the start directory
-RXTURPROOT=${HOME}/RxTURP/BEGPIOS
-# file with directories containing Raw SBF data
-GNSSRAWDATA=${RXTURPROOT}/${RXTYPE}_data.t
-
 # commands
 AWK=/usr/bin/awk
 CP=/bin/cp
@@ -41,6 +12,55 @@ SORT=/usr/bin/sort
 TOUCH=/usr/bin/touch
 TR=/usr/bin/tr
 
+# print DOY with leading zeros if needed
+function leading_zero()
+{
+    local num=$1
+    local zeroos=000
+    echo ${zeroos:${#num}:${#zeroos}}${num}
+}
+
+function cleanup()
+{
+	printf '\n'
+	if [[ '${CURBRANCH}' != '${GIT_BRANCH' ]]
+	then
+		${GIT} checkout ${CURBRANCH}  --quiet
+	fi
+	cd ${OLDPWD}
+}
+
+function escape_slashes {
+    ${SED} 's/\//\\\//g'
+}
+
+function change_line {
+    local OLD_LINE_PATTERN=$1; shift
+    local NEW_LINE=$1; shift
+    local FILE=$1
+
+    # echo ${OLD_LINE_PATTERN}
+    # echo ${NEW_LINE}
+
+    local NEW=$(echo "${NEW_LINE}" | escape_slashes)
+
+    # /bin/sed -i "s+BEGP,19,134,19134,/home/amuls/RxTURP/BEGPIOS/BEGP/19134,true*+BEGP,19,134,19134,\/home\/amuls\/RxTURP\/BEGPIOS\/BEGP\/19134,true,GPRS1340.19O,75M,GPRS1340.19E,96K+g" /home/amuls/RxTURP/BEGPIOS/BEGP_data.t
+
+    ${SED} -i.bak "s+${OLD_LINE_PATTERN}.*+${NEW}+g" ${FILE}
+    # mv "${FILE}.bak" /tmp/
+}
+
+# set the python virtual environment
+PROJECT_NAME=${PYVENV}
+GIT_BRANCH=${BRANCH}
+VIRTUAL_ENV=${WORKON_HOME}/${PROJECT_NAME}
+PYHOMEDIR=${PROJECT_HOME}/${PROJECT_NAME}
+
+# set the start directory
+RXTURPROOT=${HOME}/RxTURP/BEGPIOS
+# file with directories containing Raw SBF data
+GNSSRAWDATA=${RXTURPROOT}'/'${RXTYPE}'_data.t'
+
 # pythonscripts
 PYSBFDAILY=${PYHOMEDIR}/pySBFDaily.py
 PYCONVBIN=${PYHOMEDIR}/pyconvbin.py
@@ -54,7 +74,7 @@ LOGPYRTKPROC=${PYHOMEDIR}/pyrtkproc.log
 LOGPYRTKPLOT=${PYHOMEDIR}/pyrtkplot.log
 
 # the gnss and corresponding marker name lists
-gnss=([0]='gal' [1]='gps' [2]='com')
+gnss=([0]='Galileo' [1]='GPS Navstar' [2]='Combined EG')
 gnssMarker=([0]='GALI' [1]='GPSN' [2]='COMB')
 gnssNavExt=([0]='E' [1]='N' [2]='P')
 # for IGS downloaded data
