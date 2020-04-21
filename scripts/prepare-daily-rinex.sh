@@ -137,7 +137,7 @@ do
 			# ${SED} -i "s/${OLDPRN36}/${NEWPRN36}/g" ${BEGPNAV}
 		fi
 	else
-		echo 'No raw data available for '${RXTYPE}' @ '${YY}' '${DOY}
+		echo 'No RINEX data available for '${RXTYPE}' @ '${YY}' '${DOY}
 	fi
 done
 

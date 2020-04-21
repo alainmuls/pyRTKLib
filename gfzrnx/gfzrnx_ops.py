@@ -176,32 +176,20 @@ def gnss_rinex_creation(dTmpRnx: dict, logger: logging.Logger):
                 # create a CRUX file to correct the header info for this satsys
                 crux_file = create_crux(satsys=satsys, logger=logger)
 
-                args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-f', '-fout', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-crux', crux_file]
+                rnxobs_file = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type])
+                args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-f', '-fout', rnxobs_file, '-crux', crux_file]
 
-                # perform the RINEX creation
+                # perform the RINEX header correction
                 amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
-
                 # remove temporary file created
                 os.remove(crux_file)
 
+                # create RINEX observation file per frequency available
+                # gfzrnx -finp COMB1340.19O -fout COMB1340-L1.19O -satsys EG --obs_types 1 -q
+                create_rnxobs_subfreq(satsys=satsys, rnxobs=rnxobs_file, logger=logger)
+
+                # only create these infos when we have no mixed observations file
                 if satsys != 'M':
-                    # create e ASCII display of visibility of the SVs in the observation file
-                    # amc.dRTK['rnx']['gnss'][satsys]['prns'] = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.prns'
-
-                    # args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-stk_epo', amc.dRTK['interval'], '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['prns'])]
-
-                    # logger.info('{func:s}: Creating ASCII SVs display {prns:s}'.format(prns=colored(amc.dRTK['rnx']['gnss'][satsys]['prns'], 'green'), func=cFuncName))
-
-                    # # run the program
-                    # # gfzrnx -stk_epo 300-finp data/P1710171.20O
-                    # amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
-
-                    # # display the ASCII SVs overview
-                    # with open(os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], amc.dRTK['rnx']['gnss'][satsys]['prns'])) as f:
-                    #     for line in f:
-                    #         if line.startswith(' ST'):
-                    #             logger.info(line[:-1])
-
                     # create e ASCII display of visibility of the SVs in the observation file
                     amc.dRTK['rnx']['gnss'][satsys]['prns'] = create_svs_ascii_plot(satsys=satsys, rnx_type=rnx_type, logger=logger)
 
@@ -287,3 +275,36 @@ def create_svs_ascii_plot(satsys: str, rnx_type:str, logger: logging.Logger) -> 
                 logger.info(line[:-1])
 
     return prns_visibility
+
+
+def create_rnxobs_subfreq(satsys: str, rnxobs: str, logger: logging.Logger):
+    """
+    create_rnxobs_subfreq separates per frequency band the RINEX observation file
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    print('satsys = {:s}'.format(satsys))
+    print('rnxobs = {:s}'.format(rnxobs))
+    obs_sysfrq = amc.dRTK['rnx']['gnss'][satsys]['sysfrq']
+    print('freqs = {!s}'.format(amc.dRTK['rnx']['gnss'][satsys]['sysfrq']))
+
+    for _, freq in enumerate(amc.dRTK['rnx']['gnss'][satsys]['sysfrq']):
+        satsysfreq = '{sys:s}{freq:s}'.format(sys=satsys, freq=freq)
+
+        obs_base, obs_ext = os.path.splitext(amc.dRTK['rnx']['gnss'][satsys]['obs'])
+        obs_sysfrq = '{base:s}_{sysfrq:s}{ext:s}'.format(base=obs_base, ext=obs_ext, sysfrq=satsysfreq)
+
+        print('obs_sysfrq = {:s}'.format(obs_sysfrq))
+
+        # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
+        args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys]['obs']), '-fout', os.path.join(amc.dRTK['rinexDir'], obs_sysfrq), '-obs_types', freq, '-satsys', satsys]
+
+        print('args4GFZRNX = {!s}'.format(args4GFZRNX))
+
+        logger.info('{func:s}: Creating frequency specific RINEX observation {rnx:s}'.format(rnx=obs_sysfrq, func=cFuncName))
+
+        # run the program
+        amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+
+        # store its name in dict
+        amc.dRTK['rnx']['gnss'][satsys][satsysfreq] = obs_sysfrq

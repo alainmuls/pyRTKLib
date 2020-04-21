@@ -327,9 +327,10 @@ def run_subprocess(sub_proc: list, logger: logging.Logger):
 
     # convert all arguments to str
     strargs = [str(arg) for arg in sub_proc if arg is not str]
+    # print(' '.join(strargs))
 
     try:
-        logger.info('{func:s}: running {proc:s}'.format(proc=colored(' '.join(strargs), 'blue'), func=cFuncName))
+        logger.info('{func:s}: running\n{proc:s}'.format(proc=colored(' '.join(strargs), 'blue'), func=cFuncName))
         subprocess.check_call(strargs, stderr=subprocess.DEVNULL)
     except subprocess.CalledProcessError as e:
         # handle errors in the called executable
