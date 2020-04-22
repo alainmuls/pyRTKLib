@@ -184,10 +184,6 @@ def gnss_rinex_creation(dTmpRnx: dict, logger: logging.Logger):
                 # remove temporary file created
                 os.remove(crux_file)
 
-                # create RINEX observation file per frequency available
-                # gfzrnx -finp COMB1340.19O -fout COMB1340-L1.19O -satsys EG --obs_types 1 -q
-                create_rnxobs_subfreq(satsys=satsys, rnxobs=rnxobs_file, logger=logger)
-
                 # only create these infos when we have no mixed observations file
                 if satsys != 'M':
                     # create e ASCII display of visibility of the SVs in the observation file
@@ -277,34 +273,37 @@ def create_svs_ascii_plot(satsys: str, rnx_type:str, logger: logging.Logger) -> 
     return prns_visibility
 
 
-def create_rnxobs_subfreq(satsys: str, rnxobs: str, logger: logging.Logger):
+def create_rnxobs_subfreq(logger: logging.Logger):
     """
     create_rnxobs_subfreq separates per frequency band the RINEX observation file
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    print('satsys = {:s}'.format(satsys))
-    print('rnxobs = {:s}'.format(rnxobs))
-    obs_sysfrq = amc.dRTK['rnx']['gnss'][satsys]['sysfrq']
-    print('freqs = {!s}'.format(amc.dRTK['rnx']['gnss'][satsys]['sysfrq']))
+    for _, satsys in enumerate(amc.dRTK['rnx']['gnss']['select']):
 
-    for _, freq in enumerate(amc.dRTK['rnx']['gnss'][satsys]['sysfrq']):
-        satsysfreq = '{sys:s}{freq:s}'.format(sys=satsys, freq=freq)
+        rnxobs = amc.dRTK['rnx']['gnss'][satsys]['obs']
+        obs_sysfrq = amc.dRTK['rnx']['gnss'][satsys]['sysfrq']
 
-        obs_base, obs_ext = os.path.splitext(amc.dRTK['rnx']['gnss'][satsys]['obs'])
-        obs_sysfrq = '{base:s}_{sysfrq:s}{ext:s}'.format(base=obs_base, ext=obs_ext, sysfrq=satsysfreq)
+        if satsys == 'M':
+            sub_satsys = [char for char in amc.dRTK['rnx']['gnss'][satsys]['satsys']]
+            # we will only create RINEX files for the common frequencies between E and G
+            satfrq_common = list(set(amc.dRTK['rnx']['gnss'][sub_satsys[0]]['sysfrq']) & set(amc.dRTK['rnx']['gnss'][sub_satsys[1]]['sysfrq']))
+        else:
+            satfrq_common = amc.dRTK['rnx']['gnss'][satsys]['sysfrq']
 
-        print('obs_sysfrq = {:s}'.format(obs_sysfrq))
+        for _, freq in enumerate(satfrq_common):
+            satsysfreq = '{sys:s}{freq:s}'.format(sys=satsys, freq=freq)
 
-        # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
-        args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys]['obs']), '-fout', os.path.join(amc.dRTK['rinexDir'], obs_sysfrq), '-obs_types', freq, '-satsys', satsys]
+            obs_base, obs_ext = os.path.splitext(amc.dRTK['rnx']['gnss'][satsys]['obs'])
+            obs_sysfrq = '{base:s}_{sysfrq:s}{ext:s}'.format(base=obs_base, ext=obs_ext, sysfrq=satsysfreq)
 
-        print('args4GFZRNX = {!s}'.format(args4GFZRNX))
+            # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
+            args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys]['obs']), '-fout', os.path.join(amc.dRTK['rinexDir'], obs_sysfrq), '-obs_types', freq, '-satsys', amc.dRTK['rnx']['gnss'][satsys]['satsys']]
 
-        logger.info('{func:s}: Creating frequency specific RINEX observation {rnx:s}'.format(rnx=obs_sysfrq, func=cFuncName))
+            logger.info('{func:s}: Creating frequency specific RINEX observation {rnx:s}'.format(rnx=obs_sysfrq, func=cFuncName))
 
-        # run the program
-        amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+            # run the program
+            amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
 
-        # store its name in dict
-        amc.dRTK['rnx']['gnss'][satsys][satsysfreq] = obs_sysfrq
+            # store its name in dict
+            amc.dRTK['rnx']['gnss'][satsys][satsysfreq] = obs_sysfrq
