@@ -58,7 +58,7 @@ do
 
 	printf '\nCreating daily SBF file for '${YYDOY}'\n'
 	# echo ${NICE} ${PYSBFDAILY} --dir=${DIRRAW}  # --overwrite
-	${NICE} ${PYSBFDAILY} --dir=${DIRRAW} --overwrite
+	${NICE} ${PYSBFDAILY} --dir=${DIRRAW}  # --overwrite
 	rc=$?
 
 	# examine return code to determine whether data is present
