@@ -134,125 +134,216 @@ total 853200
 - `convbin` for converting binary `u-Blox` data to `RINEX v3.x` format,
 - the open source program `gfzrnx`[^4] used for checking the `RINEX` files and for separating according to the data of satellite systems
 
-Using the proprietary conversion programs temporary `RINEX` observation and navigation files are created. The observation header information is extracted yielding:
-
-- storing the header information in a `json` structure
-- a report similar to the console
-
-From this header information, the `pyconvbin.py` determines the date of data collection, used for creating the `RINEX` files for the satellite systems from the global temporary `RINEX` files:
+Using the proprietary conversion programs temporary `RINEX` observation and navigation files are created. The observation header information is extracted and stored in a `json` structure. From this header information, the `pyconvbin.py` determines the date of data collection, used for creating the `RINEX` files for the satellite systems from the global temporary `RINEX` files. The following marker naming convention is used:
 
 - __Galileo__ ('E'), marker name `GALI` for open source navigation services, marker name `GPRS` when PRS is detected,
 - __GPS__ ('G'), marker name `GPSN`,
 - if possible, __Combined EG__ ('M') marker name `COMB`
 
+Part of the extracted header information is displayed below. 
+
+\scriptsize
+
+```
+        "times": {
+            "DT": "2019-04-05 00:00:00",
+            "date": null,
+            "doy": 95,
+            "year": 2019,
+            "yy": 19
+        },
+        "gnss": {
+            "select": [
+                "E",
+                "G",
+                "M"
+            ],
+            "E": {
+                "name": "Galileo",
+                "satsys": "E",
+                "sysfrq": [
+                    "1",
+                    "5"
+                ],
+                "systyp": [
+                    "C",
+                    "D",
+                    "L",
+                    "S"
+                ],
+                "sysobs": [
+                    "C1C",
+                    "C5Q",
+                    "D1C",
+                    "D5Q",
+                    "L1C",
+                    "L5Q",
+                    "S1C",
+                    "S5Q"
+                ],
+            "G": {
+                "name": "GPS NavSTAR",
+                "satsys": "G",
+                "sysfrq": [
+                    "1",
+                    "2",
+                    "5"
+                ],
+                "systyp": [
+                    "C",
+                    "D",
+                    "L",
+                    "S"
+                ],
+                "sysobs": [
+                ...
+                ...
+```
+
+\normalsize
+
+
 During the final `RINEX` files creation, the above mentioned marker names replace the original marker name and the approximate coordinates, marker name and number and observer/agency header lines are replaced.[^3]
 
-The `RINEX` and several data-files are stored in the corresponding directories `rinex\YYDOY`. 
+The `RINEX` files are stored in the corresponding directories `rinex\YYDOY`. For each GNSS system the script automatically detects the frequency bands logged in the original RINEX files and creates (sub-)RINEX files with only the observations related to the frequency band. The following shows the `RINEX` files created from the `ASTX` and `TUR-P` receiver:
 
-A observation statistics, prn visibility and tabular file are created in the sub-directory `gfzrnx\MARKER`. 
+\scriptsize
+
+```
+[amuls:~/RxTURP/BEGPIOS/BEGP/rinex] $ ls -lR 19034
+19034:
+total 142456
+-rw-r--r-- 1 amuls amuls   105860 apr 22 17:59 GPRS0340.19E
+-rw-r--r-- 1 amuls amuls 70818732 apr 22 17:59 GPRS0340.19O
+-rw-r--r-- 1 amuls amuls 37499771 apr 22 18:00 GPRS0340_E1.19O
+-rw-r--r-- 1 amuls amuls 37395623 apr 22 18:00 GPRS0340_E6.19O
+
+
+[amuls:~/RxTURP/BEGPIOS/ASTX/rinex] $ ls -lR 19034
+19034:
+total 1263596
+-rw-r--r-- 1 amuls amuls 363006960 apr 22 22:48 COMB0340.19O
+-rw-r--r-- 1 amuls amuls    924284 apr 22 22:48 COMB0340.19P
+-rw-r--r-- 1 amuls amuls 143256384 apr 22 22:52 COMB0340_M1.19O
+-rw-r--r-- 1 amuls amuls  71288762 apr 22 22:51 COMB0340_M5.19O
+-rw-r--r-- 1 amuls amuls    770060 apr 22 22:48 GALI0340.19E
+-rw-r--r-- 1 amuls amuls  94135998 apr 22 22:42 GALI0340.19O
+-rw-r--r-- 1 amuls amuls  49433129 apr 22 22:49 GALI0340_E1.19O
+-rw-r--r-- 1 amuls amuls  47684774 apr 22 22:49 GALI0340_E5.19O
+-rw-r--r-- 1 amuls amuls    155108 apr 22 22:48 GPSN0340.19N
+-rw-r--r-- 1 amuls amuls 271982819 apr 22 22:45 GPSN0340.19O
+-rw-r--r-- 1 amuls amuls  96935112 apr 22 22:50 GPSN0340_G1.19O
+-rw-r--r-- 1 amuls amuls 127480719 apr 22 22:50 GPSN0340_G2.19O
+-rw-r--r-- 1 amuls amuls  26715845 apr 22 22:51 GPSN0340_G5.19O
+```
+
+\normalsize
+
+
+An observation statistics, prn visibility and tabular file are created in the sub-directory `gfzrnx\MARKER`. 
 
 - the __observation statistics file__ report for each satellite the number of observables in the `RINEX` observation file in tabular format
 
-\scriptsize 
+    \scriptsize 
 
-```bash
-$ cat /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx/GALI/GALI1340-19O.obsstat
-STP GALI E TYP   C1C   C5Q   D1C   D5Q   L1C   L5Q   S1C   S5Q
-STO GALI E E01 34685 34837 34685 34837 34685 34837 34685 34837
-STO GALI E E02 27443 27459 27443 27459 27443 27459 27443 27459
-STO GALI E E03 33499 33550 33499 33550 33499 33550 33499 33550
-STO GALI E E04 42628 42671 42628 42671 42628 42671 42628 42671
-STO GALI E E05 45416 45416 45416 45416 45416 45416 45416 45416
-STO GALI E E07 16376 16566 16376 16566 16376 16566 16376 16566
-STO GALI E E08 22419 22430 22419 22430 22419 22430 22419 22430
-STO GALI E E09 46114 46215 46114 46215 46114 46215 46114 46215
-STO GALI E E11 43915 44002 43915 44002 43915 44002 43915 44002
-STO GALI E E12 36791 36861 36791 36861 36791 36861 36791 36861
-STO GALI E E13 24574 24647 24574 24647 24574 24647 24574 24647
-STO GALI E E14 24527 24716 24527 24716 24527 24716 24527 24716
-STO GALI E E15 30125 30133 30125 30133 30125 30133 30125 30133
-STO GALI E E18 27383 27418 27383 27418 27383 27418 27383 27418
-STO GALI E E19 33384 33887 33384 33887 33384 33887 33384 33887
-STO GALI E E20 16425     0 16425     0 16425     0 16425     0
-STO GALI E E21 33893 33933 33893 33933 33893 33933 33893 33933
-STO GALI E E22 39056 39425 39056 39425 39056 39425 39056 39425
-STO GALI E E24 37383 37418 37383 37418 37383 37418 37383 37418
-STO GALI E E25 31310 31563 31310 31563 31310 31563 31310 31563
-STO GALI E E26 21440 21322 21440 21322 21440 21322 21440 21322
-STO GALI E E27 32958 33110 32958 33110 32958 33110 32958 33110
-STO GALI E E30 30260 30266 30260 30266 30260 30266 30260 30266
-```
+    ```bash
+    $ cat /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx/GALI/GALI1340-19O.obsstat
+    STP GALI E TYP   C1C   C5Q   D1C   D5Q   L1C   L5Q   S1C   S5Q
+    STO GALI E E01 34685 34837 34685 34837 34685 34837 34685 34837
+    STO GALI E E02 27443 27459 27443 27459 27443 27459 27443 27459
+    STO GALI E E03 33499 33550 33499 33550 33499 33550 33499 33550
+    STO GALI E E04 42628 42671 42628 42671 42628 42671 42628 42671
+    STO GALI E E05 45416 45416 45416 45416 45416 45416 45416 45416
+    STO GALI E E07 16376 16566 16376 16566 16376 16566 16376 16566
+    STO GALI E E08 22419 22430 22419 22430 22419 22430 22419 22430
+    STO GALI E E09 46114 46215 46114 46215 46114 46215 46114 46215
+    STO GALI E E11 43915 44002 43915 44002 43915 44002 43915 44002
+    STO GALI E E12 36791 36861 36791 36861 36791 36861 36791 36861
+    STO GALI E E13 24574 24647 24574 24647 24574 24647 24574 24647
+    STO GALI E E14 24527 24716 24527 24716 24527 24716 24527 24716
+    STO GALI E E15 30125 30133 30125 30133 30125 30133 30125 30133
+    STO GALI E E18 27383 27418 27383 27418 27383 27418 27383 27418
+    STO GALI E E19 33384 33887 33384 33887 33384 33887 33384 33887
+    STO GALI E E20 16425     0 16425     0 16425     0 16425     0
+    STO GALI E E21 33893 33933 33893 33933 33893 33933 33893 33933
+    STO GALI E E22 39056 39425 39056 39425 39056 39425 39056 39425
+    STO GALI E E24 37383 37418 37383 37418 37383 37418 37383 37418
+    STO GALI E E25 31310 31563 31310 31563 31310 31563 31310 31563
+    STO GALI E E26 21440 21322 21440 21322 21440 21322 21440 21322
+    STO GALI E E27 32958 33110 32958 33110 32958 33110 32958 33110
+    STO GALI E E30 30260 30266 30260 30266 30260 30266 30260 30266
+    ```
 
-\normalsize
+    \normalsize
 
-- the __prn visibility file__ gives an ASCII display of when a PRN is observed
+- the __prn visibility file__ gives an ASCII display of when a PRN is observed. The view can also be constructed from the tabular file with better detail.
 
-\tiny 
+    \tiny 
 
-```bash
-$ cat /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx/GALI/GALI1340-19O.prns 
+    ```bash
+    $ cat /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx/GALI/GALI1340-19O.prns 
 
- STT 20190514 00:00   01:20   02:40   04:00   05:20   06:40   08:00   09:20   10:40   12:00   13:20   14:40   16:00   17:20   18:40   20:00   21:20   22:40   00:00   
- STH            +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- STE GALI E E01 |   |   |   |  ***********************************************  |   |   |   |   |   |   |   |   |   |   |   |   |   |   |*************  |   |   | E01
- STE GALI E E02 ******  |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  ******************************************   |   |   |   |   |   |   |   | E02
- STE GALI E E03 |   |   |   |   |   |   |   |   |   |   |   |   |***************************|   |   |   |   |   |   |   |   |   |*******************************| E03
- STE GALI E E04 |   ************************************************|   |   |   |   |   |   |   |   |   |*************************  |   |   |   |   |   |   |   | E04
- STE GALI E E05 |   |   |   |   |   |   |   |   |   *********************************** |   |   |   |   |   |   |   | ******************************************| E05
- STE GALI E E07 ************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |************   |   |   |   |   |   |   |   |   |   |   |   |   | ******| E07
- STE GALI E E08 |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | ******************|   |   |   |   |   |   |   |   |   |   |   ********************| E08
- STE GALI E E09 |   |   |   |   |   |*******************************************|   |   |   |   |   |   |   | ************************************  |   |   |   | E09
- STE GALI E E11 ****************************|   |   |   |   |   |   |   |   |   |***********************************************|   |   |   |   |   |   |   |   | E11
- STE GALI E E12 **********************  |   |   |   |   |   |   |   | ***************************************** |   |   |   |   |   |   |   |   |   |   |   |   | E12
- STE GALI E E13 |   |   |   |   |   |   |   |   |   ******************* |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   ************************| E13
- STE GALI E E14 |   |   |   |   |   |   |   |***************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | ***************************** | E14
- STE GALI E E15 |   |   |   |   |   |   |   |   ************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   ****************************************| E15
- STE GALI E E18 |  ************ |   |   |   |   |   |   |   |   |   |   |  ************************************ |   |   |   |   |   |   |   |   |   |   |   |   | E18
- STE GALI E E19 ****************************************|   |   |   |   |   |   |   |   |   |   |   |****************** |   |   |   |   |   |   |   |   |   |   | E19
- STE GALI E E20 ****************************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | E20
- STE GALI E E21 |   |****************************************   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  ******************   |   |   |   | E21
- STE GALI E E22 |   |   |   |   |   |  **************   |   |   |   |   |   |   |   |   |   |   |   |   *****************************************************   | E22
- STE GALI E E24 |   |   |   |   |   |   |   |   |   | ******************************************************|   |   |   |   |   |   |   |   |   |   | **********| E24
- STE GALI E E25 |   |   |   |   |   |   |   |   |   |   |   |   |   | ************************************************  |   |   |   |   |   |   |   |   | ******| E25
- STE GALI E E26 ****|   |   |   |   |   |   |   |   |   |************************** |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  *********| E26
- STE GALI E E27 ******************************* |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  **************************   |   |   |   |   | E27
- STE GALI E E30 ******************  |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |***********************************|   |   |   |   |   |   | E30
- STH            +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
- STT 20190514 00:00   01:20   02:40   04:00   05:20   06:40   08:00   09:20   10:40   12:00   13:20   14:40   16:00   17:20   18:40   20:00   21:20   22:40   00:00   
-```
+     STT 20190514 00:00   01:20   02:40   04:00   05:20   06:40   08:00   09:20   10:40   12:00   13:20   14:40   16:00   17:20   18:40   20:00   21:20   22:40   00:00   
+     STH            +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+     STE GALI E E01 |   |   |   |  ***********************************************  |   |   |   |   |   |   |   |   |   |   |   |   |   |   |*************  |   |   | E01
+     STE GALI E E02 ******  |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  ******************************************   |   |   |   |   |   |   |   | E02
+     STE GALI E E03 |   |   |   |   |   |   |   |   |   |   |   |   |***************************|   |   |   |   |   |   |   |   |   |*******************************| E03
+     STE GALI E E04 |   ************************************************|   |   |   |   |   |   |   |   |   |*************************  |   |   |   |   |   |   |   | E04
+     STE GALI E E05 |   |   |   |   |   |   |   |   |   *********************************** |   |   |   |   |   |   |   | ******************************************| E05
+     STE GALI E E07 ************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |************   |   |   |   |   |   |   |   |   |   |   |   |   | ******| E07
+     STE GALI E E08 |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | ******************|   |   |   |   |   |   |   |   |   |   |   ********************| E08
+     STE GALI E E09 |   |   |   |   |   |*******************************************|   |   |   |   |   |   |   | ************************************  |   |   |   | E09
+     STE GALI E E11 ****************************|   |   |   |   |   |   |   |   |   |***********************************************|   |   |   |   |   |   |   |   | E11
+     STE GALI E E12 **********************  |   |   |   |   |   |   |   | ***************************************** |   |   |   |   |   |   |   |   |   |   |   |   | E12
+     STE GALI E E13 |   |   |   |   |   |   |   |   |   ******************* |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   ************************| E13
+     STE GALI E E14 |   |   |   |   |   |   |   |***************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | ***************************** | E14
+     STE GALI E E15 |   |   |   |   |   |   |   |   ************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   ****************************************| E15
+     STE GALI E E18 |  ************ |   |   |   |   |   |   |   |   |   |   |  ************************************ |   |   |   |   |   |   |   |   |   |   |   |   | E18
+     STE GALI E E19 ****************************************|   |   |   |   |   |   |   |   |   |   |   |****************** |   |   |   |   |   |   |   |   |   |   | E19
+     STE GALI E E20 ****************************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | E20
+     STE GALI E E21 |   |****************************************   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  ******************   |   |   |   | E21
+     STE GALI E E22 |   |   |   |   |   |  **************   |   |   |   |   |   |   |   |   |   |   |   |   *****************************************************   | E22
+     STE GALI E E24 |   |   |   |   |   |   |   |   |   | ******************************************************|   |   |   |   |   |   |   |   |   |   | **********| E24
+     STE GALI E E25 |   |   |   |   |   |   |   |   |   |   |   |   |   | ************************************************  |   |   |   |   |   |   |   |   | ******| E25
+     STE GALI E E26 ****|   |   |   |   |   |   |   |   |   |************************** |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  *********| E26
+     STE GALI E E27 ******************************* |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  **************************   |   |   |   |   | E27
+     STE GALI E E30 ******************  |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |***********************************|   |   |   |   |   |   | E30
+     STH            +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
+     STT 20190514 00:00   01:20   02:40   04:00   05:20   06:40   08:00   09:20   10:40   12:00   13:20   14:40   16:00   17:20   18:40   20:00   21:20   22:40   00:00   
+    ```
 
-\normalsize
+    \normalsize
 
-- the __observation tabular file__ holds all observables for the satellite system 
+- the __observation tabular file__ holds all observables for the selected satellite system 
 
 
-\tiny 
+    \tiny 
 
-```bash
-$ head -n 20 /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx/GALI/GALI1340-19O.obstab 
-#HD E DATE          TIME          PRN        C1C            C5Q            D1C            D5Q            L1C            L5Q            S1C            S5Q    
-OBS E 2019-05-14 00:00:00.0000000 E02   27931554.052   27931549.521       2655.281       1982.691  146781307.009  109609405.392         38.500         41.000
-OBS E 2019-05-14 00:00:00.0000000 E07   25673570.725   25673569.011       1387.217       1035.901  134915592.325  100748685.774         44.000         47.750
-OBS E 2019-05-14 00:00:00.0000000 E12   23069974.613   23069969.919       4790.192       3577.090  121233556.365   90531539.974         41.750         46.750
-OBS E 2019-05-14 00:00:00.0000000 E19   24976518.025   24976515.239       5672.635       4236.117  131252511.509   98013236.723         41.000         45.250
-OBS E 2019-05-14 00:00:00.0000000 E20   20301444.966 9999999999.999       3576.460 9999999999.999  106684840.572 9999999999.999         36.750 9999999999.999
-OBS E 2019-05-14 00:00:00.0000000 E26   25952215.401   25952215.636        372.591        278.244  136379853.640  101842114.363         40.250         42.250
-OBS E 2019-05-14 00:00:00.0000000 E27   27863215.428   27863215.151       6566.283       4903.253  146422188.566  109341235.820         38.500         42.500
-OBS E 2019-05-14 00:00:00.0000000 E30   25563173.776   25563172.158       5065.276       3782.426  134335399.717  100315388.563         42.500         44.750
-OBS E 2019-05-14 00:00:01.0000000 E02   27931048.723   27931044.174       2655.331       1982.770  146778651.749  109607422.566         38.000         40.750
-OBS E 2019-05-14 00:00:01.0000000 E07   25673306.594   25673304.984       1387.687       1036.244  134914204.848  100747649.671         43.750         47.750
-OBS E 2019-05-14 00:00:01.0000000 E12   23069063.084   23069058.330       4790.040       3577.052  121228766.147   90527962.855         42.000         46.500
-OBS E 2019-05-14 00:00:01.0000000 E19   24975438.589   24975435.686       5672.969       4236.222  131246838.714   98009000.541         41.000         45.250
-OBS E 2019-05-14 00:00:01.0000000 E20   20300763.999 9999999999.999       3576.827 9999999999.999  106681263.886 9999999999.999         36.500 9999999999.999
-OBS E 2019-05-14 00:00:01.0000000 E26   25952144.526   25952144.792        373.085        278.510  136379480.763  101841835.926         40.000         42.000
-OBS E 2019-05-14 00:00:01.0000000 E27   27861965.961   27861965.507       6566.551       4903.631  146415622.142  109336332.319         38.500         42.500
-OBS E 2019-05-14 00:00:01.0000000 E30   25562209.930   25562208.174       5065.214       3782.516  134330334.461  100311606.059         42.500         44.750
-OBS E 2019-05-14 00:00:02.0000000 E02   27930543.538   27930538.921       2654.857       1982.483  146775996.930  109605440.064         38.000         40.750
-OBS E 2019-05-14 00:00:02.0000000 E07   25673042.512   25673040.983       1387.619       1036.176  134912817.469  100746613.642         44.000         47.750
-OBS E 2019-05-14 00:00:02.0000000 E12   23068151.688   23068146.825       4789.764       3576.827  121223976.340   90524386.051         42.000         46.750
-```
+    ```bash
+    $ head -n 20 /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx/GALI/GALI1340-19O.obstab 
+    #HD E DATE          TIME          PRN        C1C            C5Q            D1C            D5Q            L1C            L5Q            S1C            S5Q    
+    OBS E 2019-05-14 00:00:00.0000000 E02   27931554.052   27931549.521       2655.281       1982.691  146781307.009  109609405.392         38.500         41.000
+    OBS E 2019-05-14 00:00:00.0000000 E07   25673570.725   25673569.011       1387.217       1035.901  134915592.325  100748685.774         44.000         47.750
+    OBS E 2019-05-14 00:00:00.0000000 E12   23069974.613   23069969.919       4790.192       3577.090  121233556.365   90531539.974         41.750         46.750
+    OBS E 2019-05-14 00:00:00.0000000 E19   24976518.025   24976515.239       5672.635       4236.117  131252511.509   98013236.723         41.000         45.250
+    OBS E 2019-05-14 00:00:00.0000000 E20   20301444.966 9999999999.999       3576.460 9999999999.999  106684840.572 9999999999.999         36.750 9999999999.999
+    OBS E 2019-05-14 00:00:00.0000000 E26   25952215.401   25952215.636        372.591        278.244  136379853.640  101842114.363         40.250         42.250
+    OBS E 2019-05-14 00:00:00.0000000 E27   27863215.428   27863215.151       6566.283       4903.253  146422188.566  109341235.820         38.500         42.500
+    OBS E 2019-05-14 00:00:00.0000000 E30   25563173.776   25563172.158       5065.276       3782.426  134335399.717  100315388.563         42.500         44.750
+    OBS E 2019-05-14 00:00:01.0000000 E02   27931048.723   27931044.174       2655.331       1982.770  146778651.749  109607422.566         38.000         40.750
+    OBS E 2019-05-14 00:00:01.0000000 E07   25673306.594   25673304.984       1387.687       1036.244  134914204.848  100747649.671         43.750         47.750
+    OBS E 2019-05-14 00:00:01.0000000 E12   23069063.084   23069058.330       4790.040       3577.052  121228766.147   90527962.855         42.000         46.500
+    OBS E 2019-05-14 00:00:01.0000000 E19   24975438.589   24975435.686       5672.969       4236.222  131246838.714   98009000.541         41.000         45.250
+    OBS E 2019-05-14 00:00:01.0000000 E20   20300763.999 9999999999.999       3576.827 9999999999.999  106681263.886 9999999999.999         36.500 9999999999.999
+    OBS E 2019-05-14 00:00:01.0000000 E26   25952144.526   25952144.792        373.085        278.510  136379480.763  101841835.926         40.000         42.000
+    OBS E 2019-05-14 00:00:01.0000000 E27   27861965.961   27861965.507       6566.551       4903.631  146415622.142  109336332.319         38.500         42.500
+    OBS E 2019-05-14 00:00:01.0000000 E30   25562209.930   25562208.174       5065.214       3782.516  134330334.461  100311606.059         42.500         44.750
+    OBS E 2019-05-14 00:00:02.0000000 E02   27930543.538   27930538.921       2654.857       1982.483  146775996.930  109605440.064         38.000         40.750
+    OBS E 2019-05-14 00:00:02.0000000 E07   25673042.512   25673040.983       1387.619       1036.176  134912817.469  100746613.642         44.000         47.750
+    OBS E 2019-05-14 00:00:02.0000000 E12   23068151.688   23068146.825       4789.764       3576.827  121223976.340   90524386.051         42.000         46.750
+    ```
 
-\normalsize
+    \normalsize
 
 ### Getting help
 
@@ -291,11 +382,12 @@ optional arguments:
 ```bash
 $ pyconvbin.py -d ~/RxTURP/BEGPIOS/ASTX/19134/ -f SEPT1340.19_ -b SBF -r ~/RxTURP/BEGPIOS/ASTX/rinex/19134/
 
-INFO: pyconvbin.py - main: arguments processed: amc.dRTK = {'rootDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/19134', 'binFile': 'SEPT1340.19_', 'binType': 'SBF', 'rinexDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134', 'ant_crds': [4023741.3045, 309110.4584, 4922723.1945], 'interval': 600, 'gfzrnxDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx'}
-INFO: pyconvbin.py - checkValidityArgs: check existence of rootDir /home/amuls/RxTURP/BEGPIOS/ASTX/19134
-INFO: pyconvbin.py - checkValidityArgs: check existence of binary file /home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_ to convert
-INFO: pyconvbin.py - checkValidityArgs: check existence of rinexdir /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134 and create if needed
-INFO: pyconvbin.py - checkValidityArgs: check existence of gfzrnxdir /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx and create if needed
+Creating RINEX files for ASTX @ 19105
+INFO: pyconvbin.py - main: arguments processed: amc.dRTK = {'rootDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/19105', 'binFile': 'SEPT1050.19_', 'binType': 'SBF', 'rinexDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105', 'ant_crds': [4023741.3045, 309110.4584, 4922723.1945], 'interval': 600, 'gfzrnxDir': '/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/gfzrnx'}
+INFO: pyconvbin.py - checkValidityArgs: check existence of rootDir /home/amuls/RxTURP/BEGPIOS/ASTX/19105
+INFO: pyconvbin.py - checkValidityArgs: check existence of binary file /home/amuls/RxTURP/BEGPIOS/ASTX/19105/SEPT1050.19_ to convert
+INFO: pyconvbin.py - checkValidityArgs: check existence of rinexdir /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105 and create if needed
+INFO: pyconvbin.py - checkValidityArgs: check existence of gfzrnxdir /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/gfzrnx and create if needed
 INFO: location.py - locateProg: locate programs convbin
 INFO: location.py - locateProg: convbin is /usr/bin/convbin
 INFO: location.py - locateProg: locate programs sbf2rin
@@ -305,18 +397,25 @@ INFO: location.py - locateProg: gfzrnx is /home/amuls/bin/gfzrnx
 INFO: pyconvbin.py - main: convert binary file to rinex
 INFO: pyconvbin.py - sbf2rinex: RINEX conversion from SBF binary
 INFO: pyconvbin.py - sbf2rinex: creating RINEX observation file
-INFO: amutils.py - run_subprocess: running /opt/Septentrio/RxTools/bin/sbf2rin -f /home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_ -x RSCJI -s -D -v -R3 -o /tmp/COMBdoyS.yyO
+INFO: amutils.py - run_subprocess: running
+/opt/Septentrio/RxTools/bin/sbf2rin -f /home/amuls/RxTURP/BEGPIOS/ASTX/19105/SEPT1050.19_ -x RSCJI -s -D -v -R3 -o /tmp/COMB_jnl4i1tg.obs
+
+Creating RINEX file: done                                                       
 INFO: pyconvbin.py - sbf2rinex: creating RINEX navigation file
-INFO: amutils.py - run_subprocess: running /opt/Septentrio/RxTools/bin/sbf2rin -f /home/amuls/RxTURP/BEGPIOS/ASTX/19134/SEPT1340.19_ -x RSCJI -s -D -v -n P -R3 -o /tmp/COMBdoyS.yyP
+INFO: amutils.py - run_subprocess: running
+/opt/Septentrio/RxTools/bin/sbf2rin -f /home/amuls/RxTURP/BEGPIOS/ASTX/19105/SEPT1050.19_ -x RSCJI -s -D -v -n P -R3 -o /tmp/COMB_9_5at0t8.nav
+
+Creating RINEX file: done                                                       
 INFO: gfzrnx_ops.py - rnxobs_header_info: extracting RINEX observation header
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyO -meta basic:json -fout /tmp/COMBdoyS.yyO.json -f
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -finp /tmp/COMB_jnl4i1tg.obs -meta basic:json -fout /tmp/COMB_jnl4i1tg.obs.json -f
 INFO: gfzrnx_ops.py - rnxobs_header_info: RINEX observation basic information
 INFO: gfzrnx_ops.py - rnxobs_header_info:    marker: SEPT
 INFO: gfzrnx_ops.py - rnxobs_header_info:    times:
-INFO: gfzrnx_ops.py - rnxobs_header_info:          first: 2019 05 14 00 00 00.0000000
-INFO: gfzrnx_ops.py - rnxobs_header_info:           last: 2019 05 14 23 59 59.0000000
+INFO: gfzrnx_ops.py - rnxobs_header_info:          first: 2019 04 15 00 00 00.0000000
+INFO: gfzrnx_ops.py - rnxobs_header_info:           last: 2019 04 15 23 59 59.0000000
 INFO: gfzrnx_ops.py - rnxobs_header_info:       interval: 1.00
-INFO: gfzrnx_ops.py - rnxobs_header_info:         DOY/YY: 134/19
+INFO: gfzrnx_ops.py - rnxobs_header_info:         DOY/YY: 105/19
 INFO: gfzrnx_ops.py - rnxobs_header_info:    satellite system: E (Galileo)
 INFO: gfzrnx_ops.py - rnxobs_header_info:        frequencies: ['1', '5']
 INFO: gfzrnx_ops.py - rnxobs_header_info:       system types: ['C', 'D', 'L', 'S']
@@ -325,111 +424,145 @@ INFO: gfzrnx_ops.py - rnxobs_header_info:    satellite system: G (GPS NavSTAR)
 INFO: gfzrnx_ops.py - rnxobs_header_info:        frequencies: ['1', '2', '5']
 INFO: gfzrnx_ops.py - rnxobs_header_info:       system types: ['C', 'D', 'L', 'S']
 INFO: gfzrnx_ops.py - rnxobs_header_info:        observables: ['C1C', 'C1W', 'C2L', 'C2W', 'C5Q', 'D1C', 'D2L', 'D2W', 'D5Q', 'L1C', 'L2L', 'L2W', 'L5Q', 'S1C', 'S1W', 'S2L', 'S2W', 'S5Q']
-INFO: gfzrnx_ops.py - rnxobs_statistics: extracting RINEX observation statistics
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyO -stk_obs -satsys EG -fout /tmp/COMBdoyS.yyO.obsstat -f
-INFO: gfzrnx_ops.py - rnxobs_statistics: creating observation statistics GALI1340-19O.obsstat
-INFO: gfzrnx_ops.py - rnxobs_statistics: creating observation statistics GPSN1340-19O.obsstat
-INFO: gfzrnx_ops.py - rinex_gnss_creation: creating RINEX file GALI1340.19O
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyO -fout /tmp/GALI1340.19O -satsys E -f -chk -kv
-INFO: gfzrnx_ops.py - create_crux: creating crux-file /tmp/convbin.crux
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/GALI1340.19O -f -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19O -crux /tmp/convbin.crux
-INFO: gfzrnx_ops.py - rinex_gnss_creation: Creating ASCII SVs display GALI1340-19O.prns
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -f -stk_epo 600 -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx/GALI/GALI1340-19O.prns
-INFO:  STT 20190514 00:00   01:20   02:40   04:00   05:20   06:40   08:00   09:20   10:40   12:00   13:20   14:40   16:00   17:20   18:40   20:00   21:20   22:40   00:00   
+INFO: gfzrnx_ops.py - rnxobs_statistics_file: extracting RINEX observation statistics
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -finp /tmp/COMB_jnl4i1tg.obs -stk_obs -satsys EG -fout /tmp/COMB_jnl4i1tg.obs.obsstat -f
+INFO: gfzrnx_ops.py - rnxobs_statistics_file: creating observation statistics GALI1050-19O.obsstat
+INFO: gfzrnx_ops.py - rnxobs_statistics_file: creating observation statistics GPSN1050-19O.obsstat
+INFO: gfzrnx_ops.py - gnss_rinex_creation: creating RINEX file GALI1050.19O
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -finp /tmp/COMB_jnl4i1tg.obs -fout /tmp/GALI1050.19O -satsys E -f -chk -kv
+INFO: gfzrnx_ops.py - create_crux: creating crux-file /tmp/gfzrnx_yl77xg0m.crux
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -finp /tmp/GALI1050.19O -f -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GALI1050.19O -crux /tmp/gfzrnx_yl77xg0m.crux
+INFO: gfzrnx_ops.py - create_svs_ascii_plot: Creating ASCII SVs display GALI1050-19O.prns
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -f -stk_epo 600 -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GALI1050.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/gfzrnx/GALI/GALI1050-19O.prns
+INFO:  STT 20190415 00:00   01:20   02:40   04:00   05:20   06:40   08:00   09:20   10:40   12:00   13:20   14:40   16:00   17:20   18:40   20:00   21:20   22:40   00:00   
 INFO:  STH            +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-INFO:  STE GALI E E01 |   |   |   |  ***********************************************  |   |   |   |   |   |   |   |   |   |   |   |   |   |   |*************  |   |   | E01
-INFO:  STE GALI E E02 ******  |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  ******************************************   |   |   |   |   |   |   |   | E02
-INFO:  STE GALI E E03 |   |   |   |   |   |   |   |   |   |   |   |   |***************************|   |   |   |   |   |   |   |   |   |*******************************| E03
-INFO:  STE GALI E E04 |   ************************************************|   |   |   |   |   |   |   |   |   |*************************  |   |   |   |   |   |   |   | E04
-INFO:  STE GALI E E05 |   |   |   |   |   |   |   |   |   *********************************** |   |   |   |   |   |   |   | ******************************************| E05
-INFO:  STE GALI E E07 ************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |************   |   |   |   |   |   |   |   |   |   |   |   |   | ******| E07
-INFO:  STE GALI E E08 |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | ******************|   |   |   |   |   |   |   |   |   |   |   ********************| E08
-INFO:  STE GALI E E09 |   |   |   |   |   |*******************************************|   |   |   |   |   |   |   | ************************************  |   |   |   | E09
-INFO:  STE GALI E E11 ****************************|   |   |   |   |   |   |   |   |   |***********************************************|   |   |   |   |   |   |   |   | E11
-INFO:  STE GALI E E12 **********************  |   |   |   |   |   |   |   | ***************************************** |   |   |   |   |   |   |   |   |   |   |   |   | E12
-INFO:  STE GALI E E13 |   |   |   |   |   |   |   |   |   ******************* |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   ************************| E13
-INFO:  STE GALI E E14 |   |   |   |   |   |   |   |***************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | ***************************** | E14
-INFO:  STE GALI E E15 |   |   |   |   |   |   |   |   ************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   ****************************************| E15
-INFO:  STE GALI E E18 |  ************ |   |   |   |   |   |   |   |   |   |   |  ************************************ |   |   |   |   |   |   |   |   |   |   |   |   | E18
-INFO:  STE GALI E E19 ****************************************|   |   |   |   |   |   |   |   |   |   |   |****************** |   |   |   |   |   |   |   |   |   |   | E19
-INFO:  STE GALI E E20 ****************************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | E20
-INFO:  STE GALI E E21 |   |****************************************   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  ******************   |   |   |   | E21
-INFO:  STE GALI E E22 |   |   |   |   |   |  **************   |   |   |   |   |   |   |   |   |   |   |   |   *****************************************************   | E22
-INFO:  STE GALI E E24 |   |   |   |   |   |   |   |   |   | ******************************************************|   |   |   |   |   |   |   |   |   |   | **********| E24
-INFO:  STE GALI E E25 |   |   |   |   |   |   |   |   |   |   |   |   |   | ************************************************  |   |   |   |   |   |   |   |   | ******| E25
-INFO:  STE GALI E E26 ****|   |   |   |   |   |   |   |   |   |************************** |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  *********| E26
-INFO:  STE GALI E E27 ******************************* |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  **************************   |   |   |   |   | E27
-INFO:  STE GALI E E30 ******************  |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |***********************************|   |   |   |   |   |   | E30
+INFO:  STE GALI E E01 *** |   |   |   |   |   |   |   |   |   |   |   |   |   ****************************************************|   |   |   |   |   |   |   |   |   | E01
+INFO:  STE GALI E E02 |   |   |   ************************************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   **********************  |   | E02
+INFO:  STE GALI E E03 ******************************  |   |   |   |   |   |   |   |   |   |   |   |   |   |   | ********* |   |   |   |   |   |   |   |   |   |   |   | E03
+INFO:  STE GALI E E04 |   |   |   |   |   |   |   |   |   |   |   |   |   |********************************   |   |   |   |   |   |   |   | **************************| E04
+INFO:  STE GALI E E05 **************  |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | ****************  |   |   |   |   |   |   |   |   |   |   |   |***| E05
+INFO:  STE GALI E E07 |   | ***************************************************** |   |   |   |   |   |   |   |   |   |  *********************|   |   |   |   |   |   | E07
+INFO:  STE GALI E E08 **********************************************  |   |   |   |   |   |   |   |   |   |   |   | ***************   |   |   |   |   |   |   |   |   | E08
+INFO:  STE GALI E E09 |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  ***********************  |   |   |   |   |   |   |   |   |   ****************| E09
+INFO:  STE GALI E E11 |   |   |   |   |   |   |   |   |   |   |********** |   |   |   |   |   |   |   |   |   |   |   |   |   |   ************************************| E11
+INFO:  STE GALI E E12 |   |   |   |   |   |   |   |  ***************  |   |   |   |   |   |   |   |   |   |   |  *****************************************************| E12
+INFO:  STE GALI E E13 ******************************  |   |   |   |   |   |   |   |*************************************  |   |   |   |   |   |   |   |   |   |   |   | E13
+INFO:  STE GALI E E14 |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   *********************************** |   |   |   |   |   | E14
+INFO:  STE GALI E E15 *********************   |   |   |   |   |   |   |   | ***************************** |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | E15
+INFO:  STE GALI E E18 ************|   |   |   |   |   |   |   |   | ************************* |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   ****| E18
+INFO:  STE GALI E E19 |   |   |   |   |   |   |   |   |   |*****************************************  |   |   |   |   |   |   |   |***********************************| E19
+INFO:  STE GALI E E20 |   |   |   |   |   |   |  *******************************************  |   |   |   |   |   |   |   |   | ************************* |   |   |   | E20
+INFO:  STE GALI E E21 |   |   |   |   |   |   |   |   |   |   |****************************************************** |   |   |   |   |   |   |   |   |   |   |   | **| E21
+INFO:  STE GALI E E24 | ********************  |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   ****************************************|   |   |   |   | E24
+INFO:  STE GALI E E25 |   | ***************************   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |   | ********************************  |   |   | E25
+INFO:  STE GALI E E26 |  *********************************|   |   |   |   |   |   |   |   |*********************************************  |   |   |   |   |   |   |   | E26
+INFO:  STE GALI E E27 |   |   |   |   |   |   |   |***************************************************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |*******| E27
+INFO:  STE GALI E E30 |   |   |   |   |   ********************************************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |  **************** | E30
 INFO:  STH            +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-INFO:  STT 20190514 00:00   01:20   02:40   04:00   05:20   06:40   08:00   09:20   10:40   12:00   13:20   14:40   16:00   17:20   18:40   20:00   21:20   22:40   00:00   
-INFO: gfzrnx_ops.py - rinex_gnss_creation: Creating ASCII observation tabular output GALI1340-19O.obstab
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -f -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx/GALI/GALI1340-19O.obstab -tab_obs -satsys E
-INFO: gfzrnx_ops.py - rinex_gnss_creation: creating RINEX file GPSN1340.19O
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyO -fout /tmp/GPSN1340.19O -satsys G -f -chk -kv
-INFO: gfzrnx_ops.py - create_crux: creating crux-file /tmp/convbin.crux
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/GPSN1340.19O -f -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GPSN1340.19O -crux /tmp/convbin.crux
-INFO: gfzrnx_ops.py - rinex_gnss_creation: Creating ASCII SVs display GPSN1340-19O.prns
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -f -stk_epo 600 -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GPSN1340.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx/GPSN/GPSN1340-19O.prns
-INFO:  STT 20190514 00:00   01:20   02:40   04:00   05:20   06:40   08:00   09:20   10:40   12:00   13:20   14:40   16:00   17:20   18:40   20:00   21:20   22:40   00:00   
+INFO:  STT 20190415 00:00   01:20   02:40   04:00   05:20   06:40   08:00   09:20   10:40   12:00   13:20   14:40   16:00   17:20   18:40   20:00   21:20   22:40   00:00   
+INFO: gfzrnx_ops.py - create_tabular_observation: Creating observation tabular output GALI1050-19O.obstab
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -f -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GALI1050.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/gfzrnx/GALI/GALI1050-19O.obstab -tab_obs -satsys E
+INFO: gfzrnx_ops.py - gnss_rinex_creation: creating RINEX file GPSN1050.19O
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -finp /tmp/COMB_jnl4i1tg.obs -fout /tmp/GPSN1050.19O -satsys G -f -chk -kv
+INFO: gfzrnx_ops.py - create_crux: creating crux-file /tmp/gfzrnx_u2rwxiw5.crux
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -finp /tmp/GPSN1050.19O -f -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GPSN1050.19O -crux /tmp/gfzrnx_u2rwxiw5.crux
+INFO: gfzrnx_ops.py - create_svs_ascii_plot: Creating ASCII SVs display GPSN1050-19O.prns
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -f -stk_epo 600 -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GPSN1050.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/gfzrnx/GPSN/GPSN1050-19O.prns
+INFO:  STT 20190415 00:00   01:20   02:40   04:00   05:20   06:40   08:00   09:20   10:40   12:00   13:20   14:40   16:00   17:20   18:40   20:00   21:20   22:40   00:00   
 INFO:  STH            +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-INFO:  STE GPSN G G01 *   |   |   |   |   |   |   |   |   |   |  *|********   |   |   |   |   |   |   |   |   |   |   |   |   |***************************************| G01
-INFO:  STE GPSN G G02 **************************  |   |   |   |   |   |   |*****************************  |   |   |   |   |   |   |   |   |   |   |   |   |   |  *****| G02
-INFO:  STE GPSN G G03 **********  |   |   |   |   |   |   |   |   |   |   |   |   ********|   |   |   |   |   |   |   |   |   |   |  *********************************| G03
-INFO:  STE GPSN G G05 |   *************************************   |   |   |   |   |   |   |   ********************|   |   |   |   |   |   |   |   |   |   |   |   |   | G05
-INFO:  STE GPSN G G06 *********************   |   |   |   |   |   |   | ************************  |   |   |   |   |   |   |   |   |   |   |   |   |   |   ************| G06
-INFO:  STE GPSN G G07 **********************************  |   |   |   |   |   |   |   |   |   |   |   |   |   *********************   |   |   |   |   |   |   |   | **| G07
-INFO:  STE GPSN G G08 |   |   |   |   |   | ***************   |   |   |   |   |   |   |   |   |   |   |   |   | ***************************************   |   |   |   | G08
-INFO:  STE GPSN G G09 ****************************|   |   |   |   |   |   |   |   |   |   |   |   | ***********   |   |   |   |   |   |   |   |   |   | **************| G09
-INFO:  STE GPSN G G10 |   |   |   |   |   |   |   |   |  ************************ |   |   |   |   |   |   |   *********************************** |   |   |   |   |   | G10
-INFO:  STE GPSN G G11 |   |   |   |   |   |   |   |   |   ***** ****  |   |   |   |   |   |   |   |   |   |   |   |   |   |   ************************************|   | G11
-INFO:  STE GPSN G G12 |   |   |   |   |   |   |   |   |   | ******************************************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |***|   | G12
-INFO:  STE GPSN G G13 |   |   |  ******************************************   |   |   |   |   |   |   |   |   |   | **|********   |   |   |   |   |   |   |   |   |   | G13
-INFO:  STE GPSN G G14 |   |   |   |   |   |   |   |   |   |   |   |   |   ****************************|   |   |   |   |   |   |   | ****************************  |   | G14
-INFO:  STE GPSN G G15 |   |   |   |   |   **************************************  |   |   |   |   |   |   |   |   |****************   |   |   |   |   |   |   |   |   | G15
-INFO:  STE GPSN G G16 | *******************   |   |   |   |   |   |   |   |   |   |   |   |   |  *************************************|   |   |   |   |   |   |   |   | G16
-INFO:  STE GPSN G G17 *****   |   |   |   |   |   |   *****************************   |   |   |   |   |   |   |   |   |   |   |   |   |   |   |***********************| G17
-INFO:  STE GPSN G G18 |   |   |   |   |   |   |   |   |   |   |****** |   |   |   |   |   |   |   |   |   |   |   |   ******************************************* |   | G18
-INFO:  STE GPSN G G19 ******* |   |   |   |   |   |   |  ******************************   |   |   |   |   |   |   |   |   |   |   |   |   |   | **********************| G19
-INFO:  STE GPSN G G20 |   |   |   |   |   |   |   |*************************  |   |   |   |   |   |   |  **********************************   |   |   |   |   |   |   | G20
-INFO:  STE GPSN G G21 |   |   |   |   |  ******************   |   |   |   |   |   |   |   |   **************************************  |   |   |   |   |   |   |   |   | G21
-INFO:  STE GPSN G G22 *****   |   |   |   |   |   |   |   |   |   |   |   |   |*******|   |   |   |   |   |   |   |   |   |   |   ************************************| G22
-INFO:  STE GPSN G G23 ******************* |   |   |   |   |   |   |   |   |   |   |   |   |  **************** |   |   |   |   |   |   |   |   | **********************| G23
-INFO:  STE GPSN G G24 |   |   |   |   |   |   |   ******************************************* |   |   |   |   |   |   |   |   |   |   |   ******  |   |   |   |   |   | G24
-INFO:  STE GPSN G G25 |   |   |   |   |   |   |   |   |   |   |   | *******************************************   |   |   |   |   |   |   |   |   |   |   |   | ***** | G25
-INFO:  STE GPSN G G26 **************  |   |   |   |   |   |   |   |   |   |   |   |   |  ***************************************  |   |   |   |   |   |   |   |   |   | G26
-INFO:  STE GPSN G G27 |   |   |   |   |  ************ |   |   |   |   |   |   |   |   |   |   |   |   |****************************************** |   |   |   |   |   | G27
-INFO:  STE GPSN G G28 |   |   |   |   |********************************** |   |   |   |   |   |   |   |   |   |   |   |   |   |   |********************** |   |   |   | G28
-INFO:  STE GPSN G G29 |   **************  |   |   |   |   |   |   |   |   |  **************************************** |   |   |   |   |   |   |   |   |   |   |   |   | G29
-INFO:  STE GPSN G G30 |   | ************************************  |   |   |   |   |   |   |   |   |   |   |   |   |  **************** |   |   |   |   |   |   |   |   | G30
-INFO:  STE GPSN G G31 **  |   |   |   |   |   |   |   |   |   |   |   |   |   | ***********************************   |   |   |   |   |   |   |   |   ****************| G31
-INFO:  STE GPSN G G32 |   |   |   |   |   |   |   |   |   |   |   | *******************************   |   |   |   |   |   |   |   **************************  |   |   | G32
+INFO:  STE GPSN G G01 *************   |   |   |   |   |   |   |   |   |   |  **********   |   |   |   |   |   |   |   |   |   |   |   |   |***************************| G01
+INFO:  STE GPSN G G02 |   | ********************************  |   |   |   |   |   |   |*****************************  |   |   |   |   |   |   |   |   |   |   |   |   | G02
+INFO:  STE GPSN G G03 **********************  |   |   |   |   |   |   |   |   |   |   |   |  ******** |   |   |   |   |   |   |   |   |   |   |  *********************| G03
+INFO:  STE GPSN G G05 |   |   |   |  *************************************|   |   |   |   |   |   |   |   ********************|   |   |   |   |   |   |   |   |   |   | G05
+INFO:  STE GPSN G G06 |   *****************************   |   |   |   |   |   |   | ************************  |   |   |   |   |   |   |   |   |   |   |   |   |   |   | G06
+INFO:  STE GPSN G G07 |   |   | ************************************  |   |   |   |   |   |   |   |   |   |   |   |   |   *********************   |   |   |   |   |   | G07
+INFO:  STE GPSN G G08 |   |   |   |   |   |   |   |   | ***************   |   |   |   |   |   |   |   |   |   |   |   |   |****************************************   | G08
+INFO:  STE GPSN G G09 ****************************************|   |   |   |   |   |   |   |   |   |   |   |   | ***********   |   |   |   |   |   |   |   |   |   | **| G09
+INFO:  STE GPSN G G10 |   |   |   |   |   |   |   |   |   |   |   |  ***********************  |   |   |   |   |   |   |   *********************************** |   |   | G10
+INFO:  STE GPSN G G11 ********|   |   |   |   |   |   |   |   |   |   ***** ****  |   |   |   |   |   |   |   |   |   |   |   |   |   |   ****************************| G11
+INFO:  STE GPSN G G12 *********   |   |   |   |   |   |   |   |   |   | ******************************************|   |   |   |   |   |   |   |   |   |   |   |   |  *| G12
+INFO:  STE GPSN G G13 |   |   |   |   |   |  ******************************************   |   |   |   |   |   |   |   |   |   | **|********   |   |   |   |   |   |   | G13
+INFO:  STE GPSN G G14 *****   |   |   |   |   |   |   |   |   |   |   |   |   |   |   ****************************|   |   |   |   |   |   |   | **********************| G14
+INFO:  STE GPSN G G15 |   |   |   |   |   |   |   |   **************************************  |   |   |   |   |   |   |   |   |****************   |   |   |   |   |   | G15
+INFO:  STE GPSN G G16 |   |   |   | *******************   |   |   |   |   |   |   |   |   |   |   |   |   |  *************************************|   |   |   |   |   | G16
+INFO:  STE GPSN G G17 ****************|   |   |   |   |   |   |   ****************************|   |   |   |   |   |   |   |   |   |   |   |   |   |   |   ************| G17
+INFO:  STE GPSN G G18 ******* |   |   |   |   |   |   |   |   |   |   |   |****** |   |   |   |   |   |   |   |   |   |   |   |   ************************************| G18
+INFO:  STE GPSN G G19 ******************* |   |   |   |   |   |   |  ******************************   |   |   |   |   |   |   |   |   |   |   |   |   |   | **********| G19
+INFO:  STE GPSN G G20 |   |   |   |   |   |   |   |   |   |   |*************************  |   |   |   |   |   |   |  **********************************   |   |   |   | G20
+INFO:  STE GPSN G G21 |   |   |   |   |   |   |   |  ******************   |   |   |   |   |   |   |   |  ***************************************  |   |   |   |   |   | G21
+INFO:  STE GPSN G G22 *****************   |   |   |   |   |   |   |   |   |   |   |   |   |****** |   |   |   |   |   |   |   |   |   |   |   ************************| G22
+INFO:  STE GPSN G G23 ******************************* |   |   |   |   |   |   |   |   |   |   |   |   |  **************** |   |   |   |   |   |   |   |   | **********| G23
+INFO:  STE GPSN G G24 |   |   |   |   |   |   |   |   |   |   ******************************************* |   |   |   |   |   |   |   |   |   |   |   *****   |   |   | G24
+INFO:  STE GPSN G G25 |   |  **** |   |   |   |   |   |   |   |   |   |   |   |********************************************   |   |   |   |   |   |   |   |   |   |   | G25
+INFO:  STE GPSN G G26 |   |   |   **************  |   |   |   |   |   |   |   |   |   |   |   |   |  ***************************************  |   |   |   |   |   |   | G26
+INFO:  STE GPSN G G27 |   |   |   |   |   |   |   |  ************ |   |   |   |   |   |   |   |   |   |   |   |   |****************************************** |   |   | G27
+INFO:  STE GPSN G G28 |   |   |   |   |   |   |   *********************************** |   |   |   |   |   |   |   |   |   |   |   |   |   |   |********************** | G28
+INFO:  STE GPSN G G29 |   |   |   |   **************  |   |   |   |   |   |   |   |   | ***************************************** |   |   |   |   |   |   |   |   |   | G29
+INFO:  STE GPSN G G30 |   |   |   |   | ************************************  |   |   |   |   |   |   |   |   |   |   |   |   |  **************** |   |   |   |   |   | G30
+INFO:  STE GPSN G G31 **************  |   |   |   |   |   |   |   |   |   |   |   |   |   | ***********************************   |   |   |   |   |   |   |   |   ****| G31
+INFO:  STE GPSN G G32 **  |   |   |   |   |   |   |   |   |   |   |   |   |   |  ******************************   |   |   |   |   |   |   |   ************************| G32
 INFO:  STH            +---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+---+
-INFO:  STT 20190514 00:00   01:20   02:40   04:00   05:20   06:40   08:00   09:20   10:40   12:00   13:20   14:40   16:00   17:20   18:40   20:00   21:20   22:40   00:00   
-INFO: gfzrnx_ops.py - rinex_gnss_creation: Creating ASCII observation tabular output GPSN1340-19O.obstab
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -f -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GPSN1340.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx/GPSN/GPSN1340-19O.obstab -tab_obs -satsys G
-INFO: gfzrnx_ops.py - rinex_gnss_creation: creating RINEX file COMB1340.19O
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyO -fout /tmp/COMB1340.19O -satsys EG -f -chk -kv
-INFO: gfzrnx_ops.py - create_crux: creating crux-file /tmp/convbin.crux
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMB1340.19O -f -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/COMB1340.19O -crux /tmp/convbin.crux
-INFO: gfzrnx_ops.py - rinex_gnss_creation: creating RINEX file GALI1340.19E
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyP -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GALI1340.19E -satsys E -f -chk -kv
-INFO: gfzrnx_ops.py - rinex_gnss_creation: creating RINEX file GPSN1340.19N
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyP -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/GPSN1340.19N -satsys G -f -chk -kv
-INFO: gfzrnx_ops.py - rinex_gnss_creation: creating RINEX file COMB1340.19P
-INFO: amutils.py - run_subprocess: running /home/amuls/bin/gfzrnx -finp /tmp/COMBdoyS.yyP -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/COMB1340.19P -satsys EG -f -chk -kv
+INFO:  STT 20190415 00:00   01:20   02:40   04:00   05:20   06:40   08:00   09:20   10:40   12:00   13:20   14:40   16:00   17:20   18:40   20:00   21:20   22:40   00:00   
+INFO: gfzrnx_ops.py - create_tabular_observation: Creating observation tabular output GPSN1050-19O.obstab
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -f -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GPSN1050.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/gfzrnx/GPSN/GPSN1050-19O.obstab -tab_obs -satsys G
+INFO: gfzrnx_ops.py - gnss_rinex_creation: creating RINEX file COMB1050.19O
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -finp /tmp/COMB_jnl4i1tg.obs -fout /tmp/COMB1050.19O -satsys EG -f -chk -kv
+INFO: gfzrnx_ops.py - create_crux: creating crux-file /tmp/gfzrnx_trmngmx3.crux
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -finp /tmp/COMB1050.19O -f -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/COMB1050.19O -crux /tmp/gfzrnx_trmngmx3.crux
+INFO: gfzrnx_ops.py - gnss_rinex_creation: creating RINEX file GALI1050.19E
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -finp /tmp/COMB_9_5at0t8.nav -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GALI1050.19E -satsys E -f -chk -kv
+INFO: gfzrnx_ops.py - gnss_rinex_creation: creating RINEX file GPSN1050.19N
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -finp /tmp/COMB_9_5at0t8.nav -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GPSN1050.19N -satsys G -f -chk -kv
+INFO: gfzrnx_ops.py - gnss_rinex_creation: creating RINEX file COMB1050.19P
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -finp /tmp/COMB_9_5at0t8.nav -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/COMB1050.19P -satsys EG -f -chk -kv
+INFO: gfzrnx_ops.py - create_rnxobs_subfreq: Creating frequency specific RINEX observation GALI1050_E1.19O
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -f -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GALI1050.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GALI1050_E1.19O -obs_types 1 -satsys E
+ INFO: gfzrnx_ops.py - create_rnxobs_subfreq: Creating frequency specific RINEX observation GALI1050_E5.19O
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -f -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GALI1050.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GALI1050_E5.19O -obs_types 5 -satsys E
+INFO: gfzrnx_ops.py - create_rnxobs_subfreq: Creating frequency specific RINEX observation GPSN1050_G1.19O
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -f -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GPSN1050.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GPSN1050_G1.19O -obs_types 1 -satsys G
+INFO: gfzrnx_ops.py - create_rnxobs_subfreq: Creating frequency specific RINEX observation GPSN1050_G2.19O
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -f -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GPSN1050.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GPSN1050_G2.19O -obs_types 2 -satsys G
+INFO: gfzrnx_ops.py - create_rnxobs_subfreq: Creating frequency specific RINEX observation GPSN1050_G5.19O
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -f -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GPSN1050.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/GPSN1050_G5.19O -obs_types 5 -satsys G
+INFO: gfzrnx_ops.py - create_rnxobs_subfreq: Creating frequency specific RINEX observation COMB1050_M5.19O
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -f -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/COMB1050.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/COMB1050_M5.19O -obs_types 5 -satsys EG
+INFO: gfzrnx_ops.py - create_rnxobs_subfreq: Creating frequency specific RINEX observation COMB1050_M1.19O
+INFO: amutils.py - run_subprocess: running
+/home/amuls/bin/gfzrnx -f -finp /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/COMB1050.19O -fout /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/COMB1050_M1.19O -obs_types 1 -satsys EG
 INFO: pyconvbin.py - main: amc.dRTK =
 {
-    "rootDir": "/home/amuls/RxTURP/BEGPIOS/ASTX/19134",
-    "binFile": "SEPT1340.19_",
+    "rootDir": "/home/amuls/RxTURP/BEGPIOS/ASTX/19105",
+    "binFile": "SEPT1050.19_",
     "binType": "SBF",
-    "rinexDir": "/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134",
+    "rinexDir": "/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105",
     "ant_crds": [
         4023741.3045,
         309110.4584,
         4922723.1945
     ],
     "interval": 600,
-    "gfzrnxDir": "/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/gfzrnx",
+    "gfzrnxDir": "/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19105/gfzrnx",
     "bin": {
         "CONVBIN": "/usr/bin/convbin",
         "SBF2RIN": "/opt/Septentrio/RxTools/bin/sbf2rin",
@@ -437,9 +570,9 @@ INFO: pyconvbin.py - main: amc.dRTK =
     },
     "rnx": {
         "times": {
-            "DT": "2019-05-14 00:00:00",
+            "DT": "2019-04-15 00:00:00",
             "date": null,
-            "doy": 134,
+            "doy": 105,
             "year": 2019,
             "yy": 19
         },
@@ -473,11 +606,13 @@ INFO: pyconvbin.py - main: amc.dRTK =
                     "S5Q"
                 ],
                 "marker": "GALI",
-                "obsstat": "GALI1340-19O.obsstat",
-                "obs": "GALI1340.19O",
-                "prns": "GALI1340-19O.prns",
-                "obstab": "GALI1340-19O.obstab",
-                "nav": "GALI1340.19E"
+                "obsstat": "GALI1050-19O.obsstat",
+                "obs": "GALI1050.19O",
+                "prns": "GALI1050-19O.prns",
+                "obstab": "GALI1050-19O.obstab",
+                "nav": "GALI1050.19E",
+                "E1": "GALI1050_E1.19O",
+                "E5": "GALI1050_E5.19O"
             },
             "G": {
                 "name": "GPS NavSTAR",
@@ -514,11 +649,14 @@ INFO: pyconvbin.py - main: amc.dRTK =
                     "S5Q"
                 ],
                 "marker": "GPSN",
-                "obsstat": "GPSN1340-19O.obsstat",
-                "obs": "GPSN1340.19O",
-                "prns": "GPSN1340-19O.prns",
-                "obstab": "GPSN1340-19O.obstab",
-                "nav": "GPSN1340.19N"
+                "obsstat": "GPSN1050-19O.obsstat",
+                "obs": "GPSN1050.19O",
+                "prns": "GPSN1050-19O.prns",
+                "obstab": "GPSN1050-19O.obstab",
+                "nav": "GPSN1050.19N",
+                "G1": "GPSN1050_G1.19O",
+                "G2": "GPSN1050_G2.19O",
+                "G5": "GPSN1050_G5.19O"
             },
             "M": {
                 "name": "Combined EG",
@@ -555,8 +693,10 @@ INFO: pyconvbin.py - main: amc.dRTK =
                     "S5Q"
                 ],
                 "marker": "COMB",
-                "obs": "COMB1340.19O",
-                "nav": "COMB1340.19P"
+                "obs": "COMB1050.19O",
+                "nav": "COMB1050.19P",
+                "M5": "COMB1050_M5.19O",
+                "M1": "COMB1050_M1.19O"
             }
         },
         "marker": "SEPT"
@@ -566,29 +706,39 @@ INFO: pyconvbin.py - main: amc.dRTK =
 
 \normalsize
 
-Following directories and files are created:[^2]
+Following directories and files are created:
 
 \scriptsize 
 
 ```bash
-$ tree -hD /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/
-/home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/
---- [349M Apr 17 15:30]  COMB1340.19O
---- [718K Apr 17 15:30]  COMB1340.19P
---- [567K Apr 17 15:30]  GALI1340.19E
---- [ 94M Apr 17 15:23]  GALI1340.19O
---- [4.0K Apr 16 16:18]  gfzrnx
---- --- [4.0K Apr 17 15:24]  GALI
---- --- --- [1.5K Apr 17 15:22]  GALI1340-19O.obsstat
---- --- --- [111M Apr 17 15:24]  GALI1340-19O.obstab
---- --- --- [4.4K Apr 17 15:23]  GALI1340-19O.prns
---- --- [4.0K Apr 17 15:27]  GPSN
---- --- --- [3.8K Apr 17 15:22]  GPSN1340-19O.obsstat
---- --- --- [281M Apr 17 15:27]  GPSN1340-19O.obstab
---- --- --- [5.7K Apr 17 15:26]  GPSN1340-19O.prns
---- [152K Apr 17 15:30]  GPSN1340.19N
---- [259M Apr 17 15:26]  GPSN1340.19O
---- [3.8K Apr 17 15:30]  SEPT1340-19_.json
+$ [amuls:~/RxTURP/BEGPIOS/ASTX/rinex/19105] $ tree -hD 
+.
+--- [348M Apr 23 13:34]  COMB1050.19O
+--- [979K Apr 23 13:34]  COMB1050.19P
+--- [137M Apr 23 13:38]  COMB1050_M1.19O
+--- [ 69M Apr 23 13:37]  COMB1050_M5.19O
+--- [824K Apr 23 13:34]  GALI1050.19E
+--- [ 92M Apr 23 13:27]  GALI1050.19O
+--- [ 48M Apr 23 13:34]  GALI1050_E1.19O
+--- [ 46M Apr 23 13:35]  GALI1050_E5.19O
+--- [4.0K Apr 23 13:26]  gfzrnx
+--- --- [4.0K Apr 23 13:28]  GALI
+--- --- --- [1.4K Apr 23 13:26]  GALI1050-19O.obsstat
+--- --- --- [108M Apr 23 13:28]  GALI1050-19O.obstab
+--- --- --- [4.2K Apr 23 13:28]  GALI1050-19O.prns
+--- --- [4.0K Apr 23 13:31]  GPSN
+--- --- --- [3.8K Apr 23 13:26]  GPSN1050-19O.obsstat
+--- --- --- [282M Apr 23 13:31]  GPSN1050-19O.obstab
+--- --- --- [5.7K Apr 23 13:31]  GPSN1050-19O.prns
+--- [156K Apr 23 13:34]  GPSN1050.19N
+--- [259M Apr 23 13:30]  GPSN1050.19O
+--- [ 92M Apr 23 13:35]  GPSN1050_G1.19O
+--- [121M Apr 23 13:36]  GPSN1050_G2.19O
+--- [ 26M Apr 23 13:36]  GPSN1050_G5.19O
+--- [4.1K Apr 23 13:38]  SEPT1050-19_.json
+
+3 directories, 20 files
+
 ```
 
 \normalsize
@@ -596,8 +746,6 @@ $ tree -hD /home/amuls/RxTURP/BEGPIOS/ASTX/rinex/19134/
 ### Remark
 
 The conversion for `u-Blox` receivers is still to be done.
-
-[^2]: Depending on the selected `GNSS`, the station name is `GALI` (Galileo only), `GPSS` (GPS only) or `COMB` (Galileo and GPS combined) for the free available signals, while for PRS the station name is `GPRS`
 
 
 ## __`pyftpposnav.py`__
