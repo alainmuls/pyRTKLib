@@ -1,10 +1,9 @@
 import sys
 import os
-import tempfile
 from datetime import datetime
 import logging
 from termcolor import colored
-import json
+import pandas as pd
 
 import am_config as amc
 from ampyutils import amutils
@@ -12,36 +11,22 @@ from ampyutils import amutils
 __author__ = 'amuls'
 
 
-def rnxobs_header_info(logger: logging.Logger):
+def read_obs_tabular(gnss: str, logger: logging.Logger) -> pd.DataFrame:
     """
-    rnxobs_header_info extracts the basic hedaer info from the rinex file
-    and stores it in a JSON structure
+    read_obs_tabular reads the observation data into a dataframe
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    rnx_obs_file = os.path.join(amc.dRTK['rnx_dir'], amc.dRTK['rnx_obs'])
-    json_file = os.path.join(tempfile.gettempdir(), tempfile.NamedTemporaryFile(prefix="rnxobs_", suffix=".json").name)
+    # check that th erequested OBSTAB file is present
+    gnss_obstab = os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][gnss]['marker'], amc.dRTK['rnx']['gnss'][gnss]['obstab'])
 
-    args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', rnx_obs_file, '-meta', 'basic:json', '-fout', json_file, '-f']
-    logger.info('{func:s}: extracting RINEX observation header from {rnx_obs:s}'.format(rnx_obs=rnx_obs_file, func=cFuncName))
-    amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+    # df = pd.read_csv('gnss_obstab')
+    logger.info('{func:s}: reading observation tabular file {obstab:s}'.format(obstab=colored(gnss_obstab, 'green'), func=cFuncName))
+    try:
+        df = pd.read_csv(gnss_obstab, parse_dates=[['DATE', 'TIME']], delim_whitespace=True)
+    except FileNotFoundError as e:
+        print('{func:s}: Error = {err!s}'.format(err=e, func=cFuncName))
+        sys.exit(amc.E_FILE_NOT_EXIST)
 
-    with open(json_file, 'r') as f:
-        dObsHdr = json.load(f)
+    return df
 
-    # collect time info
-    dTimes = {}
-    dTimes['DT'] = datetime.strptime(dObsHdr['data']['epoch']['first'][:-1], '%Y %m %d %H %M %S.%f')
-    dTimes['date'] = dTimes['DT'].date()
-    dTimes['doy'] = dTimes['DT'].timetuple().tm_yday
-    dTimes['year'] = dTimes['DT'].timetuple().tm_year
-    dTimes['yy'] = dTimes['year'] % 100
-
-    # keep this info
-    amc.dRTK['DT'] = dTimes
-
-    logger.info('{func:s}: dObsHdr =\n{json!s}'.format(func=cFuncName, json=json.dumps(dObsHdr, sort_keys=False, indent=4, default=amutils.DT_convertor)))
-
-    print(dObsHdr['site']['name'])
-    # remove the temporary json file
-    os.remove(json_file)

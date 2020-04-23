@@ -5,10 +5,12 @@ import os
 import argparse
 from termcolor import colored
 import logging
+import json
+import glob
 
 import am_config as amc
 from gfzrnx import rnxobs_tabular
-from ampyutils import location
+from ampyutils import location, amutils
 
 __author__ = 'amuls'
 
@@ -33,44 +35,46 @@ def treatCmdOpts(argv: list):
 
     # create the parser for command line arguments
     parser = argparse.ArgumentParser(description=helpTxt)
-    parser.add_argument('-d', '--dir', help='Directory for RINEX output (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
-    parser.add_argument('-f', '--file', help='RINEX observation file', required=True, type=str)
-
+    parser.add_argument('-d', '--dir', help='Directory with RINEX files (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
+    parser.add_argument('-g', '--gnss', help='Which GNSS observation tabular to process', choices=['E', 'G'], required=True, type=str)
     parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], action=logging_action)
 
     # drop argv[0]
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.file, args.logging
+    return args.dir, args.gnss, args.logging
 
 
-def checkValidityArgs(logger: logging.Logger) -> bool:
+def checkValidityArgs(dir_rnx: str, logger: logging.Logger) -> bool:
     """
     checks for existence of dirs/files
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     # change to baseDir, everything is relative to this directory
-    logger.info('{func:s}: check existence of rinex dir {rnxd:s}'.format(func=cFuncName, rnxd=amc.dRTK['rnx_dir']))
-    amc.dRTK['rnx_dir'] = os.path.expanduser(amc.dRTK['rnx_dir'])
-    if not os.path.exists(amc.dRTK['rnx_dir']):
-        logger.error('{func:s}   !!! Dir {basedir:s} does not exist.'.format(func=cFuncName, basedir=amc.dRTK['rnx_dir']))
+    logger.info('{func:s}: check existence of RINEX dir {rnxd:s}'.format(rnxd=dir_rnx, func=cFuncName))
+    dir_rnx = os.path.expanduser(dir_rnx)
+    if not os.path.exists(dir_rnx):
+        logger.error('{func:s}   !!! Dir {basedir:s} does not exist.'.format(basedir=dir_rnx, func=cFuncName))
         return amc.E_INVALID_ARGS
 
-    # make the coplete filename by adding to rnx_dir and check existence of RINEX obs file to convert
-    logger.info('{func:s}: check existence of RINEX observation file {rnx_obs:s}'.format(func=cFuncName, rnx_obs=os.path.join(amc.dRTK['rnx_dir'], amc.dRTK['rnx_obs'])))
-    if not os.access(os.path.join(amc.dRTK['rnx_dir'], amc.dRTK['rnx_obs']), os.R_OK):
-        logger.error('{func:s}   !!! RINEX observation file {rnx_obs:s} not accessible.'.format(func=cFuncName, rnx_obs=amc.dRTK['rnx_obs']))
-        return amc.E_FILE_NOT_EXIST
-
-    # check existence of rinexdir and create if needed
-    logger.info('{func:s}: check existence of gfzrnx_dir {gfzrnx:s}'.format(func=cFuncName, gfzrnx=amc.dRTK['gfzrnx_dir']))
-    if not os.path.exists(amc.dRTK['gfzrnx_dir']):
-        logger.error('{func:s}   !!! Dir {basedir:s} does not exist.'.format(func=cFuncName, basedir=amc.dRTK['gfzrnx_dir']))
-        return amc.E_DIR_NOT_EXIST
-
     return amc.E_SUCCESS
+
+
+def read_json(dir_rnx: str, logger: logging.Logger):
+    """
+    read_json reads the logged json file that was processed by pyconvbin
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    # read the JSON file created by processing pyconvbin.py
+    json_name = glob.glob(os.path.join(dir_rnx, '*.json'))[0]
+
+    with open(json_name) as f:
+        amc.dRTK = json.load(f)
+
+    pass
 
 
 def main(argv):
@@ -82,31 +86,32 @@ def main(argv):
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     # treat command line options
-    rnx_dir, rnx_obs, logLevels = treatCmdOpts(argv)
+    rnx_dir, gnss, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger = amc.createLoggers(os.path.basename(__file__), dir=rnx_dir, logLevels=logLevels)
 
-    # store cli parameters
-    amc.dRTK = {}
-    amc.dRTK['rnx_dir'] = rnx_dir
-    amc.dRTK['rnx_obs'] = rnx_obs
-    amc.dRTK['gfzrnx_dir'] = os.path.join(rnx_dir, 'gfzrnx')
-
-    logger.info('{func:s}: arguments processed: amc.dRTK = {drtk!s}'.format(func=cFuncName, drtk=amc.dRTK))
+    logger.info('{func:s}: arguments processed: {args!s}'.format(args=rnx_dir, func=cFuncName))
 
     # check validity of passed arguments
-    retCode = checkValidityArgs(logger=logger)
+    retCode = checkValidityArgs(dir_rnx=rnx_dir, logger=logger)
     if retCode != amc.E_SUCCESS:
-        logger.error('{func:s}: Program exits with code {error:s}'.format(func=cFuncName, error=colored('{!s}'.format(retCode), 'red')))
+        logger.error('{func:s}: Program exits with code {error:s}'.format(error=colored('{!s}'.format(retCode), 'red'), func=cFuncName))
         sys.exit(retCode)
 
-    # locate the conversion programs SBF2RIN and CONVBIN
-    amc.dRTK['bin'] = {}
-    amc.dRTK['bin']['GFZRNX'] = location.locateProg('gfzrnx', logger)
+    # store parameters
+    amc.dRTK = {}
+    # get the information from pyconvbin created json file
+    read_json(dir_rnx=rnx_dir, logger=logger)
 
-    # get the header info from the observation file
-    rnxobs_tabular.rnxobs_header_info(logger=logger)
+    # load the requested OBSTAB file into a pandas dataframe
+    df_obs = rnxobs_tabular.read_obs_tabular(gnss=gnss, logger=logger)
+    # get unique list of PRNs in dataframe
+    prn_lst = sorted(df_obs['PRN'].unique())
+    print(prn_lst)
+
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs, dfName='df_obs')
+    # logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor), func=cFuncName))
 
 
 if __name__ == "__main__":  # Only run if this file is called directly

@@ -301,7 +301,6 @@ def main(argv):
     logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
     # store the json structure
     jsonName = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['binFile'].replace('.', '-') + '.json')
-    print('jsonName {!s}'.format(jsonName))
     with open(jsonName, 'w') as f:
         json.dump(amc.dRTK, f, ensure_ascii=False, indent=4, default=amutils.DT_convertor)
 
