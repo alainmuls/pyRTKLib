@@ -151,6 +151,8 @@ def logHeadTailDataFrame(logger: logging.Logger, callerName: str, df: DataFrame,
     """
     # cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
+    print('{func:s}: dataframe {dfname:s} dtypes\n{dtypes!s}'.format(dtypes=df.dtypes, dfname=colored(dfName, 'green'), func=callerName))
+
     if df.shape[0] <= (head + tail):
         logger.info('{func:s}: dataframe {dfname:s} (#{shape:d})\n{df:s}'.format(func=callerName, dfname=colored(dfName, 'green'), shape=df.shape[0], df=df.to_string(index=index)))
     else:

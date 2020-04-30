@@ -7,10 +7,11 @@ from termcolor import colored
 import logging
 import json
 import glob
+import numpy as np
 
 import am_config as amc
 from gfzrnx import rnxobs_tabular
-from ampyutils import location, amutils
+from ampyutils import  amutils
 
 __author__ = 'amuls'
 
@@ -22,6 +23,13 @@ class logging_action(argparse.Action):
             if log_action not in choices:
                 raise argparse.ArgumentError(self, "log_actions must be in {!s}".format(choices))
         setattr(namespace, self.dest, log_actions)
+
+
+class multiplier_action(argparse.Action):
+    def __call__(self, parser, namespace, multiplier, option_string=None):
+        if not 1 <= int(multiplier) <= 60:
+            raise argparse.ArgumentError(self, "multiplier must be in 1..60 times nominal observation interval")
+        setattr(namespace, self.dest, multiplier)
 
 
 def treatCmdOpts(argv: list):
@@ -37,13 +45,15 @@ def treatCmdOpts(argv: list):
     parser = argparse.ArgumentParser(description=helpTxt)
     parser.add_argument('-d', '--dir', help='Directory with RINEX files (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
     parser.add_argument('-g', '--gnss', help='Which GNSS observation tabular to process', choices=['E', 'G'], required=True, type=str)
+    parser.add_argument('-m', '--multiplier', help='multiplier of nominal interval for gap detection', default=10, type=int, action=multiplier_action)
+
     parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], action=logging_action)
 
     # drop argv[0]
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.gnss, args.logging
+    return args.dir, args.gnss, args.multiplier, args.logging
 
 
 def checkValidityArgs(dir_rnx: str, logger: logging.Logger) -> bool:
@@ -86,7 +96,7 @@ def main(argv):
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     # treat command line options
-    rnx_dir, gnss, logLevels = treatCmdOpts(argv)
+    rnx_dir, gnss, multiplier, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger = amc.createLoggers(os.path.basename(__file__), dir=rnx_dir, logLevels=logLevels)
@@ -106,12 +116,31 @@ def main(argv):
 
     # load the requested OBSTAB file into a pandas dataframe
     df_obs = rnxobs_tabular.read_obs_tabular(gnss=gnss, logger=logger)
-    # get unique list of PRNs in dataframe
-    prn_lst = sorted(df_obs['PRN'].unique())
-    print(prn_lst)
+    df_obs['gap'] = np.nan
 
     amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs, dfName='df_obs')
+    # get unique list of PRNs in dataframe
+    prn_lst = sorted(df_obs['PRN'].unique())
+    # find rise & set times for each SV and store into list lst_rise and lst_set
+    lst_rise = []
+    lst_set = []
+    for prn in prn_lst:
+        l1, l2 = rnxobs_tabular.rise_set_times(prn=prn, df=df_obs, nomint_multi=multiplier, logger=logger)
+        print(l1)
+        print(l2)
+
+        lst_rise.append([prn, l1])
+        lst_set.append([prn, l2])
+
+    print(lst_rise)
+    print(lst_set)
+
+    # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs, dfName='df_obs', head=50)
+    # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs[(df_obs['gap'] > 1.) | (df_obs['gap'].isna())], dfName='df_obs', head=50)
+
+
     # logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor), func=cFuncName))
+
 
 
 if __name__ == "__main__":  # Only run if this file is called directly
