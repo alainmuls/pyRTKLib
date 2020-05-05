@@ -54,6 +54,21 @@ def plot_rise_set_times(df_dt: pd.DataFrame, df_idx_rs: pd.DataFrame, logger: lo
     plt.xticks(rotation=30)
 
     # format the y-ticks to represent the PRN number
-    plt.yticks(np.arange(0, 37))
+    plt.yticks(np.arange(0, 36))
+    print(np.arange(0, 36))
+    print(type(np.arange(0, 36)))
+    prn_ticks = [''] * 36
+
+    # get list of observed PRN numbers (without satsyst letter)
+    prn_nrs = [int(prn[1:]) for prn in df_idx_rs.index]
+    print(prn_nrs)
+
+    for prn_nr, prn_txt in zip(prn_nrs, df_idx_rs.index):
+        print('{:2d} = {:s}'.format(prn_nr, prn_txt))
+
+        prn_ticks[prn_nr - 1] = prn_txt
+    print(prn_ticks)
+
+    ax.set_yticklabels(prn_ticks)
 
     plt.show(block=True)
