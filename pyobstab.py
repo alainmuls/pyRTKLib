@@ -8,10 +8,14 @@ import logging
 import json
 import glob
 import numpy as np
+from shutil import copyfile
+from tabulate import tabulate
+import pandas as pd
 
 import am_config as amc
 from gfzrnx import rnxobs_tabular
 from ampyutils import  amutils
+from plot import plot_obstab
 
 __author__ = 'amuls'
 
@@ -99,7 +103,7 @@ def main(argv):
     rnx_dir, gnss, multiplier, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
-    logger = amc.createLoggers(os.path.basename(__file__), dir=rnx_dir, logLevels=logLevels)
+    logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=rnx_dir, logLevels=logLevels)
 
     logger.info('{func:s}: arguments processed: {args!s}'.format(args=rnx_dir, func=cFuncName))
 
@@ -121,19 +125,25 @@ def main(argv):
     amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs, dfName='df_obs')
     # get unique list of PRNs in dataframe
     prn_lst = sorted(df_obs['PRN'].unique())
-    # find rise & set times for each SV and store into list lst_rise and lst_set
-    lst_rise = []
-    lst_set = []
+    # find rise & set times for each SV and store into list lst_rise_set and lst_set
+    lst_rise_set = []
     for prn in prn_lst:
-        l1, l2 = rnxobs_tabular.rise_set_times(prn=prn, df=df_obs, nomint_multi=multiplier, logger=logger)
-        print(l1)
-        print(l2)
+        lst_rise, lst_set = rnxobs_tabular.rise_set_times(prn=prn, df_obstab=df_obs, nomint_multi=multiplier, logger=logger)
 
-        lst_rise.append([prn, l1])
-        lst_set.append([prn, l2])
+        # check if as many rise and set DT found
+        if len(lst_rise) == len(lst_set):
+            lst_rise_set.append([lst_rise, lst_set])
 
-    print(lst_rise)
-    print(lst_set)
+    # test to import in  dataframe
+    df_rise_set = pd.DataFrame(lst_rise_set, columns=['idx_rise', 'idx_set'], index=prn_lst)
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_rise_set, dfName='df_rise_set')
+
+    # write to csv file
+    csvName = os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][gnss]['marker'], 'rise-set-idx.csv')
+    df_rise_set.to_csv(csvName, index=None, header=True)
+
+    # plot the rise-set
+    plot_obstab.plot_rise_set_times(df_dt=df_obs['DATE_TIME'], df_idx_rs=df_rise_set, logger=logger, showplot=True)
 
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs, dfName='df_obs', head=50)
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs[(df_obs['gap'] > 1.) | (df_obs['gap'].isna())], dfName='df_obs', head=50)
@@ -141,6 +151,9 @@ def main(argv):
 
     # logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor), func=cFuncName))
 
+    # copy temp log file to the YYDOY directory
+    copyfile(log_name, os.path.join(os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][gnss]['marker']), 'pyobstab.log'))
+    os.remove(log_name)
 
 
 if __name__ == "__main__":  # Only run if this file is called directly
