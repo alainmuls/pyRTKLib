@@ -8,6 +8,7 @@ import json
 from json import encoder
 import logging
 import tempfile
+from shutil import copyfile
 
 from ampyutils import amutils, location
 import am_config as amc
@@ -260,7 +261,7 @@ def main(argv):
     rootDir, binFile, binType, rinexDir, crd_cart, interval, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
-    logger = amc.createLoggers(os.path.basename(__file__), dir=rootDir, logLevels=logLevels)
+    logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=rootDir, logLevels=logLevels)
 
     # store cli parameters
     amc.dRTK = {}
@@ -285,6 +286,8 @@ def main(argv):
     amc.dRTK['bin']['CONVBIN'] = location.locateProg('convbin', logger)
     amc.dRTK['bin']['SBF2RIN'] = location.locateProg('sbf2rin', logger)
     amc.dRTK['bin']['GFZRNX'] = location.locateProg('gfzrnx', logger)
+    amc.dRTK['bin']['RNX2CRZ'] = location.locateProg('rnx2crz', logger)
+    amc.dRTK['bin']['COMPRESS'] = location.locateProg('compress', logger)
 
     # convert binary file to rinex
     logger.info('{func:s}: convert binary file to rinex'.format(func=cFuncName))
@@ -294,6 +297,7 @@ def main(argv):
         gfzrnx_ops.rnxobs_statistics_file(dTmpRnx=dRnxTmp, logger=logger)
         gfzrnx_ops.gnss_rinex_creation(dTmpRnx=dRnxTmp, logger=logger)
         gfzrnx_ops.create_rnxobs_subfreq(logger=logger)
+        gfzrnx_ops.compress_rinex_obsnav(logger=logger)
     else:
         ubx2rinex(logger=logger)
 
@@ -307,6 +311,10 @@ def main(argv):
     # remove the temporar files
     for file in dRnxTmp.values():
         os.remove(file)
+
+    # copy temp log file to the YYDOY directory
+    copyfile(log_name, os.path.join(amc.dRTK['rinexDir'], 'pyconvbin.log'))
+    os.remove(log_name)
 
 
 if __name__ == "__main__":  # Only run if this file is called directly

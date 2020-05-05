@@ -3,6 +3,8 @@ import os
 import io
 import pandas as pd
 import inspect
+import tempfile
+from typing import Tuple
 
 # global used variables by passing as module
 dRTK = {}  # contains settings maily put by CLI arguments
@@ -46,15 +48,17 @@ E_OSERROR = 10
 E_FAILURE = 99
 
 
-def createLoggers(baseName: str, dir=dir, logLevels: str = ['INFO', 'DEBUG']) -> logging.Logger:
+def createLoggers(baseName: str, dir=dir, logLevels: str = ['INFO', 'DEBUG']) -> Tuple[logging.Logger, str]:
     """
-    create logging for python
+    create logging for python and returns temporary file name
     """
     pyLogger = logging.getLogger(os.path.splitext(baseName)[0])
     pyLogger.setLevel(level=logging.DEBUG)
 
     # create file handler which logs even debug messages
-    fh = logging.FileHandler('{:s}.log'.format(os.path.splitext(baseName)[0]), mode='w')
+    tmp_log_name = os.path.join(tempfile.gettempdir(), tempfile.NamedTemporaryFile(suffix=".log").name)
+    fh = logging.FileHandler('{:s}'.format(tmp_log_name), mode='w')
+
     fh.setLevel(dLogLevel[logLevels[1]])
 
     # create console handler with a higher log level
@@ -70,7 +74,7 @@ def createLoggers(baseName: str, dir=dir, logLevels: str = ['INFO', 'DEBUG']) ->
     pyLogger.addHandler(fh)
     pyLogger.addHandler(ch)
 
-    return pyLogger
+    return pyLogger, tmp_log_name
 
 
 def logDataframeInfo(df: pd.DataFrame, dfName: str, callerName: str, logger: logging.Logger):

@@ -2,7 +2,7 @@
 
 usage()
 {
-    echo "usage: $0 -v pyenv -b git-bracnh -s startDOY -e endDOY -y YYYY -r RxType [-h]"
+    echo "usage: $0 -v pyenv -b git-branch -s startDOY -e endDOY -y YYYY -r RxType [-h]"
 }
 
 if [ $# -ne 12 ]; then

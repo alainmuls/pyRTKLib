@@ -152,6 +152,7 @@ def gnss_rinex_creation(dTmpRnx: dict, logger: logging.Logger):
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
+
     for rnx_type in ('obs', 'nav'):
         # create the corresponding RINEX Obs/Nav file for each individual satellite system
         for _, satsys in enumerate(amc.dRTK['rnx']['gnss']['select']):
@@ -300,10 +301,50 @@ def create_rnxobs_subfreq(logger: logging.Logger):
             # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
             args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys]['obs']), '-fout', os.path.join(amc.dRTK['rinexDir'], obs_sysfrq), '-obs_types', freq, '-satsys', amc.dRTK['rnx']['gnss'][satsys]['satsys']]
 
-            logger.info('{func:s}: Creating frequency specific RINEX observation {rnx:s}'.format(rnx=obs_sysfrq, func=cFuncName))
+            logger.info('{func:s}: Creating frequency specific RINEX observation {rnx:s}'.format(rnx=colored(obs_sysfrq, 'green'), func=cFuncName))
 
             # run the program
             amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
 
+            # compress the obtained RINEX file using rnx2crz with options -d (delete original) -f (overwrite)
+            obs_sysfreq_cmp = '{obs:s}D.Z'.format(obs=obs_sysfrq[:-1])
+            args4RNX2CRZ = [amc.dRTK['bin']['RNX2CRZ'], '-f', '-d', os.path.join(amc.dRTK['rinexDir'], obs_sysfrq)]
+
+            logger.info('{func:s}: Compressing frequency specific RINEX observation {rnx:s}'.format(rnx=colored(obs_sysfreq_cmp, 'green'), func=cFuncName))
+
+            # run the program
+            amutils.run_subprocess(sub_proc=args4RNX2CRZ, logger=logger)
+            logger.info('\n')
             # store its name in dict
-            amc.dRTK['rnx']['gnss'][satsys][satsysfreq] = obs_sysfrq
+            amc.dRTK['rnx']['gnss'][satsys]['obs-{freq:s}'.format(freq=satsysfreq)] = obs_sysfreq_cmp
+
+
+def compress_rinex_obsnav(logger: logging.Logger):
+    """
+    compress_rinex_obsnav compresses using Hatanaka & UNIX compress the observation file, while using 'gzip' for navigation full files
+    """
+    # compress also the full observation file
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    for _, satsys in enumerate(amc.dRTK['rnx']['gnss']['select']):
+        obs_cmp = '{obs:s}D.Z'.format(obs=amc.dRTK['rnx']['gnss'][satsys]['obs'][:-1])
+        args4RNX2CRZ = [amc.dRTK['bin']['RNX2CRZ'], '-f', '-d', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys]['obs'])]
+
+        logger.info('{func:s}: Compressing RINEX observation {rnx:s}'.format(rnx=colored(obs_cmp, 'green'), func=cFuncName))
+
+        # run the program
+        amutils.run_subprocess(sub_proc=args4RNX2CRZ, logger=logger)
+        logger.info('\n')
+        # store its name in dict
+        amc.dRTK['rnx']['gnss'][satsys]['obs'] = obs_cmp
+
+        # compress the full navigation file
+        nav_cmp = '{nav:s}.Z'.format(nav=amc.dRTK['rnx']['gnss'][satsys]['nav'])
+        args4COMPRESS = [amc.dRTK['bin']['COMPRESS'], '-f', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys]['nav'])]
+
+        logger.info('{func:s}: Compressing RINEX observation {rnx:s}'.format(rnx=colored(nav_cmp, 'green'), func=cFuncName))
+
+        # run the program
+        amutils.run_subprocess(sub_proc=args4COMPRESS, logger=logger)
+        # store its name in dict
+        amc.dRTK['rnx']['gnss'][satsys]['nav'] = nav_cmp

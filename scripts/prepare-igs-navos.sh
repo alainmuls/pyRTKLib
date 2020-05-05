@@ -2,7 +2,7 @@
 
 usage()
 {
-    echo "usage: $0 -v pyenv -s startDOY -e endDOY -y YYYY -r RxType [-h]"
+    echo "usage: $0 -v pyenv -b git-branch -s startDOY -e endDOY -y YYYY [-h]"
 }
 
 if [ $# -ne 10 ]; then
@@ -15,14 +15,14 @@ do
     case $1 in
 		-v)	shift
         	PYVENV=$1 ;;
+        -b) shift
+			BRANCH=$1;;
 		-s)	shift
         	STDOY=$1 ;;
         -e) shift
 			ENDOY=$1 ;;
     	-y) shift
 			YYYY=$1 ;;
-        -r) shift
-			RXTYPE=$1 ;;
         *)  usage
             exit 1
     esac
@@ -40,7 +40,7 @@ do
 	YYDOY=${YY}${DOY}
 	# printf ${YY}' '${DOY}' '${YYDOY}
 
-	DIRIGS=${RXTURPROOT}/${RXTYPE}/igs/
+	DIRIGS=${RXTURPROOT}/igs/
 	cd ${DIRIGS}
 
 	printf '\nDownloading OS files for '${YYDOY}'\n'
