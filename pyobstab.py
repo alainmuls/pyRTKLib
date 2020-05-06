@@ -143,13 +143,12 @@ def main(argv):
     df_rise_set.to_csv(csvName, index=None, header=True)
 
     # plot the rise-set
-    plot_obstab.plot_rise_set_times(df_dt=df_obs['DATE_TIME'], df_idx_rs=df_rise_set, logger=logger, showplot=True)
+    plot_obstab.plot_rise_set_times(gnss=gnss, df_dt=df_obs['DATE_TIME'], df_idx_rs=df_rise_set, logger=logger, showplot=True)
 
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs, dfName='df_obs', head=50)
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs[(df_obs['gap'] > 1.) | (df_obs['gap'].isna())], dfName='df_obs', head=50)
 
-
-    # logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor), func=cFuncName))
+    logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor), func=cFuncName))
 
     # copy temp log file to the YYDOY directory
     copyfile(log_name, os.path.join(os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][gnss]['marker']), 'pyobstab.log'))
