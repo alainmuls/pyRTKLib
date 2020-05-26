@@ -7,6 +7,7 @@ from termcolor import colored
 import json
 from json import encoder
 import logging
+from shutil import copyfile
 
 import am_config as amc
 from ampyutils import location, amutils, exeprogram
@@ -121,7 +122,7 @@ def main(argv):
     amc.dRTK['local']['root'], amc.dRTK['ftp']['server'], dDate['year'], dDate['daynr'], overwrite, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
-    logger = amc.createLoggers(os.path.basename(__file__), dir=amc.dRTK['local']['root'], logLevels=logLevels)
+    logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=amc.dRTK['local']['root'], logLevels=logLevels)
 
     # get the YY and DOY values as string
     dDate['YY'] = dDate['year'][2:]
@@ -135,6 +136,10 @@ def main(argv):
 
     # report to the user
     logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
+
+    # copy temp log file to the YYDOY directory
+    copyfile(log_name, os.path.join(amc.dRTK['local']['dir'], 'pyftposnav.log'))
+    os.remove(log_name)
 
 
 if __name__ == "__main__":  # Only run if this file is called directly

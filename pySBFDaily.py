@@ -6,6 +6,7 @@ import sys
 import glob
 import shutil
 from termcolor import colored
+from shutil import copyfile
 
 import am_config as amc
 
@@ -54,7 +55,7 @@ def main(argv):
     dirSBF, overwrite, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
-    logger = amc.createLoggers(os.path.basename(__file__), dir=dirSBF, logLevels=logLevels)
+    logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=dirSBF, logLevels=logLevels)
 
     # change to the directory dirSBF if it exists
     workDir = os.getcwd()
@@ -105,6 +106,10 @@ def main(argv):
             logger.info('{func:s}: reusing daily SBF file {daily:s}'.format(func=cFuncName, daily=colored(dailySBF, 'green')))
     else:
         logger.info('{func:s}: No SBF files found with syntax STATDOYS.YY_'.format(func=cFuncName))
+
+    # copy temp log file to the YYDOY directory
+    copyfile(log_name, os.path.join(workDir, 'pysbfdaily.log'))
+    os.remove(log_name)
 
 
 if __name__ == "__main__":

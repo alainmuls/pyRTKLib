@@ -9,13 +9,13 @@ import json
 import glob
 import numpy as np
 from shutil import copyfile
-from tabulate import tabulate
 import pandas as pd
 
 import am_config as amc
 from gfzrnx import rnxobs_tabular
-from ampyutils import  amutils
+from ampyutils import amutils
 from plot import plot_obstab
+from tle import tle_parser
 
 __author__ = 'amuls'
 
@@ -80,7 +80,7 @@ def read_json(dir_rnx: str, logger: logging.Logger):
     """
     read_json reads the logged json file that was processed by pyconvbin
     """
-    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+    # cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     # read the JSON file created by processing pyconvbin.py
     json_name = glob.glob(os.path.join(dir_rnx, '*.json'))[0]
@@ -125,6 +125,19 @@ def main(argv):
     amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs, dfName='df_obs')
     # get unique list of PRNs in dataframe
     prn_lst = sorted(df_obs['PRN'].unique())
+    print(prn_lst)
+
+    logger.info('{func:s}; getting corresponding NORAD info'.format(func=cFuncName))
+
+    # read the files galileo-NORAD-PRN.t and gps-ops-NORAD-PRN.t
+    dfNORAD = tle_parser.read_norad2prn(logger=logger)
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=dfNORAD, dfName='dfNORAD')
+
+    # get the corresponding NORAD nrs for the given PRNs
+    dNORADs = tle_parser.get_norad_numbers(prns=prn_lst, dfNorad=dfNORAD, logger=logger)
+
+
+    sys.exit(6)
     # find rise & set times for each SV and store into list lst_rise_set and lst_set
     lst_rise_set = []
     for prn in prn_lst:
