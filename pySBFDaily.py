@@ -108,11 +108,7 @@ def main(argv):
         logger.info('{func:s}: No SBF files found with syntax STATDOYS.YY_'.format(func=cFuncName))
 
     # copy temp log file to the YYDOY directory
-<<<<<<< HEAD
     copyfile(log_name, os.path.join(workDir, 'pysbfdaily.log'))
-=======
-    copyfile(log_name, os.path.join(dirSBF, 'pySBFDaily.log'))
->>>>>>> origin/master
     os.remove(log_name)
 
 
