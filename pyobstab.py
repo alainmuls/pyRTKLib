@@ -10,6 +10,8 @@ import glob
 import numpy as np
 from shutil import copyfile
 import pandas as pd
+from skyfield import api as sf
+from datetime import datetime, timedelta
 
 import am_config as amc
 from gfzrnx import rnxobs_tabular
@@ -36,6 +38,13 @@ class multiplier_action(argparse.Action):
         setattr(namespace, self.dest, multiplier)
 
 
+class cutoff_action(argparse.Action):
+    def __call__(self, parser, namespace, cutoff, option_string=None):
+        if not 1 <= int(cutoff) <= 60:
+            raise argparse.ArgumentError(self, "cutoff must be lower than 60 degrees")
+        setattr(namespace, self.dest, cutoff)
+
+
 def treatCmdOpts(argv: list):
     """
     Treats the command line options
@@ -49,6 +58,7 @@ def treatCmdOpts(argv: list):
     parser = argparse.ArgumentParser(description=helpTxt)
     parser.add_argument('-d', '--dir', help='Directory with RINEX files (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
     parser.add_argument('-g', '--gnss', help='Which GNSS observation tabular to process', choices=['E', 'G'], required=True, type=str)
+    parser.add_argument('-c', '--cutoff', help='minimal cutoff angle (default 0 deg)', required=False, default=0, type=int, action=cutoff_action)
     parser.add_argument('-m', '--multiplier', help='multiplier of nominal interval for gap detection', default=10, type=int, action=multiplier_action)
 
     parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], action=logging_action)
@@ -57,7 +67,7 @@ def treatCmdOpts(argv: list):
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.gnss, args.multiplier, args.logging
+    return args.dir, args.gnss, args.cutoff, args.multiplier, args.logging
 
 
 def checkValidityArgs(dir_rnx: str, logger: logging.Logger) -> bool:
@@ -100,7 +110,7 @@ def main(argv):
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     # treat command line options
-    rnx_dir, gnss, multiplier, logLevels = treatCmdOpts(argv)
+    rnx_dir, gnss, cutoff, multiplier, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=rnx_dir, logLevels=logLevels)
@@ -125,7 +135,7 @@ def main(argv):
     amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs, dfName='df_obs')
     # get unique list of PRNs in dataframe
     prn_lst = sorted(df_obs['PRN'].unique())
-    print(prn_lst)
+    logger.info('{func:s}: observed PRNs are {prns!s} (#{total:d})'.format(prns=prn_lst, total=len(prn_lst), func=cFuncName))
 
     logger.info('{func:s}; getting corresponding NORAD info'.format(func=cFuncName))
 
@@ -135,30 +145,52 @@ def main(argv):
 
     # get the corresponding NORAD nrs for the given PRNs
     dNORADs = tle_parser.get_norad_numbers(prns=prn_lst, dfNorad=dfNORAD, logger=logger)
+    logger.info('{func:s}: corresponding NORAD nrs (#{count:d}):'.format(count=len(dNORADs), func=cFuncName))
 
+    # load a time scale and set RMA as Topo
+    # loader = sf.Loader(dir_tle, expire=True)  # loads the needed data files into the tle dir
+    ts = sf.load.timescale()
+    RMA = sf.Topos('50.8438 N', '4.3928 E')
+    logger.info('{func:s}: Earth station RMA @ {topo!s}'.format(topo=colored(RMA, 'green'), func=cFuncName))
+    # get the datetime that corresponds to yydoy
+    date_yydoy = datetime.strptime(amc.dRTK['rnx']['times']['DT'], '%Y-%m-%d %H:%M:%S')
+    yydoy = date_yydoy.strftime('%y%j')
+    logger.info('{func:s}: calculating rise / set times for {date:s} ({yydoy:s})'.format(date=colored(date_yydoy.strftime('%d-%m-%Y'), 'green'), yydoy=yydoy, func=cFuncName))
 
-    sys.exit(6)
-    # find rise & set times for each SV and store into list lst_rise_set and lst_set
-    lst_rise_set = []
+    t0 = ts.utc(int(date_yydoy.strftime('%Y')), int(date_yydoy.strftime('%m')), int(date_yydoy.strftime('%d')))
+    date_tomorrow = date_yydoy + timedelta(days=1)
+    t1 = ts.utc(int(date_tomorrow.strftime('%Y')), int(date_tomorrow.strftime('%m')), int(date_tomorrow.strftime('%d')))
+
+    # find corresponding TLE record for NORAD nrs
+    df_tles = tle_parser.find_norad_tle_yydoy(dNorads=dNORADs, yydoy=yydoy, logger=logger)
+
+    # list of rise / set times by observation / TLEs
+    lst_obs_rise = []
+
+    # find in observations and by TLEs what the riuse/set times are and number of observations
     for prn in prn_lst:
-        lst_rise, lst_set = rnxobs_tabular.rise_set_times(prn=prn, df_obstab=df_obs, nomint_multi=multiplier, logger=logger)
+        # find rise & set times for each SV and store into list dt_obs_rise_set and dt_obs_set
+        nom_interval, dt_obs_rise, dt_obs_set, obs_arc_count = rnxobs_tabular.rise_set_times(prn=prn, df_obstab=df_obs, nomint_multi=multiplier, logger=logger)
 
-        # check if as many rise and set DT found
-        if len(lst_rise) == len(lst_set):
-            lst_rise_set.append([lst_rise, lst_set])
+        # find rise:set times using TLEs
+        dt_tle_rise, dt_tle_set, dt_tle_cul, tle_arc_count = tle_parser.tle_rise_set_times(prn=prn, df_tle=df_tles, marker=RMA, t0=t0, t1=t1, elev_min=cutoff, obs_int=nom_interval, logger=logger)
 
-    # test to import in  dataframe
-    df_rise_set = pd.DataFrame(lst_rise_set, columns=['idx_rise', 'idx_set'], index=prn_lst)
+        # add to list for creating dataframe
+        lst_obs_rise.append([dt_obs_rise, dt_obs_set, obs_arc_count, dt_tle_rise, dt_tle_set, dt_tle_cul, tle_arc_count])
+
+    # test to import in dataframe
+    df_rise_set = pd.DataFrame(lst_obs_rise, columns=['obs_rise', 'obs_set', 'obs_arc_count', 'tle_rise', 'tle_set', 'tle_cul', 'tle_arc_count'], index=prn_lst)
     amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_rise_set, dfName='df_rise_set')
 
     # write to csv file
-    csvName = os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][gnss]['marker'], 'rise-set-idx.csv')
+    csvName = os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][gnss]['marker'], 'rise-set-dt.csv')
     df_rise_set.to_csv(csvName, index=None, header=True)
 
     # plot the rise-set
-    plot_obstab.plot_rise_set_times(gnss=gnss, df_dt=df_obs['DATE_TIME'], df_idx_rs=df_rise_set, logger=logger, showplot=True)
+    plot_obstab.plot_rise_set_times(gnss=gnss, df_dt=df_obs['DATE_TIME'], df_rs=df_rise_set, logger=logger, showplot=True)
 
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs, dfName='df_obs', head=50)
+
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs[(df_obs['gap'] > 1.) | (df_obs['gap'].isna())], dfName='df_obs', head=50)
 
     logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor), func=cFuncName))

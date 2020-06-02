@@ -5,9 +5,10 @@ from termcolor import colored
 import pandas as pd
 from bisect import bisect_left, bisect_right
 from typing import Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from skyfield import api as sf
 from skyfield.api import EarthSatellite
+import numpy as np
 
 from ampyutils import amutils
 import am_config as amc
@@ -80,13 +81,6 @@ def find_norad_tle_yydoy(dNorads: dict, yydoy: str, logger: logging.Logger) -> p
                 amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_tle_prn, dfName='df_tle_prn')
 
                 # # look into rows with first column 1 (TLE Line 1) for date closest to YYDOY
-                # print('yydoy = {:s}'.format(yydoy))
-                # print('doy = {:d}'.format(int(yydoy[2:])))
-                # print('-' * 50)
-                # print(df_tle_prn[df_tle_prn[0] == 1][3])
-                # print('-' * 50)
-                # print(df_tle_prn[df_tle_prn[0] == 2][3])
-                # print('-' * 50)
 
                 tle_line1, tle_line2 = get_closests_tle(df=df_tle_prn[df_tle_prn[0] == 1], col=3, val=int(yydoy), norad_file=norad_tle_file, logger=logger)
 
@@ -135,7 +129,7 @@ def rise_set_yydoy(df_tle: pd.DataFrame, yydoy: str, dir_tle: str, logger: loggi
         logger.info('{func:s}:   for NORAD {norad:s} ({prn:s})'.format(norad=colored(df_tle['NORAD'][row], 'green'), prn=colored(prn, 'green'), func=cFuncName))
         # create a EarthSatellites from the TLE lines for this PRN
         gnss_sv = EarthSatellite(df_tle['TLE1'][row], df_tle['TLE2'][row])
-        logger.info('{func:s}:       created erath satellites {sat!s}'.format(sat=colored(gnss_sv, 'green'), func=cFuncName))
+        logger.info('{func:s}:       created earth satellites {sat!s}'.format(sat=colored(gnss_sv, 'green'), func=cFuncName))
 
         t, events = gnss_sv.find_events(RMA, t0, t1, altitude_degrees=5.0)
 
@@ -180,3 +174,69 @@ def get_closests_tle(df: pd.DataFrame, col: int, val: int, norad_file: str, logg
 
 def take_closest(num: float, collection: list):
     return min(collection, key=lambda x: abs(x - num))
+
+
+def tle_rise_set_times(prn: int, df_tle: pd.DataFrame, marker: sf.Topos, t0: sf.Time, t1: sf.Time, elev_min: int, obs_int: float, logger: logging.Logger) -> Tuple[list, list, list, list]:
+    """
+    tle_rise_set_info calculates for a PRN based on TLEs the rise and set times and theoreticlal number of observations.
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+
+    # create the to be returned lists
+    dt_tle_rise = []
+    dt_tle_set = []
+    dt_tle_cul = []
+    tle_arc_count = []
+
+    # check with the TLEs what the theoretical rise / set times should be
+    try:
+        row = df_tle.index[df_tle['PRN'] == prn].tolist()[0]
+
+        logger.info('{func:s}:    for NORAD {norad:s} ({prn:s})'.format(norad=colored(df_tle['NORAD'][row], 'green'), prn=colored(prn, 'green'), func=cFuncName))
+
+        # create a EarthSatellites from the TLE lines for this PRN
+        gnss_sv = EarthSatellite(df_tle['TLE1'][row], df_tle['TLE2'][row])
+        logger.info('{func:s}:       created earth satellite {sat!s}'.format(sat=colored(gnss_sv, 'green'), func=cFuncName))
+
+        # find rise:set/cul times
+        t, events = gnss_sv.find_events(marker, t0, t1, altitude_degrees=elev_min)
+
+        # create a list for setting for each rise-culminate-set sequence the datetime values
+        tle_events = [t0.utc_datetime(), np.NaN, t1.utc_datetime()]
+        event_latest = -1
+
+        # event: 0=RISE, 1=Culminate, 2=SET
+        for i, (ti, event) in enumerate(zip(t, events)):
+            tle_events[event] = ti.utc_datetime()
+            event_latest = event
+
+            if event == 2:  # PRN belwo cutoff
+                dt_tle_rise.append(tle_events[0])
+                dt_tle_set.append(tle_events[2])
+                dt_tle_cul.append(tle_events[1])
+
+                tle_events = [t0.utc_datetime(), np.NaN, t1.utc_datetime()]
+
+        # add the final events detected
+        if event_latest != 2:
+            dt_tle_rise.append(tle_events[0])
+            dt_tle_set.append(tle_events[2])
+            dt_tle_cul.append(tle_events[1])
+
+        for tle_rise, tle_set in zip(dt_tle_rise, dt_tle_set):
+            tle_arc_count.append(int((tle_set - tle_rise).total_seconds()) / obs_int)
+
+        # inform the user
+        logger.info('{func:s}:       TLE based times for {prn:s}'.format(prn=colored(prn, 'green'), func=cFuncName))
+        for i, (stdt, culdt, enddt) in enumerate(zip(dt_tle_rise, dt_tle_cul, dt_tle_set)):
+            if isinstance(culdt, float):
+                str_culdt = 'N/A'
+            else:
+                str_culdt = culdt.strftime('%H:%M:%S')
+            logger.info('{func:s}:          arc[{nr:d}]: {stdt:s} -> {culdt:s} -> {enddt:s}'.format(nr=i, stdt=colored(stdt.strftime('%H:%M:%S'), 'yellow'), culdt=colored(str_culdt, 'yellow'), enddt=colored(enddt.strftime('%H:%M:%S'), 'yellow'), func=cFuncName))
+
+    except IndexError:
+        logger.info('{func:s}: No NARAD TLE file present for {prn:s}'.format(prn=colored(prn, 'red'), func=cFuncName))
+
+    return dt_tle_rise, dt_tle_set, dt_tle_cul, tle_arc_count

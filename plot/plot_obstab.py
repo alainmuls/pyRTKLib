@@ -7,6 +7,7 @@ import os
 import pandas as pd
 import sys
 import matplotlib._color_data as mcd
+import matplotlib.markers
 
 import am_config as amc
 from ampyutils import amutils
@@ -17,7 +18,7 @@ register_matplotlib_converters()
 __author__ = 'amuls'
 
 
-def plot_rise_set_times(gnss: str, df_dt: pd.DataFrame, df_idx_rs: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
+def plot_rise_set_times(gnss: str, df_dt: pd.DataFrame, df_rs: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
     """
     plot_rise_set_times plots the rise/set times vs time per SVs as observed
     """
@@ -55,16 +56,16 @@ def plot_rise_set_times(gnss: str, df_dt: pd.DataFrame, df_idx_rs: pd.DataFrame,
     fig.suptitle('Rise Set for system {gnss:s} on {date:s}'.format(gnss=amc.dRTK['rnx']['gnss'][gnss]['name'], date='{yy:02d}/{doy:03d}'.format(yy=amc.dRTK['rnx']['times']['yy'], doy=amc.dRTK['rnx']['times']['doy'])), fontdict=font, fontsize=24)
 
     # draw the rise to set lines per PRN
-    for prn in df_idx_rs.index:
+    for prn in df_rs.index:
+        y_prn = int(prn[1:])
 
-        for idx_rise, idx_set in zip(df_idx_rs.loc[prn]['idx_rise'], df_idx_rs.loc[prn]['idx_set']):
+        # get the lists with rise / set times as observed
+        for dt_obs_rise, dt_obs_set in zip(df_rs.loc[prn]['obs_rise'], df_rs.loc[prn]['obs_set']):
+            ax.plot_date([dt_obs_rise, dt_obs_set], [y_prn, y_prn], linestyle='solid', color=color_used[y_prn], linewidth=2, marker='v', markersize=4, alpha=1)
 
-            y_prn = int(prn[1:]) - 1
-
-            # rgba = prn_rgba[y_prn]
-            # prn_color = (rgba[0], rgba[1], rgba[2])
-
-            ax.plot_date([df_dt.loc[idx_rise], df_dt.loc[idx_set]], [y_prn, y_prn], linestyle='solid', color=color_used[y_prn], linewidth=3, marker='|', markersize=10, alpha=1)
+        # get the lists with rise / set times by TLEs
+        for dt_tle_rise, dt_tle_set, dt_tle_cul in zip(df_rs.loc[prn]['tle_rise'], df_rs.loc[prn]['tle_set'], df_rs.loc[prn]['tle_cul']):
+            ax.plot_date([dt_tle_rise, dt_tle_set], [y_prn - 0.25, y_prn - 0.25], linestyle='--', color=color_used[y_prn], linewidth=2, marker='^', markersize=4, alpha=0.5)
 
     # format the date time ticks
     ax.xaxis.set_major_locator(dates.DayLocator(interval=1))
@@ -75,15 +76,15 @@ def plot_rise_set_times(gnss: str, df_dt: pd.DataFrame, df_idx_rs: pd.DataFrame,
     plt.xticks()
 
     # format the y-ticks to represent the PRN number
-    plt.yticks(np.arange(0, max_prn))
+    plt.yticks(np.arange(0, max_prn + 1))
     prn_ticks = [''] * max_prn
 
     # get list of observed PRN numbers (without satsyst letter)
-    prn_nrs = [int(prn[1:]) for prn in df_idx_rs.index]
+    prn_nrs = [int(prn[1:]) for prn in df_rs.index]
 
     # and the corresponding ticks
-    for prn_nr, prn_txt in zip(prn_nrs, df_idx_rs.index):
-        prn_ticks[prn_nr - 1] = prn_txt
+    for prn_nr, prn_txt in zip(prn_nrs, df_rs.index):
+        prn_ticks[prn_nr] = prn_txt
 
     # adjust color for y ticks
     for color, tick in zip(color_used, ax.yaxis.get_major_ticks()):
@@ -91,9 +92,7 @@ def plot_rise_set_times(gnss: str, df_dt: pd.DataFrame, df_idx_rs: pd.DataFrame,
         tick.label1.set_fontweight('bold')
     ax.set_yticklabels(prn_ticks)
 
-    # for xmin in ax.xaxis.get_minorticklocs():
-    #   ax.axvline(x=xmin, linestyle='solid', color='white', linewidth=0.5, alpha=0.2)
-
+    # set the axis labels
     ax.set_xlabel('Time', fontdict=font)
     ax.set_ylabel('PRN', fontdict=font)
 

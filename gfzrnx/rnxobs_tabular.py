@@ -1,14 +1,12 @@
 import sys
 import os
-from datetime import datetime
 import logging
 from termcolor import colored
 import pandas as pd
-import numpy as np
 from typing import Tuple
 
 import am_config as amc
-from ampyutils import  amutils
+from ampyutils import amutils
 
 __author__ = 'amuls'
 
@@ -33,7 +31,7 @@ def read_obs_tabular(gnss: str, logger: logging.Logger) -> pd.DataFrame:
     return df
 
 
-def rise_set_times(prn: str, df_obstab: pd.DataFrame, nomint_multi: int, logger: logging.Logger) -> Tuple[list, list]:
+def rise_set_times(prn: str, df_obstab: pd.DataFrame, nomint_multi: int, logger: logging.Logger) -> Tuple[int, list, list, list]:
     """
     rise_set_times determines observed rise and set times for PRN
     """
@@ -49,24 +47,34 @@ def rise_set_times(prn: str, df_obstab: pd.DataFrame, nomint_multi: int, logger:
 
     # determine the datetime gaps for this PRN
     df_prn['gap'] = (df_prn['DATE_TIME'] - df_prn['DATE_TIME'].shift(1)).astype('timedelta64[s]')
-    # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_prn, dfName='df_prn[{:s}]'.format(prn), head=30)
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_prn, dfName='df_prn[{:s}]'.format(prn))
 
     # find the nominal time interval of observations
     nominal_interval = df_prn['gap'].median()
     # find the indices where the interval is bigger than nominal_interval
-    idx_arc_start = df_prn[(df_prn['gap'] > nomint_multi * nominal_interval) | (df_prn['gap'].isna())].index.tolist()
+    # idx_arc_start = df_prn[(df_prn['gap'] > nomint_multi * nominal_interval) | (df_prn['gap'].isna())].index.tolist()
     idx_arc_start = [df_prn.index[0]] + df_prn[df_prn['gap'] > nomint_multi * nominal_interval].index.tolist()
     idx_arc_end = df_prn[df_prn['gap'].shift(-1) > nomint_multi * nominal_interval].index.tolist() + [df_prn.index[-1]]
 
-    logger.info('{func:s}:    nominal time interval for {prn:s} = {tint:f}'.format(prn=colored(prn, 'green'), tint=nominal_interval, func=cFuncName))
-    logger.info('{func:s}:    {prn:s} rises at:\n{arcst!s}'.format(prn=colored(prn, 'green'), arcst=df_prn.loc[idx_arc_start][['DATE_TIME', 'PRN', 'gap']], func=cFuncName))
-    logger.info('{func:s}:    {prn:s} sets at:\n{arcend!s}'.format(prn=colored(prn, 'green'), arcend=df_prn.loc[idx_arc_end][['DATE_TIME', 'PRN', 'gap']], func=cFuncName))
+    # find the number of observations for each arc
+    obs_arc_count = []
+    for arc_start, arc_end in zip(idx_arc_start, idx_arc_end):
+        obs_arc_count.append(prn_loc.get_loc(arc_end) - prn_loc.get_loc(arc_start) + 1)
 
-    # print(df.loc[[378285, 378286, 378287, 378288, 378289, 378290, 378291, 378292, 378293, 378294]])
-    # print(df.loc[[378494, 378495, 378496, 378497, 378498, 378499, 378590, 378591, 378592, 378593, 378594, 378595, 378596, 378597, 378598, 378599, 378600, 378601, 378602, 378603, 378604]])
-    # print(df.loc[[378094, 378095, 378096, 378097, 378098, 378099, 378100, 378101, 378102, 378103, 378104, 378105, 378106, 378107, 378108, 378109, 378110, 378111, 378112, 378113, 378114, 378115, 378116, 378117, 378118, 378119, 378120, 378121, 378122, 378123, 378124, 378125, 378126, 378127, 378128, 378129, 378130]])
+    # get the corresponding data time info
+    df_tmp = df_prn.loc[idx_arc_start][['DATE_TIME']]
+    dt_arc_start = pd.to_datetime(df_tmp['DATE_TIME']).tolist()
+    df_tmp = df_prn.loc[idx_arc_end][['DATE_TIME']]
+    dt_arc_end = pd.to_datetime(df_tmp['DATE_TIME']).tolist()
+
+    logger.info('{func:s}:    nominal observation interval for {prn:s} = {tint:f}'.format(prn=colored(prn, 'green'), tint=nominal_interval, func=cFuncName))
+    # logger.info('{func:s}:    {prn:s} rises at:\n{arcst!s}'.format(prn=colored(prn, 'green'), arcst=df_prn.loc[idx_arc_end][['DATE_TIME', 'PRN', 'gap']], func=cFuncName))
+    # logger.info('{func:s}:    {prn:s} sets at:\n{arcend!s}'.format(prn=colored(prn, 'green'), arcend=df_prn.loc[idx_arc_end][['DATE_TIME', 'PRN', 'gap']], func=cFuncName))
+
+    for i, (stdt, enddt) in enumerate(zip(dt_arc_start, dt_arc_end)):
+        logger.info('{func:s}:       arc[{nr:d}]: {stdt:s} -> {enddt:s}'.format(nr=i, stdt=colored(stdt.strftime('%H:%M:%S'), 'yellow'), enddt=colored(enddt.strftime('%H:%M:%S'), 'yellow'), func=cFuncName))
 
     # copy the gap column for this PRN into original df
     df_obstab.loc[df_prn.index, 'gap'] = df_prn['gap']
 
-    return idx_arc_start, idx_arc_end
+    return nominal_interval, dt_arc_start, dt_arc_end, obs_arc_count
