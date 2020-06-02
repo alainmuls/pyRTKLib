@@ -67,6 +67,9 @@ def plot_rise_set_times(gnss: str, df_dt: pd.DataFrame, df_rs: pd.DataFrame, log
         for dt_tle_rise, dt_tle_set, dt_tle_cul in zip(df_rs.loc[prn]['tle_rise'], df_rs.loc[prn]['tle_set'], df_rs.loc[prn]['tle_cul']):
             ax.plot_date([dt_tle_rise, dt_tle_set], [y_prn - 0.25, y_prn - 0.25], linestyle='--', color=color_used[y_prn], linewidth=2, marker='^', markersize=4, alpha=0.5)
 
+            # add a indicator for the culmination time of PRN
+            ax.plot(dt_tle_cul, y_prn - 0.25, marker='d', markersize=4, alpha=0.5, color=color_used[y_prn])
+
     # format the date time ticks
     ax.xaxis.set_major_locator(dates.DayLocator(interval=1))
     ax.xaxis.set_major_formatter(dates.DateFormatter('\n%d-%m-%Y'))
