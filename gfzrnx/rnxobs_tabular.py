@@ -4,6 +4,7 @@ import logging
 from termcolor import colored
 import pandas as pd
 from typing import Tuple
+from datetime import datetime
 
 import am_config as amc
 from ampyutils import amutils
@@ -63,9 +64,21 @@ def rise_set_times(prn: str, df_obstab: pd.DataFrame, nomint_multi: int, logger:
 
     # get the corresponding data time info
     df_tmp = df_prn.loc[idx_arc_start][['DATE_TIME']]
-    dt_arc_start = pd.to_datetime(df_tmp['DATE_TIME']).tolist()
+    # lst_time = [datetime.strptime(dt.strftime('%H:%M:%S'), '%H:%M:%S').time() for dt in df_tmp['DATE_TIME']]
+    # df_tmp.loc[:, 'time'] = lst_time
+    # print('lst_time = {!s}'.format(lst_time))
+    # print('df_tmp\n{!s}'.format(df_tmp))
+
+    # dt_arc_start = pd.to_datetime(df_tmp['DATE_TIME']).tolist()
+
+    dt_arc_start = [datetime.strptime(dt.strftime('%H:%M:%S'), '%H:%M:%S').time() for dt in df_tmp['DATE_TIME']]
+    print('dt_arc_start = {!s}'.format(dt_arc_start))
+
     df_tmp = df_prn.loc[idx_arc_end][['DATE_TIME']]
-    dt_arc_end = pd.to_datetime(df_tmp['DATE_TIME']).tolist()
+    # dt_arc_end = pd.to_datetime(df_tmp['DATE_TIME']).tolist()
+    # print('dt_arc_end = {!s}'.format(dt_arc_end))
+    dt_arc_end = [datetime.strptime(dt.strftime('%H:%M:%S'), '%H:%M:%S').time() for dt in df_tmp['DATE_TIME']]
+    print('dt_arc_end = {!s}'.format(dt_arc_end))
 
     logger.info('{func:s}:    nominal observation interval for {prn:s} = {tint:f}'.format(prn=colored(prn, 'green'), tint=nominal_interval, func=cFuncName))
     # logger.info('{func:s}:    {prn:s} rises at:\n{arcst!s}'.format(prn=colored(prn, 'green'), arcst=df_prn.loc[idx_arc_end][['DATE_TIME', 'PRN', 'gap']], func=cFuncName))
@@ -78,3 +91,42 @@ def rise_set_times(prn: str, df_obstab: pd.DataFrame, nomint_multi: int, logger:
     df_obstab.loc[df_prn.index, 'gap'] = df_prn['gap']
 
     return nominal_interval, dt_arc_start, dt_arc_end, obs_arc_count
+
+
+def intersect_arcs():
+    """
+    intersect_arcs determines which observation intervals belong to which TLE interval
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    # number of arcs according to observations
+    nr_arcs_obs = []
+    for prn in df_rs.index:
+        # find maximum number of arcs in observations
+        nr_arcs_obs.append(longest(df_rs.loc[prn]['obs_arc_count']))
+    logger.info('{func:s}:     number of observed arcs per prn: {arcs!s}'.format(arcs=nr_arcs_obs, func=cFuncName))
+
+    # find number of ars per PRN from TLE
+    nr_arcs_tle = []
+    for prn in df_rs.index:
+        # find maximum number of arcs in observations
+        nr_arcs_tle.append(longest(df_rs.loc[prn]['tle_arc_count']))
+    nr_arcs = max(nr_arcs_tle)
+    logger.info('{func:s}:    number of predicted arcs per prn: {arcs!s}'.format(arcs=nr_arcs_tle, func=cFuncName))
+
+    # make the arcs fit together by comparing the start / end dates between observed and TLEs
+    # for prn in df_rs.index:
+    J2000 = datetime(2000, 1, 1)
+    for prn in df_rs.index:
+        logger.info('{func:s}: PRN {prn:s}'.format(prn=prn, func=cFuncName))
+        for i, (tle_rise, tle_set) in enumerate(zip(df_rs.loc[prn]['tle_rise'], df_rs.loc[prn]['tle_set'])):
+            tle_range = DateTimeRange(datetime.combine(J2000, tle_rise), datetime.combine(J2000, tle_set))
+            tle_range.start_time_format = '%H:%M:%S'
+            tle_range.end_time_format = '%H:%M:%S'
+            logger.info('{func:s}:    tle_range = {tler!s}'.format(tler=tle_range, func=cFuncName))
+            for j, (obs_start, obs_end) in enumerate(zip(df_rs.loc[prn]['obs_rise'], df_rs.loc[prn]['obs_set'])):
+                obs_range = DateTimeRange(datetime.combine(J2000, obs_start), datetime.combine(J2000, obs_end))
+                obs_range.start_time_format = '%H:%M:%S'
+                obs_range.end_time_format = '%H:%M:%S'
+                logger.info('{func:s}:       obs_range = {obsr!s}  intersect = {int!s}'.format(obsr=obs_range, int=tle_range.is_intersection(obs_range), func=cFuncName))
+

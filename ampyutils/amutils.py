@@ -11,6 +11,8 @@ import logging
 from pandas import DataFrame
 import subprocess
 from datetime import datetime
+from typing import Tuple
+import matplotlib._color_data as mcd
 
 from GNSS import gpstime
 import am_config as amc
@@ -347,3 +349,21 @@ def run_subprocess(sub_proc: list, logger: logging.Logger):
 def DT_convertor(o):
     if isinstance(o, datetime):
         return o.__str__()
+
+
+def create_colormap_font(nrcolors: int, font_size: int) -> Tuple[list, dict]:
+    """
+    create_colormap_font creates a colormap for the number entered and returns a color list and dict with fonts for title and axes
+    """
+    # get the color names
+    color_names = [name for name in mcd.XKCD_COLORS]
+    color_step = len(color_names) // nrcolors
+    color_used = color_names[::color_step]
+
+    font = {'family': 'serif',
+            # 'color': 'darkred',
+            'weight': 'bold',
+            'size': font_size,
+            }
+
+    return color_used, font

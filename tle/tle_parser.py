@@ -5,7 +5,7 @@ from termcolor import colored
 import pandas as pd
 from bisect import bisect_left, bisect_right
 from typing import Tuple
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, time
 from skyfield import api as sf
 from skyfield.api import EarthSatellite
 import numpy as np
@@ -182,7 +182,6 @@ def tle_rise_set_times(prn: int, df_tle: pd.DataFrame, marker: sf.Topos, t0: sf.
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-
     # create the to be returned lists
     dt_tle_rise = []
     dt_tle_set = []
@@ -212,20 +211,35 @@ def tle_rise_set_times(prn: int, df_tle: pd.DataFrame, marker: sf.Topos, t0: sf.
             event_latest = event
 
             if event == 2:  # PRN belwo cutoff
-                dt_tle_rise.append(tle_events[0])
-                dt_tle_set.append(tle_events[2])
-                dt_tle_cul.append(tle_events[1])
+                dt_tle_rise.append(tle_events[0].time())
+                dt_tle_set.append(tle_events[2].time())
+                if isinstance(tle_events[1], float):
+                    dt_tle_cul.append(np.NaN)
+                else:
+                    dt_tle_cul.append(tle_events[1].time())
 
                 tle_events = [t0.utc_datetime(), np.NaN, t1.utc_datetime()]
 
         # add the final events detected
         if event_latest != 2:
-            dt_tle_rise.append(tle_events[0])
-            dt_tle_set.append(tle_events[2])
-            dt_tle_cul.append(tle_events[1])
+            dt_tle_rise.append(tle_events[0].time())
+            dt_tle_set.append(tle_events[2].time())
+            if isinstance(tle_events[1], float):
+                dt_tle_cul.append(np.NaN)
+            else:
+                dt_tle_cul.append(tle_events[1].time())
+
+        # check whether a set time is "00:00:00" and change to "23:59:59"
+        midnight = time(hour=0, minute=0, second=0, microsecond=0)
+        for i, tle_set in enumerate(dt_tle_set):
+            if tle_set == midnight:
+                dt_tle_set[i] = time(hour=23, minute=59, second=59, microsecond=0)
 
         for tle_rise, tle_set in zip(dt_tle_rise, dt_tle_set):
-            tle_arc_count.append(int((tle_set - tle_rise).total_seconds()) / obs_int)
+            print('type tle_rise {!s}'.format(type(tle_rise)))
+            rise_sec = int(timedelta(hours=tle_rise.hour, minutes=tle_rise.minute, seconds=tle_rise.second).total_seconds())
+            set_sec = int(timedelta(hours=tle_set.hour, minutes=tle_set.minute, seconds=tle_set.second).total_seconds())
+            tle_arc_count.append((set_sec - rise_sec) / obs_int)
 
         # inform the user
         logger.info('{func:s}:       TLE based times for {prn:s}'.format(prn=colored(prn, 'green'), func=cFuncName))

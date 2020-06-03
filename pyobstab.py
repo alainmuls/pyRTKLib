@@ -33,15 +33,15 @@ class logging_action(argparse.Action):
 
 class multiplier_action(argparse.Action):
     def __call__(self, parser, namespace, multiplier, option_string=None):
-        if not 1 <= int(multiplier) <= 60:
-            raise argparse.ArgumentError(self, "multiplier must be in 1..60 times nominal observation interval")
+        if not 1 <= int(multiplier) <= 120:
+            raise argparse.ArgumentError(self, "multiplier must be in 1..120 times nominal observation interval")
         setattr(namespace, self.dest, multiplier)
 
 
 class cutoff_action(argparse.Action):
     def __call__(self, parser, namespace, cutoff, option_string=None):
-        if not 1 <= int(cutoff) <= 60:
-            raise argparse.ArgumentError(self, "cutoff must be lower than 60 degrees")
+        if not -10 <= int(cutoff) <= 60:
+            raise argparse.ArgumentError(self, "cutoff must be lower than 60 degrees, higher than -10 degrees")
         setattr(namespace, self.dest, cutoff)
 
 
@@ -59,7 +59,9 @@ def treatCmdOpts(argv: list):
     parser.add_argument('-d', '--dir', help='Directory with RINEX files (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
     parser.add_argument('-g', '--gnss', help='Which GNSS observation tabular to process', choices=['E', 'G'], required=True, type=str)
     parser.add_argument('-c', '--cutoff', help='minimal cutoff angle (default 0 deg)', required=False, default=0, type=int, action=cutoff_action)
-    parser.add_argument('-m', '--multiplier', help='multiplier of nominal interval for gap detection', default=10, type=int, action=multiplier_action)
+    parser.add_argument('-m', '--multiplier', help='multiplier of nominal interval for gap detection', default=30, type=int, action=multiplier_action)
+
+    parser.add_argument('-p', '--plots', help='displays interactive plots (default True)', action='store_true', required=False, default=False)
 
     parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], action=logging_action)
 
@@ -67,7 +69,7 @@ def treatCmdOpts(argv: list):
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.gnss, args.cutoff, args.multiplier, args.logging
+    return args.dir, args.gnss, args.cutoff, args.multiplier, args.plots, args.logging
 
 
 def checkValidityArgs(dir_rnx: str, logger: logging.Logger) -> bool:
@@ -110,7 +112,7 @@ def main(argv):
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     # treat command line options
-    rnx_dir, gnss, cutoff, multiplier, logLevels = treatCmdOpts(argv)
+    rnx_dir, gnss, cutoff, multiplier, showPlots, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=rnx_dir, logLevels=logLevels)
@@ -187,9 +189,9 @@ def main(argv):
     df_rise_set.to_csv(csvName, index=None, header=True)
 
     # plot the rise-set
-    plot_obstab.plot_rise_set_times(gnss=gnss, df_dt=df_obs['DATE_TIME'], df_rs=df_rise_set, logger=logger, showplot=True)
-
-    # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs, dfName='df_obs', head=50)
+    plot_obstab.plot_rise_set_times(gnss=gnss, df_rs=df_rise_set, logger=logger, showplot=showPlots)
+    # plot the statistics of observed vs TLE predicted
+    plot_obstab.plot_rise_set_stats(gnss=gnss, df_rs=df_rise_set, logger=logger, showplot=showPlots)
 
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs[(df_obs['gap'] > 1.) | (df_obs['gap'].isna())], dfName='df_obs', head=50)
 
