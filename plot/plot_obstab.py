@@ -6,8 +6,8 @@ import numpy as np
 import os
 import pandas as pd
 import sys
-import matplotlib.ticker as plticker
 import matplotlib.ticker as ticker
+from typing import Tuple
 
 import am_config as amc
 from ampyutils import amutils
@@ -96,7 +96,7 @@ def plot_rise_set_times(gnss: str, df_rs: pd.DataFrame, logger: logging.Logger, 
         plt.close(fig)
 
 
-def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
+def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, nr_arcs: int,  logger: logging.Logger, showplot: bool = False):
     """
     plot_rise_set_stats plots the rise/set statistics per SVs
     """
@@ -107,6 +107,8 @@ def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, logger: logging.Logger
     # set up the plot
     plt.style.use('ggplot')
     # plt.style.use('seaborn-darkgrid')
+
+    bars_info(nr_arcs=nr_arcs, logger=logger)
 
     # create colormap with 36 discrete colors
     max_prn = 36
@@ -151,7 +153,6 @@ def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, logger: logging.Logger
     ax2.bar(x - width / 2, percentages, width=width * 1.2, color='red', label='% Arc 2')
     # draw ARC2
     percentages = [df_arcs.iloc[i]['Arc2_obs'] / df_arcs.iloc[i]['Arc2_tle'] * 100 if df_arcs.iloc[i]['Arc2_tle'] > 0 else np.nan for i in np.arange(df_arcs.shape[0])]
-    print(percentages)
     ax2.bar(x + width, percentages, width=width * 1.2, color='green', label='% Arc 2')
 
     # beautify plot
@@ -166,8 +167,48 @@ def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, logger: logging.Logger
     ax2.xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.0f'))
     ax2.set_xticklabels(df_arcs['PRN'], rotation=90)
 
+    # save the plot in subdir png of GNSSSystem
+    png_dir = os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][gnss]['marker'], 'png')
+    amutils.mkdir_p(png_dir)
+    pngName = os.path.join(png_dir, os.path.splitext(amc.dRTK['rnx']['gnss'][gnss]['obstab'])[0] + '-obs.png')
+    fig.savefig(pngName, dpi=fig.dpi)
+
+    logger.info('{func:s}: created plot {plot:s}'.format(func=cFuncName, plot=colored(pngName, 'green')))
+
+    if showplot:
+        plt.show(block=True)
+    else:
+        plt.close(fig)
+
     plt.show()
 
 
-def longest(a):
-    return max(len(a), *map(longest, a)) if isinstance(a, list) and a else 0
+def bars_info(nr_arcs: int, logger:logging.Logger) -> Tuple[int, int, list]:
+    """
+    bars_info determines the width of an individual bar, the spaces between the arc bars, and localtion in delta-x-coordinates of beginning of each PRN arcs
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+    logger.info('{func:s}: determining the information for the bars'.format(func=cFuncName))
+
+    # the bars for all arcs for 1 PRN may span over 0.8 units (from [-0.4 => 0.4]), including the spaces between the different arcs
+    width_prn_arcs = 0.8
+    x_start = -0.4  # start of the bars relative to integer of PRN
+    width_space = 0.1  # space between the different arcs for 1 PRN
+
+    # substract width-spaces needed for nr_arcs
+    width_arcs = width_prn_arcs - (nr_arcs - 1) * width_space
+
+    # the width taken by 1 arc for 1 prn is
+    width_arc = width_arcs / nr_arcs
+
+    # each arc has up to 2 bars which partial overlap
+    width_bar = width_arc * 0.75
+
+    # get the delta-x to apply to the integer value that corresponds to a PRN
+    x_obs = [x_start + i * (width_space + width_arc) for i in np.arange(nr_arcs)]
+    x_tle = [obs_x + width_bar * 0.25 for obs_x in x_obs]
+
+    print(x_obs)
+    print(x_tle)
+
+    sys.exit(6)
