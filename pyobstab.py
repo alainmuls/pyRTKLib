@@ -198,10 +198,11 @@ def main(argv):
     csvName = os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][gnss]['marker'], 'obs_arcs.csv')
     df_obs_arcs.to_csv(csvName, index=None, header=True)
 
+    # plot the statistics of observed vs TLE predicted
+    plot_obstab.plot_rise_set_stats(gnss=gnss, df_arcs=df_obs_arcs, logger=logger, showplot=showPlots)
+    sys.exit(5)
     # plot the rise-set
     plot_obstab.plot_rise_set_times(gnss=gnss, df_rs=df_rise_set, logger=logger, showplot=showPlots)
-    # plot the statistics of observed vs TLE predicted
-    plot_obstab.plot_rise_set_stats(gnss=gnss, df_rs=df_obs_arcs, logger=logger, showplot=showPlots)
 
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs[(df_obs['gap'] > 1.) | (df_obs['gap'].isna())], dfName='df_obs', head=50)
 

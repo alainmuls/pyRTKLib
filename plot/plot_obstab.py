@@ -6,6 +6,8 @@ import numpy as np
 import os
 import pandas as pd
 import sys
+import matplotlib.ticker as plticker
+import matplotlib.ticker as ticker
 
 import am_config as amc
 from ampyutils import amutils
@@ -94,7 +96,7 @@ def plot_rise_set_times(gnss: str, df_rs: pd.DataFrame, logger: logging.Logger, 
         plt.close(fig)
 
 
-def plot_rise_set_stats(gnss: str, df_rs: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
+def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
     """
     plot_rise_set_stats plots the rise/set statistics per SVs
     """
@@ -110,30 +112,62 @@ def plot_rise_set_stats(gnss: str, df_rs: pd.DataFrame, logger: logging.Logger, 
     max_prn = 36
     prn_colors, title_font = amutils.create_colormap_font(nrcolors=max_prn, font_size=14)
 
+    width = 0.2  # the width of the bars
+    x = np.arange(df_arcs.shape[0])  # the label locations
+
     # subplots
-    fig, (ax1, ax2) = plt.subplots(figsize=(16.0, 10.0), nrows=2)
+    fig, (ax1, ax2) = plt.subplots(figsize=(14.0, 9.0), nrows=2)
     fig.suptitle('Rise Set statistics for system {gnss:s} on {date:s}'.format(gnss=amc.dRTK['rnx']['gnss'][gnss]['name'], date='{yy:02d}/{doy:03d}'.format(yy=amc.dRTK['rnx']['times']['yy'], doy=amc.dRTK['rnx']['times']['doy'])), fontdict=title_font, fontsize=24)
 
-    # # make the plot with absolute values
-    # # draw the rise to set lines per PRN
-    # for prn in df_rs.index:
-    #     y_prn = int(prn[1:])
-    #     for obs_count, tle_count in zip(df_rs.loc[prn]['obs_arc_count'], df_rs.loc[prn]['tle_arc_count']):
-    #         print('{prn:s}: {obs:d} {tle:d}'.format(prn=prn, obs=obs_count, tle=int(tle_count)))
+    # creating bar plots for absolute values
+    # draw ARC0
+    ax1.bar(x - 2 * width + 0.1, df_arcs['Arc0_tle'], width=0.75 * width, color='blue', alpha=0.35, edgecolor='black', hatch='//', label='TLE Arc 1')
+    ax1.bar(x - 2 * width, df_arcs['Arc0_obs'], width=0.75 * width, color='blue', label='Obs Arc 1')
+    # draw ARC1
+    ax1.bar(x - width / 2 + 0.1, df_arcs['Arc1_tle'], width=0.75 * width, color='red', alpha=0.35, edgecolor='black', hatch='//', label='TLE Arc 2')
+    ax1.bar(x - width / 2, df_arcs['Arc1_obs'], width=0.75 * width, color='red', label='Obs Arc 2')
+    # draw ARC2
+    ax1.bar(x + width + 0.1, df_arcs['Arc2_tle'], width=0.75 * width, color='green', alpha=0.35, edgecolor='black', hatch='//', label='TLE Arc 3')
+    ax1.bar(x + width, df_arcs['Arc2_obs'], width=0.75 * width, color='green', label='Obs Arc 3')
 
-    #     print('longest obs = {!s}'.format(longest(df_rs.loc[prn]['obs_arc_count'])))
-    #     print('longest tle = {!s}'.format(longest(df_rs.loc[prn]['tle_arc_count'])))
+    # beautify plot
+    ax1.xaxis.grid()
+    ax1.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+    # ax1.set_xlabel('PRN', fontdict=title_font)
+    ax1.set_ylabel('#Observed / #Predicted', fontdict=title_font)
+
+    # setticks on X axis to represent the PRN
+    ax1.xaxis.set_ticks(np.arange(0, df_arcs.shape[0], 1))
+    ax1.xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.0f'))
+    ax1.set_xticklabels(df_arcs['PRN'], rotation=90)
+
+    # # creating bar plots for relative values
+    # draw ARC0
+    percentages = [df_arcs.iloc[i]['Arc0_obs'] / df_arcs.iloc[i]['Arc0_tle'] * 100 for i in np.arange(df_arcs.shape[0])]
+    ax2.bar(x - 2 * width, percentages, width=width * 1.2, color='blue', label='% Arc 1')
+    # draw ARC1
+    percentages = [df_arcs.iloc[i]['Arc1_obs'] / df_arcs.iloc[i]['Arc1_tle'] * 100 for i in np.arange(df_arcs.shape[0])]
+    ax2.bar(x - width / 2, percentages, width=width * 1.2, color='red', label='% Arc 2')
+    # draw ARC2
+    percentages = [df_arcs.iloc[i]['Arc2_obs'] / df_arcs.iloc[i]['Arc2_tle'] * 100 if df_arcs.iloc[i]['Arc2_tle'] > 0 else np.nan for i in np.arange(df_arcs.shape[0])]
+    print(percentages)
+    ax2.bar(x + width, percentages, width=width * 1.2, color='green', label='% Arc 2')
+
+    # beautify plot
+    ax2.xaxis.grid()
+    ax2.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+
+    ax2.set_xlabel('PRN', fontdict=title_font)
+    ax2.set_ylabel('Percentage', fontdict=title_font)
+
+    # setticks on X axis to represent the PRN
+    ax2.xaxis.set_ticks(np.arange(0, df_arcs.shape[0], 1))
+    ax2.xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.0f'))
+    ax2.set_xticklabels(df_arcs['PRN'], rotation=90)
+
+    plt.show()
 
 
 def longest(a):
     return max(len(a), *map(longest, a)) if isinstance(a, list) and a else 0
-
-
-
-
-
-    # df = pd.DataFrame({'a': a, 'b': b, 'c': c, 'd': d}, columns=['a', 'b', 'c', 'd'])
-    # df.set_index('a', inplace=True)
-
-    # df.plot.bar()
-    # plt.show()
