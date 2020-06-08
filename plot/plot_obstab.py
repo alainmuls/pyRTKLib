@@ -6,8 +6,6 @@ import numpy as np
 import os
 import pandas as pd
 import sys
-from datetime import datetime
-from datetimerange import DateTimeRange
 
 import am_config as amc
 from ampyutils import amutils
@@ -96,12 +94,12 @@ def plot_rise_set_times(gnss: str, df_rs: pd.DataFrame, logger: logging.Logger, 
         plt.close(fig)
 
 
-def plot_rise_set_stats(gnss: str,df_rs: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
+def plot_rise_set_stats(gnss: str, df_rs: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
     """
     plot_rise_set_stats plots the rise/set statistics per SVs
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
-    logger.info('{func:s}: plotting rise/set times'.format(func=cFuncName))
+    logger.info('{func:s}: plotting observation statistics'.format(func=cFuncName))
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_dt, dfName='df_dt')
 
     # set up the plot
@@ -116,50 +114,26 @@ def plot_rise_set_stats(gnss: str,df_rs: pd.DataFrame, logger: logging.Logger, s
     fig, (ax1, ax2) = plt.subplots(figsize=(16.0, 10.0), nrows=2)
     fig.suptitle('Rise Set statistics for system {gnss:s} on {date:s}'.format(gnss=amc.dRTK['rnx']['gnss'][gnss]['name'], date='{yy:02d}/{doy:03d}'.format(yy=amc.dRTK['rnx']['times']['yy'], doy=amc.dRTK['rnx']['times']['doy'])), fontdict=title_font, fontsize=24)
 
-    # number of arcs according to observations
-    nr_arcs_obs = []
-    for prn in df_rs.index:
-        # find maximum number of arcs in observations
-        nr_arcs_obs.append(longest(df_rs.loc[prn]['obs_arc_count']))
-    logger.info('{func:s}:     number of observed arcs per prn: {arcs!s}'.format(arcs=nr_arcs_obs, func=cFuncName))
-
-    # find number of ars per PRN from TLE
-    nr_arcs_tle = []
-    for prn in df_rs.index:
-        # find maximum number of arcs in observations
-        nr_arcs_tle.append(longest(df_rs.loc[prn]['tle_arc_count']))
-    nr_arcs = max(nr_arcs_tle)
-    logger.info('{func:s}:    number of predicted arcs per prn: {arcs!s}'.format(arcs=nr_arcs_tle, func=cFuncName))
-
-    # make the arcs fit together by comparing the start / end dates between observed and TLEs
+    # # make the plot with absolute values
+    # # draw the rise to set lines per PRN
     # for prn in df_rs.index:
-    J2000 = datetime(2000, 1, 1)
-    for prn in df_rs.index:
-        logger.info('{func:s}: PRN {prn:s}'.format(prn=prn, func=cFuncName))
-        for i, (tle_rise, tle_set) in enumerate(zip(df_rs.loc[prn]['tle_rise'], df_rs.loc[prn]['tle_set'])):
-            tle_range = DateTimeRange(datetime.combine(J2000, tle_rise), datetime.combine(J2000, tle_set))
-            tle_range.start_time_format = '%H:%M:%S'
-            tle_range.end_time_format = '%H:%M:%S'
-            logger.info('{func:s}:    tle_range = {tler!s}'.format(tler=tle_range, func=cFuncName))
-            for j, (obs_start, obs_end) in enumerate(zip(df_rs.loc[prn]['obs_rise'], df_rs.loc[prn]['obs_set'])):
-                obs_range = DateTimeRange(datetime.combine(J2000, obs_start), datetime.combine(J2000, obs_end))
-                obs_range.start_time_format = '%H:%M:%S'
-                obs_range.end_time_format = '%H:%M:%S'
-                logger.info('{func:s}:       obs_range = {obsr!s}  intersect = {int!s}'.format(obsr=obs_range, int=tle_range.is_intersection(obs_range), func=cFuncName))
+    #     y_prn = int(prn[1:])
+    #     for obs_count, tle_count in zip(df_rs.loc[prn]['obs_arc_count'], df_rs.loc[prn]['tle_arc_count']):
+    #         print('{prn:s}: {obs:d} {tle:d}'.format(prn=prn, obs=obs_count, tle=int(tle_count)))
 
-
-
-    sys.exit(5)
-    # make the plot with absolute values
-    # draw the rise to set lines per PRN
-    for prn in df_rs.index:
-        y_prn = int(prn[1:])
-        for obs_count, tle_count in zip(df_rs.loc[prn]['obs_arc_count'], df_rs.loc[prn]['tle_arc_count']):
-            print('{prn:s}: {obs:d} {tle:d}'.format(prn=prn, obs=obs_count, tle=int(tle_count)))
-
-        print('longest obs = {!s}'.format(longest(df_rs.loc[prn]['obs_arc_count'])))
-        print('longest tle = {!s}'.format(longest(df_rs.loc[prn]['tle_arc_count'])))
+    #     print('longest obs = {!s}'.format(longest(df_rs.loc[prn]['obs_arc_count'])))
+    #     print('longest tle = {!s}'.format(longest(df_rs.loc[prn]['tle_arc_count'])))
 
 
 def longest(a):
     return max(len(a), *map(longest, a)) if isinstance(a, list) and a else 0
+
+
+
+
+
+    # df = pd.DataFrame({'a': a, 'b': b, 'c': c, 'd': d}, columns=['a', 'b', 'c', 'd'])
+    # df.set_index('a', inplace=True)
+
+    # df.plot.bar()
+    # plt.show()

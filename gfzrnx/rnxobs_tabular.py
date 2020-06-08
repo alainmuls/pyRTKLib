@@ -5,6 +5,8 @@ from termcolor import colored
 import pandas as pd
 from typing import Tuple
 from datetime import datetime
+from datetimerange import DateTimeRange
+import numpy as np
 
 import am_config as amc
 from ampyutils import amutils
@@ -66,8 +68,6 @@ def rise_set_times(prn: str, df_obstab: pd.DataFrame, nomint_multi: int, logger:
     df_tmp = df_prn.loc[idx_arc_start][['DATE_TIME']]
     # lst_time = [datetime.strptime(dt.strftime('%H:%M:%S'), '%H:%M:%S').time() for dt in df_tmp['DATE_TIME']]
     # df_tmp.loc[:, 'time'] = lst_time
-    # print('lst_time = {!s}'.format(lst_time))
-    # print('df_tmp\n{!s}'.format(df_tmp))
 
     # dt_arc_start = pd.to_datetime(df_tmp['DATE_TIME']).tolist()
 
@@ -76,7 +76,6 @@ def rise_set_times(prn: str, df_obstab: pd.DataFrame, nomint_multi: int, logger:
 
     df_tmp = df_prn.loc[idx_arc_end][['DATE_TIME']]
     # dt_arc_end = pd.to_datetime(df_tmp['DATE_TIME']).tolist()
-    # print('dt_arc_end = {!s}'.format(dt_arc_end))
     dt_arc_end = [datetime.strptime(dt.strftime('%H:%M:%S'), '%H:%M:%S').time() for dt in df_tmp['DATE_TIME']]
     print('dt_arc_end = {!s}'.format(dt_arc_end))
 
@@ -93,7 +92,7 @@ def rise_set_times(prn: str, df_obstab: pd.DataFrame, nomint_multi: int, logger:
     return nominal_interval, dt_arc_start, dt_arc_end, obs_arc_count
 
 
-def intersect_arcs():
+def intersect_arcs(df_rs: pd.DataFrame, logger: logging.Logger) -> Tuple[int, pd.DataFrame]:
     """
     intersect_arcs determines which observation intervals belong to which TLE interval
     """
@@ -115,18 +114,67 @@ def intersect_arcs():
     logger.info('{func:s}:    number of predicted arcs per prn: {arcs!s}'.format(arcs=nr_arcs_tle, func=cFuncName))
 
     # make the arcs fit together by comparing the start / end dates between observed and TLEs
-    # for prn in df_rs.index:
+    df_rs['intersect'] = pd.Series(dtype=object)
+
     J2000 = datetime(2000, 1, 1)
-    for prn in df_rs.index:
+    for i_prn, prn in enumerate(df_rs.index):
         logger.info('{func:s}: PRN {prn:s}'.format(prn=prn, func=cFuncName))
-        for i, (tle_rise, tle_set) in enumerate(zip(df_rs.loc[prn]['tle_rise'], df_rs.loc[prn]['tle_set'])):
+        prn_intersect = [np.nan] * nr_arcs_obs[i_prn]
+
+        for i_tle, (tle_rise, tle_set) in enumerate(zip(df_rs.loc[prn]['tle_rise'], df_rs.loc[prn]['tle_set'])):
             tle_range = DateTimeRange(datetime.combine(J2000, tle_rise), datetime.combine(J2000, tle_set))
             tle_range.start_time_format = '%H:%M:%S'
             tle_range.end_time_format = '%H:%M:%S'
             logger.info('{func:s}:    tle_range = {tler!s}'.format(tler=tle_range, func=cFuncName))
-            for j, (obs_start, obs_end) in enumerate(zip(df_rs.loc[prn]['obs_rise'], df_rs.loc[prn]['obs_set'])):
+            for i_obs, (obs_start, obs_end) in enumerate(zip(df_rs.loc[prn]['obs_rise'], df_rs.loc[prn]['obs_set'])):
                 obs_range = DateTimeRange(datetime.combine(J2000, obs_start), datetime.combine(J2000, obs_end))
                 obs_range.start_time_format = '%H:%M:%S'
                 obs_range.end_time_format = '%H:%M:%S'
                 logger.info('{func:s}:       obs_range = {obsr!s}  intersect = {int!s}'.format(obsr=obs_range, int=tle_range.is_intersection(obs_range), func=cFuncName))
 
+                if tle_range.is_intersection(obs_range):
+                    prn_intersect[i_obs] = i_tle
+
+        # store in the itersection column
+        df_rs.loc[prn, 'intersect'] = prn_intersect
+
+    return nr_arcs, df_rs
+
+
+def rearrange_arcs(nr_arcs: int, df_rs: pd.DataFrame, logger: logging.Logger) -> pd.DataFrame:
+    """
+    rearrange_arcs creates a dataframe containing the number of observations (observed / TLE) per arc
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    lst_arcs = ['Arc{:d}_obs'.format(i) for i in range(nr_arcs)] + ['Arc{:d}_tle'.format(i) for i in range(nr_arcs)]
+    df_arcs = pd.DataFrame(columns=['PRN'] + lst_arcs)
+
+    for i_prn, prn in enumerate(df_rs.index):
+        nr_arc_obs = []
+        nr_arc_tle = []
+
+        for i_arc in range(nr_arcs):
+            # determine the observations done per arc
+            lst_obs2sum = [i for i in range(len(df_rs.loc[prn]['intersect'])) if df_rs.loc[prn]['intersect'][i] == i_arc]
+
+            lst_prn_obs = [df_rs.loc[prn]['obs_arc_count'][index] for index in lst_obs2sum]
+            nr_arc_obs.append(sum(lst_prn_obs))
+
+            # determine the predicted number of observations by TLE
+            if i_arc < len(df_rs.loc[prn]['tle_arc_count']):
+                nr_arc_tle.append(int(df_rs.loc[prn]['tle_arc_count'][i_arc]))
+            else:
+                nr_arc_tle.append(0)
+
+        # add to dataframe
+        a_series = pd.Series([prn] + nr_arc_obs + nr_arc_tle, index=df_arcs.columns)
+        df_arcs = df_arcs.append(a_series, ignore_index=True)
+
+    logger.info('{func:s}: number of observations\n{nrobs!s}'.format(nrobs=df_arcs, func=cFuncName))
+
+    return df_arcs
+
+
+def longest(a):
+    return max(len(a), *map(longest, a)) if isinstance(a, list) and a else 0

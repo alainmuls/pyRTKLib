@@ -181,17 +181,27 @@ def main(argv):
         lst_obs_rise.append([dt_obs_rise, dt_obs_set, obs_arc_count, dt_tle_rise, dt_tle_set, dt_tle_cul, tle_arc_count])
 
     # test to import in dataframe
-    df_rise_set = pd.DataFrame(lst_obs_rise, columns=['obs_rise', 'obs_set', 'obs_arc_count', 'tle_rise', 'tle_set', 'tle_cul', 'tle_arc_count'], index=prn_lst)
-    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_rise_set, dfName='df_rise_set')
+    df_rise_set_tmp = pd.DataFrame(lst_obs_rise, columns=['obs_rise', 'obs_set', 'obs_arc_count', 'tle_rise', 'tle_set', 'tle_cul', 'tle_arc_count'], index=prn_lst)
 
+    # find corresponding arcs between observation and predicted TLE
+    max_arcs, df_rise_set = rnxobs_tabular.intersect_arcs(df_rs=df_rise_set_tmp, logger=logger)
+
+    # inform user
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_rise_set, dfName='df_rise_set')
     # write to csv file
     csvName = os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][gnss]['marker'], 'rise-set-dt.csv')
     df_rise_set.to_csv(csvName, index=None, header=True)
 
+    # create a new dataframe that has PRNs as index and the max_arcs columns with number of obs / TLEs
+    df_obs_arcs = rnxobs_tabular.rearrange_arcs(nr_arcs=max_arcs, df_rs=df_rise_set, logger=logger)
+    # write to csv file
+    csvName = os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][gnss]['marker'], 'obs_arcs.csv')
+    df_obs_arcs.to_csv(csvName, index=None, header=True)
+
     # plot the rise-set
     plot_obstab.plot_rise_set_times(gnss=gnss, df_rs=df_rise_set, logger=logger, showplot=showPlots)
     # plot the statistics of observed vs TLE predicted
-    plot_obstab.plot_rise_set_stats(gnss=gnss, df_rs=df_rise_set, logger=logger, showplot=showPlots)
+    plot_obstab.plot_rise_set_stats(gnss=gnss, df_rs=df_obs_arcs, logger=logger, showplot=showPlots)
 
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs[(df_obs['gap'] > 1.) | (df_obs['gap'].isna())], dfName='df_obs', head=50)
 
