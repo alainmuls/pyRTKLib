@@ -96,7 +96,7 @@ def plot_rise_set_times(gnss: str, df_rs: pd.DataFrame, logger: logging.Logger, 
         plt.close(fig)
 
 
-def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, nr_arcs: int,  logger: logging.Logger, showplot: bool = False):
+def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, nr_arcs: int, logger: logging.Logger, showplot: bool = False):
     """
     plot_rise_set_stats plots the rise/set statistics per SVs
     """
@@ -108,13 +108,11 @@ def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, nr_arcs: int,  logger:
     plt.style.use('ggplot')
     # plt.style.use('seaborn-darkgrid')
 
-    bars_info(nr_arcs=nr_arcs, logger=logger)
+    dx_obs, dx_tle, arc_width = bars_info(nr_arcs=nr_arcs, logger=logger)
 
     # create colormap with 36 discrete colors
-    max_prn = 36
-    prn_colors, title_font = amutils.create_colormap_font(nrcolors=max_prn, font_size=14)
+    arc_colors, title_font = amutils.create_colormap_font(nrcolors=nr_arcs, font_size=14)
 
-    width = 0.2  # the width of the bars
     x = np.arange(df_arcs.shape[0])  # the label locations
 
     # subplots
@@ -122,15 +120,9 @@ def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, nr_arcs: int,  logger:
     fig.suptitle('Rise Set statistics for system {gnss:s} on {date:s}'.format(gnss=amc.dRTK['rnx']['gnss'][gnss]['name'], date='{yy:02d}/{doy:03d}'.format(yy=amc.dRTK['rnx']['times']['yy'], doy=amc.dRTK['rnx']['times']['doy'])), fontdict=title_font, fontsize=24)
 
     # creating bar plots for absolute values
-    # draw ARC0
-    ax1.bar(x - 2 * width + 0.1, df_arcs['Arc0_tle'], width=0.75 * width, color='blue', alpha=0.35, edgecolor='black', hatch='//', label='TLE Arc 1')
-    ax1.bar(x - 2 * width, df_arcs['Arc0_obs'], width=0.75 * width, color='blue', label='Obs Arc 1')
-    # draw ARC1
-    ax1.bar(x - width / 2 + 0.1, df_arcs['Arc1_tle'], width=0.75 * width, color='red', alpha=0.35, edgecolor='black', hatch='//', label='TLE Arc 2')
-    ax1.bar(x - width / 2, df_arcs['Arc1_obs'], width=0.75 * width, color='red', label='Obs Arc 2')
-    # draw ARC2
-    ax1.bar(x + width + 0.1, df_arcs['Arc2_tle'], width=0.75 * width, color='green', alpha=0.35, edgecolor='black', hatch='//', label='TLE Arc 3')
-    ax1.bar(x + width, df_arcs['Arc2_obs'], width=0.75 * width, color='green', label='Obs Arc 3')
+    for i_arc, (obs_dx, tle_dx) in enumerate(zip(dx_obs, dx_tle)):
+        ax1.bar(x + tle_dx, df_arcs['Arc{arc:d}_tle'.format(arc=i_arc)], width=arc_width, color=arc_colors[i_arc], alpha=0.35, edgecolor='black', hatch='//', label='TLE Arc {arc:d}'.format(arc=i_arc))
+        ax1.bar(x + obs_dx, df_arcs['Arc{arc:d}_obs'.format(arc=i_arc)], width=arc_width, color=arc_colors[i_arc], label='Obs Arc {arc:d}'.format(arc=i_arc))
 
     # beautify plot
     ax1.xaxis.grid()
@@ -145,15 +137,15 @@ def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, nr_arcs: int,  logger:
     ax1.set_xticklabels(df_arcs['PRN'], rotation=90)
 
     # # creating bar plots for relative values
-    # draw ARC0
-    percentages = [df_arcs.iloc[i]['Arc0_obs'] / df_arcs.iloc[i]['Arc0_tle'] * 100 for i in np.arange(df_arcs.shape[0])]
-    ax2.bar(x - 2 * width, percentages, width=width * 1.2, color='blue', label='% Arc 1')
-    # draw ARC1
-    percentages = [df_arcs.iloc[i]['Arc1_obs'] / df_arcs.iloc[i]['Arc1_tle'] * 100 for i in np.arange(df_arcs.shape[0])]
-    ax2.bar(x - width / 2, percentages, width=width * 1.2, color='red', label='% Arc 2')
-    # draw ARC2
-    percentages = [df_arcs.iloc[i]['Arc2_obs'] / df_arcs.iloc[i]['Arc2_tle'] * 100 if df_arcs.iloc[i]['Arc2_tle'] > 0 else np.nan for i in np.arange(df_arcs.shape[0])]
-    ax2.bar(x + width, percentages, width=width * 1.2, color='green', label='% Arc 2')
+    for i_arc, (obs_dx, tle_dx) in enumerate(zip(dx_obs, dx_tle)):
+        percentages = []
+        for i in np.arange(df_arcs.shape[0]):
+            if df_arcs.iloc[i]['Arc{arc:d}_tle'.format(arc=i_arc)] != 0:
+                percentages.append(df_arcs.iloc[i]['Arc{arc:d}_obs'.format(arc=i_arc)] / df_arcs.iloc[i]['Arc{arc:d}_tle'.format(arc=i_arc)] * 100)
+            else:
+                percentages.append(np.nan)
+
+        ax2.bar(x + obs_dx, percentages, width=arc_width, color=arc_colors[i_arc], label='% Arc 1')
 
     # beautify plot
     ax2.xaxis.grid()
@@ -183,7 +175,7 @@ def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, nr_arcs: int,  logger:
     plt.show()
 
 
-def bars_info(nr_arcs: int, logger:logging.Logger) -> Tuple[int, int, list]:
+def bars_info(nr_arcs: int, logger:logging.Logger) -> Tuple[list, list, int]:
     """
     bars_info determines the width of an individual bar, the spaces between the arc bars, and localtion in delta-x-coordinates of beginning of each PRN arcs
     """
@@ -192,7 +184,7 @@ def bars_info(nr_arcs: int, logger:logging.Logger) -> Tuple[int, int, list]:
 
     # the bars for all arcs for 1 PRN may span over 0.8 units (from [-0.4 => 0.4]), including the spaces between the different arcs
     width_prn_arcs = 0.8
-    x_start = -0.4  # start of the bars relative to integer of PRN
+    dx_start = -0.4  # start of the bars relative to integer of PRN
     width_space = 0.1  # space between the different arcs for 1 PRN
 
     # substract width-spaces needed for nr_arcs
@@ -205,10 +197,7 @@ def bars_info(nr_arcs: int, logger:logging.Logger) -> Tuple[int, int, list]:
     width_bar = width_arc * 0.75
 
     # get the delta-x to apply to the integer value that corresponds to a PRN
-    x_obs = [x_start + i * (width_space + width_arc) for i in np.arange(nr_arcs)]
-    x_tle = [obs_x + width_bar * 0.25 for obs_x in x_obs]
+    dx_obs = [dx_start + i * (width_space + width_arc) for i in np.arange(nr_arcs)]
+    dx_tle = [obs_dx + width_bar * 0.25 for obs_dx in dx_obs]
 
-    print(x_obs)
-    print(x_tle)
-
-    sys.exit(6)
+    return dx_obs, dx_tle, width_arc
