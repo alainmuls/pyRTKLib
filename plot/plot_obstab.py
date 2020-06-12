@@ -32,11 +32,11 @@ def plot_rise_set_times(gnss: str, df_rs: pd.DataFrame, logger: logging.Logger, 
 
     # create colormap with 36 discrete colors
     max_prn = 36
-    prn_colors, title_font = amutils.create_colormap_font(nrcolors=max_prn, font_size=14)
+    prn_colors, title_font = amutils.create_colormap_font(nrcolors=max_prn, font_size=12)
 
     # subplots
     fig, ax = plt.subplots(figsize=(16.0, 10.0))
-    fig.suptitle('Rise Set for system {gnss:s} on {date:s}'.format(gnss=amc.dRTK['rnx']['gnss'][gnss]['name'], date='{yy:02d}/{doy:03d}'.format(yy=amc.dRTK['rnx']['times']['yy'], doy=amc.dRTK['rnx']['times']['doy'])), fontdict=title_font, fontsize=24)
+    fig.suptitle('Rise/Set for {gnss:s} - {marker:s} - {date:s}'.format(gnss=amc.dRTK['rnx']['gnss'][gnss]['name'], marker=amc.dRTK['rnx']['gnss'][gnss]['marker'], date='{date:s} ({yy:02d}/{doy:03d})'.format(date=amc.dRTK['rnx']['times']['DT'][:10], yy=amc.dRTK['rnx']['times']['yy'], doy=amc.dRTK['rnx']['times']['doy'])), fontdict=title_font, fontsize=24)
 
     # draw the rise to set lines per PRN
     for prn in df_rs.index:
@@ -111,13 +111,13 @@ def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, nr_arcs: int, logger: 
     dx_obs, dx_tle, arc_width = bars_info(nr_arcs=nr_arcs, logger=logger)
 
     # create colormap with 36 discrete colors
-    arc_colors, title_font = amutils.create_colormap_font(nrcolors=nr_arcs, font_size=14)
+    arc_colors, title_font = amutils.create_colormap_font(nrcolors=nr_arcs, font_size=12)
 
     x = np.arange(df_arcs.shape[0])  # the label locations
 
     # subplots
     fig, (ax1, ax2) = plt.subplots(figsize=(14.0, 9.0), nrows=2)
-    fig.suptitle('Rise Set statistics for system {gnss:s} on {date:s}'.format(gnss=amc.dRTK['rnx']['gnss'][gnss]['name'], date='{yy:02d}/{doy:03d}'.format(yy=amc.dRTK['rnx']['times']['yy'], doy=amc.dRTK['rnx']['times']['doy'])), fontdict=title_font, fontsize=24)
+    fig.suptitle('Rise/Set for {gnss:s} - {marker:s} - {date:s}'.format(gnss=amc.dRTK['rnx']['gnss'][gnss]['name'], marker=amc.dRTK['rnx']['gnss'][gnss]['marker'], date='{date:s} ({yy:02d}/{doy:03d})'.format(date=amc.dRTK['rnx']['times']['DT'][:10], yy=amc.dRTK['rnx']['times']['yy'], doy=amc.dRTK['rnx']['times']['doy'])), fontdict=title_font, fontsize=24)
 
     # creating bar plots for absolute values
     for i_arc, (obs_dx, tle_dx) in enumerate(zip(dx_obs, dx_tle)):
@@ -145,7 +145,11 @@ def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, nr_arcs: int, logger: 
             else:
                 percentages.append(np.nan)
 
-        ax2.bar(x + obs_dx, percentages, width=arc_width, color=arc_colors[i_arc], label='% Arc 1')
+        ax2.bar(x + obs_dx, percentages, width=arc_width, color=arc_colors[i_arc], label='% Arc {arc:d}'.format(arc=i_arc))
+
+        for i, patch in enumerate(ax2.patches[i_arc * df_arcs.shape[0]:]):
+            if not np.isnan(percentages[i]):
+                ax2.text(patch.get_x(), patch.get_y(), '{rnd:.1f}%'.format(rnd=percentages[i]), fontsize=8, rotation=90, color='black', verticalalignment='bottom')
 
     # beautify plot
     ax2.xaxis.grid()
