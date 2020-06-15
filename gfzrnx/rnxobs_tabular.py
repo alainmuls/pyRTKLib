@@ -147,9 +147,11 @@ def rearrange_arcs(nr_arcs: int, df_rs: pd.DataFrame, logger: logging.Logger) ->
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    lst_arcs = ['Arc{:d}_obs'.format(i) for i in range(nr_arcs)] + ['Arc{:d}_tle'.format(i) for i in range(nr_arcs)]
+    # create an empty dataframe for collecting the information per arc
+    lst_arcs = ['Arc{:d}_obs'.format(i) for i in range(nr_arcs)] + ['Arc{:d}_tle'.format(i) for i in range(nr_arcs)] + ['Arc{:d}_%'.format(i) for i in range(nr_arcs)]
     df_arcs = pd.DataFrame(columns=['PRN'] + lst_arcs)
 
+    # determine the observations vs predicted per arc
     for i_prn, prn in enumerate(df_rs.index):
         nr_arc_obs = []
         nr_arc_tle = []
@@ -168,10 +170,14 @@ def rearrange_arcs(nr_arcs: int, df_rs: pd.DataFrame, logger: logging.Logger) ->
                 nr_arc_tle.append(0)
 
         # add to dataframe
-        a_series = pd.Series([prn] + nr_arc_obs + nr_arc_tle, index=df_arcs.columns)
+        a_series = pd.Series([prn] + nr_arc_obs + nr_arc_tle, index=df_arcs.columns[:7])
         df_arcs = df_arcs.append(a_series, ignore_index=True)
 
-    logger.info('{func:s}: number of observations\n{nrobs!s}'.format(nrobs=df_arcs, func=cFuncName))
+        # determine the percentage of observations
+        nr_arc_perc = [float(obs) / float(tle) if tle > 0 else np.nan for obs, tle in zip(nr_arc_obs, nr_arc_tle)]
+        df_arcs.iloc[i_prn, 7:] = nr_arc_perc
+
+    logger.info('{func:s}: number of observations vs TLE predicted\n{nrobs!s}'.format(nrobs=df_arcs, func=cFuncName))
 
     return df_arcs
 

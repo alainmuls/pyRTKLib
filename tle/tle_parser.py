@@ -210,24 +210,24 @@ def tle_rise_set_times(prn: int, df_tle: pd.DataFrame, marker: sf.Topos, t0: sf.
             tle_events[event] = ti.utc_datetime()
             event_latest = event
 
-            if event == 2:  # PRN belwo cutoff
-                dt_tle_rise.append(tle_events[0].time())
-                dt_tle_set.append(tle_events[2].time())
+            if event == 2:  # PRN below cutoff
+                dt_tle_rise.append(tle_events[0].time().replace(microsecond=0))
+                dt_tle_set.append(tle_events[2].time().replace(microsecond=0))
                 if isinstance(tle_events[1], float):
                     dt_tle_cul.append(np.NaN)
                 else:
-                    dt_tle_cul.append(tle_events[1].time())
+                    dt_tle_cul.append(tle_events[1].time().replace(microsecond=0))
 
                 tle_events = [t0.utc_datetime(), np.NaN, t1.utc_datetime()]
 
         # add the final events detected
         if event_latest != 2:
-            dt_tle_rise.append(tle_events[0].time())
-            dt_tle_set.append(tle_events[2].time())
+            dt_tle_rise.append(tle_events[0].time().replace(microsecond=0))
+            dt_tle_set.append(tle_events[2].time().replace(microsecond=0))
             if isinstance(tle_events[1], float):
                 dt_tle_cul.append(np.NaN)
             else:
-                dt_tle_cul.append(tle_events[1].time())
+                dt_tle_cul.append(tle_events[1].time().replace(microsecond=0))
 
         # check whether a set time is "00:00:00" and change to "23:59:59"
         midnight = time(hour=0, minute=0, second=0, microsecond=0)

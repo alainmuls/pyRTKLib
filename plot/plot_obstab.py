@@ -138,18 +138,12 @@ def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, nr_arcs: int, logger: 
 
     # # creating bar plots for relative values
     for i_arc, (obs_dx, tle_dx) in enumerate(zip(dx_obs, dx_tle)):
-        percentages = []
-        for i in np.arange(df_arcs.shape[0]):
-            if df_arcs.iloc[i]['Arc{arc:d}_tle'.format(arc=i_arc)] != 0:
-                percentages.append(df_arcs.iloc[i]['Arc{arc:d}_obs'.format(arc=i_arc)] / df_arcs.iloc[i]['Arc{arc:d}_tle'.format(arc=i_arc)] * 100)
-            else:
-                percentages.append(np.nan)
+        ax2.bar(x + tle_dx, (df_arcs['Arc{arc:d}_%'.format(arc=i_arc)] * 100), width=arc_width, color=arc_colors[i_arc], label='Perc Arc {arc:d}'.format(arc=i_arc))
 
-        ax2.bar(x + obs_dx, percentages, width=arc_width, color=arc_colors[i_arc], label='% Arc {arc:d}'.format(arc=i_arc))
-
+        # write the percentage in the bars
         for i, patch in enumerate(ax2.patches[i_arc * df_arcs.shape[0]:]):
-            if not np.isnan(percentages[i]):
-                ax2.text(patch.get_x(), patch.get_y(), '{rnd:.1f}%'.format(rnd=percentages[i]), fontsize=8, rotation=90, color='black', verticalalignment='bottom')
+            if not np.isnan(df_arcs.iloc[i]['Arc{arc:d}_%'.format(arc=i_arc)]):
+                ax2.text(patch.get_x(), patch.get_y() + 2, '{rnd:.1f}%'.format(rnd=(df_arcs.iloc[i]['Arc{arc:d}_%'.format(arc=i_arc)] * 100)), fontsize=8, rotation=90, color='black', verticalalignment='bottom')
 
     # beautify plot
     ax2.xaxis.grid()

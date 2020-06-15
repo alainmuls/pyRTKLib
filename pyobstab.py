@@ -204,7 +204,7 @@ def main(argv):
 
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_obs[(df_obs['gap'] > 1.) | (df_obs['gap'].isna())], dfName='df_obs', head=50)
 
-    logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor), func=cFuncName))
+    # logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor), func=cFuncName))
 
     # copy temp log file to the YYDOY directory
     copyfile(log_name, os.path.join(os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][gnss]['marker']), 'pyobstab.log'))
