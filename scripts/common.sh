@@ -68,10 +68,11 @@ PYFTPOSNAV=${PYHOMEDIR}/pyftposnav.py
 PYRTKPROC=${PYHOMEDIR}/pyrtkproc.py
 PYRTKPLOT=${PYHOMEDIR}/pyrtkplot.py
 PYPOS2MAVG=${PYHOMEDIR}/pos2movavg.py
+PYOBSTAB=${PYHOMEDIR}/pyobstab.py
 
 # log files
-LOGPYRTKPROC=${PYHOMEDIR}/pyrtkproc.log
-LOGPYRTKPLOT=${PYHOMEDIR}/pyrtkplot.log
+# LOGPYRTKPROC=${PYHOMEDIR}/pyrtkproc.log
+# LOGPYRTKPLOT=${PYHOMEDIR}/pyrtkplot.log
 
 # the gnss and corresponding marker name lists
 gnss=([0]='Galileo' [1]='GPS Navstar' [2]='Combined EG')
