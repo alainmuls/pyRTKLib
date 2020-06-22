@@ -2,17 +2,19 @@
 
 usage()
 {
-    echo "usage: $0 -v pyenv -s startDOY -e endDOY -y YYYY -r RxType [-h]"
+    echo "usage: $0 -v pyenv -b git-branch -s startDOY -e endDOY -y YYYY -r RxType [-h]"
 }
 
 # number of arguments
 argc=$#
 
-if [[ $argc -eq 10 ]]; then
+if [[ $argc -eq 12 ]]; then
 	while [[ $# -gt 0 ]]; do
 	    case $1 in
 			-v)	shift
 	        	PYVENV=$1 ;;
+        -b) shift
+			BRANCH=$1;;
 			-s)	shift
 	        	STDOY=$1 ;;
 	        -e) shift
@@ -49,7 +51,7 @@ for curDOY in $(seq $STDOY $ENDOY); do
 	# printf ${YY}' '${DOY}' '${YYDOY}
 
 	DIRRIN=${RXTURPROOT}/${RXTYPE}/rinex/${YYDOY}
-	DIRIGS=${RXTURPROOT}/${RXTYPE}/igs/${YYDOY}
+	DIRIGS=${RXTURPROOT}/igs/${YYDOY}
 
 	PROCESSINGFILE=${RXTURPROOT}/${RXTYPE}/rtkprocessing.txt
 	${TOUCH} ${PROCESSINGFILE}
@@ -57,34 +59,53 @@ for curDOY in $(seq $STDOY $ENDOY); do
 	echo 'DIRRIN = '${DIRRIN}
 	echo 'DIRIGS = '${DIRIGS}
 
+	cd ${DIRRIN}
+
 	if [[ ${RXTYPE} = 'ASTX' ]]; then
 		for i in "${!gnss[@]}"; do
-			# create names for obs / nav file of rover station
-			ROVEROBS=${gnssMarker[i]}${DOY}'0.'${YY}O
-			ROVERNAV=${gnssMarker[i]}${DOY}'0.'${YY}${gnssNavExt[i]}
+			echo '\n'${i}': '${gnss[i]}
 
+			gnsslower=${gnss[i],,}
+			gnss=${gnsslower:0:3}
+			# find out which RINEX Obs files are available
+			ROVEROBSFILES=`ls -1 ${gnssMarker[i]}*${YY}D.Z`
+
+			# find out which RINEX Nav files are available
+			ROVERNAV=`ls -1 ${gnssMarker[i]}*${YY}${gnssNavExt[i]}.Z`
 			# create names for igs downloaded nav file
 			IGSNAV=${igsNavName[i]}00${igsNavCountry[i]}_R_${YYYY}${DOY}0000_01D_${igsNavNameExt[i]}N.rnx.gz
 
-			echo 'Processing: '${gnss[i]}' '${YY}' '${DOY}': '${ROVEROBS}' '${ROVERNAV}' '${IGSNAV}' '${DIRRIN} >> ${PROCESSINGFILE}
-			${NICE} ${PYRTKPROC} --dir=${DIRRIN} --rover=${ROVEROBS} --freq=4 --cutoff=5 -e ${ROVERNAV} ${DIRIGS}/${IGSNAV} --gnss=${gnss[i]}
+			# process each OBS file
+			echo -n /tmp/proc.t
+			for ROVEROBS in ${ROVEROBSFILES}
+			do
+				echo '... ROVEROBS='${ROVEROBS}
+				echo '... Processing '${gnssMarker[i]}' '${YY}' '${DOY}': '${ROVEROBS}' '${ROVERNAV}' '${IGSNAV}' '${DIRRIN}
+				echo ${gnssMarker[i]}' '${YY}' '${DOY}': '${ROVEROBS}' '${ROVERNAV}' '${IGSNAV}' '${DIRRIN} >> ${PROCESSINGFILE}
+				echo ${PYRTKPROC} --dir=${DIRRIN} --rover=${ROVEROBS} --freq=4 --cutoff=5 -e ${ROVERNAV} ${DIRIGS}/${IGSNAV} --gnss=${gnss} >> /tmp/proc.t
+				${NICE} ${PYRTKPROC} --dir=${DIRRIN} --rover=${ROVEROBS} --freq=4 --cutoff=5 -e ${ROVERNAV} ${DIRIGS}/${IGSNAV} --gnss=${gnss}
 
-			# cp the log file to the directory where the processing placed its files
-			# ${CP} ${LOGPYRTKPROC} ${DIRRIN}/'pyrtkproc-'${gnssMarker[i]}'-'${YY}'-'${DOY}'.log'
+			done
+
+			# # cp the log file to the directory where the processing placed its files
+			# # ${CP} ${LOGPYRTKPROC} ${DIRRIN}/'pyrtkproc-'${gnssMarker[i]}'-'${YY}'-'${DOY}'.log'
 		done
 	elif [[ ${RXTYPE} = 'BEGP' ]]; then
-		# create names for obs / nav file of rover station
-		ROVEROBS='BEGP'${DOY}'0.'${YY}'O'
-		ROVERNAV='BEGP'${DOY}'0.'${YY}'E'
+		# find out which combinations of RINEX Obs/Nav files are available
+		ls -1 ${DIRRIN}/*.Z
 
-		# create names for igs downloaded nav file
-		IGSNAV=${igsNavName[0]}00${igsNavCountry[0]}_R_${YYYY}${DOY}0000_01D_${igsNavNameExt[0]}N.rnx.gz
+		# # create names for obs / nav file of rover station
+		# ROVEROBS='BEGP'${DOY}'0.'${YY}'O'
+		# ROVERNAV='BEGP'${DOY}'0.'${YY}'E'
 
-		echo 'Processing: '${RXTYPE}' '${YY}' '${DOY}': '${ROVEROBS}' '${ROVERNAV}' '${IGSNAV}' '${DIRRIN} >> ${PROCESSINGFILE}
-		${NICE} ${PYRTKPROC} --dir=${DIRRIN} --rover=${ROVEROBS} --freq=4 --cutoff=5 -e ${ROVERNAV} ${DIRIGS}/${IGSNAV} --gnss=gal
+		# # create names for igs downloaded nav file
+		# IGSNAV=${igsNavName[0]}00${igsNavCountry[0]}_R_${YYYY}${DOY}0000_01D_${igsNavNameExt[0]}N.rnx.gz
 
-		# cp the log file to the directory where the processing placed its files
-		# ${CP} ${LOGPYRTKPROC} ${DIRRIN}/'pyrtkproc-BEGP-'${YY}'-'${DOY}'.log'
+		# echo 'Processing: '${RXTYPE}' '${YY}' '${DOY}': '${ROVEROBS}' '${ROVERNAV}' '${IGSNAV}' '${DIRRIN} >> ${PROCESSINGFILE}
+		# ${NICE} ${PYRTKPROC} --dir=${DIRRIN} --rover=${ROVEROBS} --freq=4 --cutoff=5 -e ${ROVERNAV} ${DIRIGS}/${IGSNAV} --gnss=gal
+
+		# # cp the log file to the directory where the processing placed its files
+		# # ${CP} ${LOGPYRTKPROC} ${DIRRIN}/'pyrtkproc-BEGP-'${YY}'-'${DOY}'.log'
 	fi
 done
 

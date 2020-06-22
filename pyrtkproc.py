@@ -8,6 +8,7 @@ import json
 from json import encoder
 import pandas as pd
 import logging
+from shutil import copyfile
 
 import am_config as amc
 from ampyutils import location, exeprogram, amutils
@@ -135,7 +136,7 @@ def main(argv):
     rootDir, roverObs, posMode, freq, cutOff, baseObs, ephemeris, gnss, typeEphem, tropo, iono, template, overwrite, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
-    logger = amc.createLoggers(baseName=os.path.basename(__file__), dir=rootDir, logLevels=logLevels)
+    logger, log_name = amc.createLoggers(baseName=os.path.basename(__file__), dir=rootDir, logLevels=logLevels)
 
     # store cli parameters
     amc.dRTK = {}
@@ -186,6 +187,10 @@ def main(argv):
     # inform user
     logger.info('{func:s}: Created position file: {pos:s}'.format(func=cFuncName, pos=colored(amc.dRTK['filePos'], 'blue')))
     logger.info('{func:s}: Created statistics file: {stat:s}'.format(func=cFuncName, stat=colored(amc.dRTK['fileStat'], 'blue')))
+
+    # copy temp log file to the YYDOY directory
+    copyfile(log_name, os.path.join(amc.dRTK['rootDir'], '{obs:s}-{prog:s}'.format(obs=amc.dRTK['roverObs'], prog='pyrtkproc.log')))
+    os.remove(log_name)
 
 
 if __name__ == "__main__":  # Only run if this file is called directly
