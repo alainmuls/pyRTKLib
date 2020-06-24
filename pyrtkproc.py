@@ -189,7 +189,7 @@ def main(argv):
     logger.info('{func:s}: Created statistics file: {stat:s}'.format(func=cFuncName, stat=colored(amc.dRTK['fileStat'], 'blue')))
 
     # copy temp log file to the YYDOY directory
-    copyfile(log_name, os.path.join(amc.dRTK['rootDir'], '{obs:s}-{prog:s}'.format(obs=amc.dRTK['roverObs'], prog='pyrtkproc.log')))
+    copyfile(log_name, os.path.join(amc.dRTK['rootDir'], '{obs:s}-{prog:s}'.format(obs=amc.dRTK['roverObs'], prog='proc.log')))
     os.remove(log_name)
 
 

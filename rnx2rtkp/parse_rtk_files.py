@@ -130,8 +130,14 @@ def parseSatelliteStatistics(statsSat: tempfile._TemporaryFileWrapper, logger: l
 
     logger.info('{func:s}: Parsing RTKLib satellites file {file:s} ({info:s})'.format(func=cFuncName, file=statsSat.name, info=colored('be patient', 'red')))
 
-    # read in the satellite status file
-    dfSat = pd.read_csv(statsSat.name, header=None, sep=',', names=rtkc.dRTKPosStat['Res']['colNames'], usecols=rtkc.dRTKPosStat['Res']['useCols'])
+    dfSat = pd.read_csv(statsSat.name, header=None, sep=',', usecols=[*range(1, 11)])
+    dfSat.columns = rtkc.dRTKPosStat['Res']['useCols']
+    amutils.printHeadTailDataFrame(df=dfSat, name='dfSat range')
+
+    # dfSat = pd.read_csv(statsSat.name, header=None, sep=',', names=rtkc.dRTKPosStat['Res']['colNames'], usecols=rtkc.dRTKPosStat['Res']['useCols'])
+    # amutils.printHeadTailDataFrame(df=dfSat, name='dfSat usecol')
+
+    # sys.exit(77)
 
     # add DT column
     dfSat['DT'] = dfSat.apply(lambda x: gpstime.UTCFromWT(x['WNC'], x['TOW']), axis=1)
@@ -382,10 +388,29 @@ def parseClockBias(statsClk: tempfile._TemporaryFileWrapper, logger: logging.Log
 
     logger.info('{func:s}: parsing RTKLib clock statistics {file:s}'.format(func=cFuncName, file=statsClk.name))
 
-    # read in the satellite status file
-    dfCLKs = pd.read_csv(statsClk.name, header=None, sep=',', names=rtkc.dRTKPosStat['Clk']['colNames'], usecols=rtkc.dRTKPosStat['Clk']['useCols'])
+    # # read in the satellite status file
+    # print('colNames = {!s}'.format(rtkc.dRTKPosStat['Clk']['colNames']))
+    # print('useNames = {!s}'.format(rtkc.dRTKPosStat['Clk']['useCols']))
 
-    amc.logDataframeInfo(df=dfCLKs, dfName='dfCLKs', callerName=cFuncName, logger=logger)
+    # with open(statsClk.name, 'r') as fstat:
+    #     i = 0
+    #     for line in fstat:
+    #         print(line, end='')
+    #         i = i + 1
+    #         if i == 10:
+    #             break
+
+    # input("Press Enter to continue...")
+
+    # read in the satellite status file
+    dfCLKs = pd.read_csv(statsClk.name, header=None, sep=',', usecols=[*range(1, 9)])
+    dfCLKs.columns = rtkc.dRTKPosStat['Clk']['useCols']
+    amutils.printHeadTailDataFrame(df=dfCLKs, name='dfCLKs range')
+
+    # # read in the satellite status file
+    # dfCLKs = pd.read_csv(statsClk.name, header=None, sep=',', names=rtkc.dRTKPosStat['Clk']['colNames'], usecols=rtkc.dRTKPosStat['Clk']['useCols'])
+
+    # amc.logDataframeInfo(df=dfCLKs, dfName='dfCLKs', callerName=cFuncName, logger=logger)
 
     # replace the headers
     cols = np.asarray(rtkc.dRTKPosStat['Clk']['useCols'][-4:])

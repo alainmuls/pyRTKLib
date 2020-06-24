@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 import math
 import utm
-# import pandas_profiling as pp
+from shutil import copyfile
 import logging
 
 import am_config as amc
@@ -86,7 +86,7 @@ def main(argv):
     rtkPosFile, rtkDir, crdMarker, showPlots, overwrite, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
-    logger = amc.createLoggers(baseName=os.path.basename(__file__), dir=rtkDir, logLevels=logLevels)
+    logger, log_name = amc.createLoggers(baseName=os.path.basename(__file__), dir=rtkDir, logLevels=logLevels)
 
     # change to selected directory if exists
     # print('rtkDir = %s' % rtkDir)
@@ -256,6 +256,10 @@ def main(argv):
         json.dump(amc.dRTK, f, ensure_ascii=False, indent=4)
 
     logger.info('{func:s}: created json file {json:s}'.format(func=cFuncName, json=colored(jsonName, 'green')))
+
+    # copy temp log file to the YYDOY directory
+    copyfile(log_name, os.path.join(amc.dRTK['info']['dir'], '{obs:s}-{prog:s}'.format(obs=amc.dRTK['info']['rtkPosFile'].replace(';', '_'), prog='plot.log')))
+    os.remove(log_name)
 
 
 if __name__ == "__main__":  # Only run if this file is called directly
