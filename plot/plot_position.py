@@ -86,6 +86,11 @@ def plotUTMOffset(dRtk: dict, dfPos: pd.DataFrame, dfCrd: pd.DataFrame, dCrdLim:
     colors.append([51 / 256., 51 / 256., 255 / 256.])
     colors.append([255 / 256., 51 / 256., 51 / 256.])
 
+    # # determine the discrete colors for all observables
+    # colormap = plt.cm.tab20  # I suggest to use nipy_spectral, Set1, Paired
+    # colors = [colormap(i) for i in np.linspace(0, 1, 3)]
+    # # print('colors = {!s}'.format(colors))
+
     # what to plot
     crds2Plot = ['UTM.E', 'UTM.N', 'ellH', 'ns']
     stdDev2Plot = ['sde', 'sdn', 'sdu']

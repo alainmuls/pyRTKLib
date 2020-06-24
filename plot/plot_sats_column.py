@@ -66,13 +66,19 @@ def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger: lo
         amc.logDataframeInfo(df=dfMerged, dfName='dfMerged', callerName=cFuncName, logger=logger)
 
         # only processing dCol['name'] of current system, plot both vs DT and statistics
-        if dCol['name'] in ['CN0', 'PRres']:
+        if dCol['name'] == 'PRres':
+            fig, axis = plt.subplots(nrows=4, ncols=1, figsize=(24.0, 20.0))
+        elif dCol['name'] == 'CN0':
             fig, axis = plt.subplots(nrows=3, ncols=1, figsize=(24.0, 20.0))
         else:
             fig, axis = plt.subplots(nrows=2, ncols=1, figsize=(24.0, 16.0))
 
         # determine the discrete colors for SVs
-        colormap = plt.cm.nipy_spectral  # I suggest to use nipy_spectral, Set1, Paired
+        # colormap = plt.cm.nipy_spectral  # I suggest to use nipy_spectral, Set1, Paired
+        # colors = [colormap(i) for i in np.linspace(0, 1, len(dfMerged.columns) - 1)]
+        # print('colors = {!s}'.format(colors))
+        # determine the discrete colors for all observables
+        colormap = plt.cm.tab20  # I suggest to use nipy_spectral, Set1, Paired
         colors = [colormap(i) for i in np.linspace(0, 1, len(dfMerged.columns) - 1)]
         # print('colors = {!s}'.format(colors))
 
@@ -207,7 +213,7 @@ def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger: lo
         elif dCol['name'] == 'PRres':
             # THIRD: FOR PRRES WE ALSO PLOT THE PERCENTAGE OF PRRES WITHIN [-2, +2]
             ax3 = axis[2]
-            ax3bis = ax3.twinx()
+            ax4 = axis[3]
 
             # get the list of SVs for this GNSS
             if GNSSSyst == 'COM':
@@ -245,16 +251,7 @@ def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger: lo
             # print('end = {!s}'.format(end))
             # ax3.set_xlim(left=start-1, right=end+1)
 
-            # plot line for representing the percentage
-            dfSVPR.plot(kind='line', ax=ax3bis, x='SV', y=['#pcreslt2'], fontsize='large', color='green', marker='o', markersize=5, linestyle='')
-            ax3bis.legend(labels=[r'% PRres  $\leq$ 2'], fontsize='medium')
-            ax3bis.set_ylim([94.5, 100.5])
-            ax3bis.tick_params(axis='y', colors='green')
-            # start, end = ax3bis.get_xlim()
-            # print('start = {!s}'.format(start))
-            # print('end = {!s}'.format(end))
-            ax3bis.set_xlim(left=start, right=end)
-
+            # beatify the boxplot
             svRects = []
             for i, rect in enumerate(ax3.patches):
                 # print('i = {:d}  rect = {!s}'.format(i, rect))
@@ -272,7 +269,21 @@ def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger: lo
 
             # name the y axis
             ax3.set_ylabel('# of {:s}'.format(dCol['name']), fontsize='large')
-            ax3bis.set_ylabel(r'% $\in$ [-2, +2]'.format(dCol['name']), fontsize='large', color='green')
+            ax4.set_ylabel(r'% $\in$ [-2, +2]'.format(dCol['name']), fontsize='large', color='green')
+
+            # plot representing the percentage
+            dfSVPR.plot(kind='bar', ax=ax4, x='SV', y='#pcreslt2', fontsize='large', sharex=ax3, color=svColors, alpha=0.8)
+            ax4.legend(labels=[r'%PRres $\leq$ 2'], fontsize='medium')
+            ax4.set_ylim([50, 101])
+            ax4.tick_params(axis='y')
+            # start, end = ax4.get_xlim()
+            # print('start = {!s}'.format(start))
+            # print('end = {!s}'.format(end))
+            # ax4.set_xlim(left=start, right=end)
+
+            # color the ticks on ax4 axis
+            for xtick, color in zip(ax4.get_xticklabels(), svColors):
+                xtick.set_color(color)
 
     # save the plot in subdir png of GNSSSystem
     amutils.mkdir_p(os.path.join(dRtk['info']['dir'], 'png'))
