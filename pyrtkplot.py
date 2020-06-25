@@ -227,7 +227,7 @@ def main(argv):
     plot_distributions_crds.plot_xdop_distribution(dRtk=amc.dRTK, dfXDOP=dfDOPs, dfXDOPdisp=dfDistXDOP, logger=logger, showplot=showPlots)
 
     # plot pseudo-range residus
-    dPRResInfo = {'name': 'PRres', 'yrange': [-10, 7.5], 'title': 'PR Residuals', 'unit': 'm', 'linestyle': '-'}
+    dPRResInfo = {'name': 'PRres', 'yrange': [-6, 6], 'title': 'PR Residuals', 'unit': 'm', 'linestyle': '-'}
     logger.info('{func:s}: creating dPRRes plots based on dict {dict!s}'.format(func=cFuncName, dict=dPRResInfo))
     plot_sats_column.plotRTKLibSatsColumn(dCol=dPRResInfo, dRtk=amc.dRTK, dfSVs=dfSats, logger=logger, showplot=showPlots)
 

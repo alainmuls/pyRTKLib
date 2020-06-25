@@ -90,17 +90,17 @@ def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger: lo
             ax1.fill_between(dfMerged['DT'], -2, +2, color='lightgreen', alpha=0.2)
 
         # plot the selected 'col' values excluding last column
-        dfMerged[dfMerged.columns[:-1]].set_index('DT').plot(ax=ax1, color=colors, marker='.', markersize=1, linestyle='', alpha=1)
+        dfMerged[dfMerged.columns[:-1]].set_index('DT').plot(ax=ax1, color=colors, marker='.', markersize=1, linestyle='', alpha=0.8)
         # name the ax1 and set limits
         ax1.set_ylabel('{title:s} [{unit:s}]'.format(title=dCol['title'], unit=dCol['unit']), fontsize='large')
         if not dCol['yrange'][0] is np.nan:
             ax1.set_ylim(dCol['yrange'])
 
         # title for plot
-        ax1.set_title('{title:s} {syst:s} - {date:s}'.format(title=dCol['title'], syst=GNSSSyst, date=dRtk['Time']['date']), fontsize='large')
+        ax1.set_title('{title:s} {syst:s} - {date:s}'.format(title=dCol['title'], syst=GNSSSyst, date=dRtk['Time']['date']), fontsize='x-large')
 
         # add legend
-        ax1.legend(bbox_to_anchor=(0.5, 0.025), loc='lower center', ncol=min(np.size(curSVsList), 15), fontsize='small', markerscale=10)
+        # ax1.legend(bbox_to_anchor=(0.5, 0.025), loc='lower center', ncol=min(np.size(curSVsList), 15), fontsize='small', markerscale=10)
 
         # create the ticks for the time axis
         dtFormat = plot_utils.determine_datetime_ticks(startDT=dfMerged['DT'].iloc[0], endDT=dfMerged['DT'].iloc[-1])
@@ -116,8 +116,6 @@ def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger: lo
 
         ax1.xaxis.set_tick_params(rotation=0)
         for tick in ax1.xaxis.get_major_ticks():
-            # tick.tick1line.set_markersize(0)
-            # tick.tick2line.set_markersize(0)
             tick.label1.set_horizontalalignment('center')
 
         ax1.annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='large')
@@ -126,12 +124,12 @@ def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger: lo
         logger.info('{func:s}: {gnss:s} statistics {name:s}\n{stat!s}'.format(func=cFuncName, name=dCol['name'], gnss=GNSSSyst, stat=dfMerged.describe()))
 
         ax2 = axis[1]
-        plotTitle = '{title:s} {gnss:s} statistics - {date:s}'.format(title=dCol['title'], gnss=GNSSSyst, date=dRtk['Time']['date'])
+        # plotTitle = '{title:s} {gnss:s} statistics - {date:s}'.format(title=dCol['title'], gnss=GNSSSyst, date=dRtk['Time']['date'])
 
         # leave out the column DT and the count column (eg '#PRres')
         selectCols = [x for x in dfMerged.columns if x not in ['DT', '#{name:s}'.format(name=dCol['name'])]]
         # print('selectCols = {!s}'.format(selectCols))
-        boxPlot = dfMerged[selectCols].plot(ax=ax2, kind='box', title=plotTitle, legend=True, fontsize='large', colormap='jet', return_type='dict', ylim=dCol['yrange'], rot=90, notch=True, patch_artist=True)
+        boxPlot = dfMerged[selectCols].plot(ax=ax2, kind='box', legend=True, fontsize='large', colormap='jet', return_type='dict', ylim=dCol['yrange'], rot=90, notch=True, patch_artist=True)
         # name the ax1 and set limits
         ax2.set_ylabel('%s [%s]' % (dCol['title'], dCol['unit']), fontsize='large')
         if not dCol['yrange'][0] is np.nan:
@@ -258,32 +256,38 @@ def plotRTKLibSatsColumn(dCol: dict, dRtk: dict, dfSVs: pd.DataFrame, logger: lo
                 if i < len(curSVsList):
                     svRects.append(rect)
 
-            for i, rect in enumerate(ax3.patches):
-                # print('i = {:d}  len = {:d}'.format(i, len(curSVsList)))
-                if i % 2:  # 2 bars per SV
-                    # get_width pulls left or right; get_y pushes up or down
-                    sv = curSVsList[int(i / 2)]
-                    # print('SV = {:s}  rect = {!s}'.format(sv, rect))
-                    svRect = svRects[int(i / 2)]
-                    ax3.text(svRect.get_x() + svRect.get_width(), svRect.get_y() + svRect.get_height(), '{:.2f}%'.format(dfSVPR.loc[sv]['#pcreslt2']), fontsize='medium', color='green', horizontalalignment='center')
+            # for i, rect in enumerate(ax3.patches):
+            #     # print('i = {:d}  len = {:d}'.format(i, len(curSVsList)))
+            #     if i % 2:  # 2 bars per SV
+            #         # get_width pulls left or right; get_y pushes up or down
+            #         sv = curSVsList[int(i / 2)]
+            #         # print('SV = {:s}  rect = {!s}'.format(sv, rect))
+            #         svRect = svRects[int(i / 2)]
+            #         ax3.text(svRect.get_x() + svRect.get_width(), svRect.get_y() + svRect.get_height(), '{:.2f}%'.format(dfSVPR.loc[sv]['#pcreslt2']), fontsize='medium', color='green', horizontalalignment='center')
 
             # name the y axis
             ax3.set_ylabel('# of {:s}'.format(dCol['name']), fontsize='large')
-            ax4.set_ylabel(r'% $\in$ [-2, +2]'.format(dCol['name']), fontsize='large', color='green')
 
             # plot representing the percentage
-            dfSVPR.plot(kind='bar', ax=ax4, x='SV', y='#pcreslt2', fontsize='large', sharex=ax3, color=svColors, alpha=0.8)
+            dfSVPR.plot(kind='bar', ax=ax4, x='SV', y='#pcreslt2', fontsize='large', sharex=ax3, color=svColors, alpha=0.5)
+
             ax4.legend(labels=[r'%PRres $\leq$ 2'], fontsize='medium')
             ax4.set_ylim([50, 101])
             ax4.tick_params(axis='y')
-            # start, end = ax4.get_xlim()
-            # print('start = {!s}'.format(start))
-            # print('end = {!s}'.format(end))
-            # ax4.set_xlim(left=start, right=end)
+
+            # name the y axis
+            ax4.set_ylabel(r'% $\in$ [-2, +2]'.format(dCol['name']), fontsize='large')
 
             # color the ticks on ax4 axis
             for xtick, color in zip(ax4.get_xticklabels(), svColors):
                 xtick.set_color(color)
+
+            # set percantage in the bars
+            bars = ax4.patches
+            print('bars = {!s}'.format(bars))
+            # Text on the top of each barplot
+            for i, bar in enumerate(bars):
+                ax4.text(x=bar.get_x() + bar.get_width() / 2, y=bar.get_y() + 52, s='{rnd:.1f}'.format(rnd=bar.get_height()), rotation=90, fontsize=8, color='black', verticalalignment='bottom')
 
     # save the plot in subdir png of GNSSSystem
     amutils.mkdir_p(os.path.join(dRtk['info']['dir'], 'png'))

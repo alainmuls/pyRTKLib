@@ -103,7 +103,7 @@ def plot_elev_distribution(dRtk: dict, df: pd.DataFrame, ds:pd.Series, obs_name:
                 axis.set_xticks(idx)
                 axis.set_xticklabels(df.index.tolist(), rotation='vertical')
 
-                axis.annotate('# = {:.0f} ({:.2f}%)'.format(ds[col], ds[col] / ds.sum() * 100), xy=(1, 1), xycoords='axes fraction', xytext=(0, -25), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='large')
+                axis.annotate('#{:.0f} ({:.2f}%)'.format(ds[col], ds[col] / ds.sum() * 100), xy=(1, 1), xycoords='axes fraction', xytext=(0, -25), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='large')
 
                 # set the title for sub-plot
                 axis.set_title(label='Elevation bin {bin:s}'.format(bin=col[3:]), fontsize='x-large')
