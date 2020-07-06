@@ -1,7 +1,6 @@
 import sys
 import os
 from termcolor import colored
-import configparser
 import json
 from string import Template
 import logging

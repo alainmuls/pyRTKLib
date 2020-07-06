@@ -68,6 +68,37 @@ def treatCmdOpts(argv):
     return args.dir, args.roverobs, args.mode, args.freq, args.cutoff, args.baseobs, args.ephem, args.gnss, args.sateph, args.atmtropo, args.iono, args.template, args.overwrite, args.logging
 
 
+def roverobs_decomp(logger: logging.Logger):
+    """
+    roverobs_decomp decompresses the hatanake/compressed file
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    # check the end of roverObs filename
+    if amc.dRTK['roverObs'].endswith('D.Z'):
+        logger.info('{func:s}: decompressing {comp:s}'.format(comp=amc.dRTK['roverObs'], func=cFuncName))
+
+        cmdCRZ2RNX = '{prog:s} -f {comp:s}'.format(prog=amc.dRTK['exeCRZ2RNX'], comp=amc.dRTK['roverObs'])
+        logger.info('{func:s}: Running:\n{cmd:s}'.format(func=cFuncName, cmd=colored(cmdCRZ2RNX, 'green')))
+
+        # run the program
+        exeprogram.subProcessDisplayStdErr(cmd=cmdCRZ2RNX, verbose=True)
+
+    # name the file to use from now on
+    amc.dRTK['rover2proc'] = '{base:s}.{ext:s}'.format(base=amc.dRTK['roverObsParts'][0], ext=amc.dRTK['roverObsParts'][1].replace('D', 'O'))
+
+    logger.info('{func:s}: amc.dRTK = \n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
+
+
+def rover_adjust_obstypes(logger: logging.Logger):
+    """
+    rover_adjust_obstypes temporary adjust the header of obs to make rnx2rtkp think we have C1C observables
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+
+
+
 def checkValidityArgs(logger: logging.Logger) -> bool:
     """
     checks for existence of dirs/files and also for presence of base station observation when posmode > 0 (single)
@@ -91,9 +122,8 @@ def checkValidityArgs(logger: logging.Logger) -> bool:
         logger.error('{func:s}: rover observation file {rover:s} not accessible.\n'.format(func=cFuncName, rover=amc.dRTK['roverObs']))
         return amc.E_FILE_NOT_EXIST
     else:
-        # name the result/statistics file calculated by rnx2rtkp
-        amc.dRTK['filePos'] = '{rover:s}.pos'.format(rover=os.path.join('rtkp', amc.dRTK['GNSS'], amc.dRTK['roverObs'].replace('.', '-')))
-        amc.dRTK['fileStat'] = '{rover:s}.pos.stat'.format(rover=os.path.join('rtkp', amc.dRTK['GNSS'], amc.dRTK['roverObs'].replace('.', '-')))
+        amc.dRTK['filePos'] = '{rover:s}.pos'.format(rover=os.path.join('rtkp', amc.dRTK['GNSS'], amc.dRTK['basename2use']))
+        amc.dRTK['fileStat'] = '{pos:s}.stat'.format(pos=amc.dRTK['filePos'])
 
     # check existence of ephemeris file
     for _, ephemFile in enumerate(amc.dRTK['ephems']):
@@ -153,33 +183,48 @@ def main(argv):
     amc.dRTK['Iono'] = iono
     amc.dRTK['template'] = template
 
+    # locate the rnx2rtkp program used for execution
+    amc.dRTK['exeRNX2RTKP'] = location.locateProg('rnx2rtkp', logger)
+    amc.dRTK['exeCRZ2RNX'] = location.locateProg('crz2rnx', logger)
+    amc.dRTK['exeCRX2RNX'] = location.locateProg('crx2rnx', logger)
+
+    # store first 2 parts for consisting naming of files conf, pos and stat
+    amc.dRTK['roverObsParts'] = amc.dRTK['roverObs'].split('.')
+    amc.dRTK['basename2use'] = '{part1:s}_{part2:s}'.format(part1=amc.dRTK['roverObsParts'][0], part2=amc.dRTK['roverObsParts'][1])
+    print('mc.dRTK[roverObsParts] = {!s}'.format(amc.dRTK['roverObsParts']))
+    print('2use = {!s}'.format(amc.dRTK['basename2use']))
+
     # check validity of passed arguments
     retCode = checkValidityArgs(logger=logger)
     if retCode != amc.E_SUCCESS:
         logger.error('{func:s}: Program exits with code {error:s}'.format(func=cFuncName, error=colored('{!s}'.format(retCode), 'red')))
         sys.exit(retCode)
 
-    # create the configuration file for the GNSSs to process
-    amc.dRTK['config'] = os.path.join(amc.dRTK['rtkDir'], '{rover:s}-{syst:s}.conf'.format(rover=amc.dRTK['roverObs'].split('.')[0], syst=amc.dRTK['GNSS'].upper()))
+    logger.info('{func:s}: amc.dRTK = \n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
 
+    # decompress roverObs file and adjust observables to allow processing
+    roverobs_decomp(logger=logger)
+
+    sys.exit(6)
+
+    # create the configuration file for the GNSSs to process
+    amc.dRTK['config'] = os.path.join(amc.dRTK['rtkDir'], '{rover:s}-{syst:s}.conf'.format(rover=amc.dRTK['basename2use'], syst=amc.dRTK['GNSS'].upper()))
     logger.info('{func:s}: Creating {syst:s} configuration file {conf:s}'.format(func=cFuncName, syst=colored(gnss, 'green'), conf=colored(amc.dRTK['config'], 'green')))
 
     # create the settings used for replacing the fields in the template file
     template_rnx2rtkp.create_rnx2rtkp_settings(overwrite=overwrite, logger=logger)
-
+    # create the template for this processing
     template_rnx2rtkp.create_rnx2rtkp_template(cfgFile=amc.dRTK['config'], overwrite=overwrite, logger=logger)
 
     logger.info('{func:s}: amc.dRTK = \n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
 
-    # locate the rnx2rtkp program used for execution
-    exeRNX2RTKP = location.locateProg('rnx2rtkp', logger)
 
-    cmdRNX2RTKP = '{prog:s} -k {conf:s} -o {pos:s} {rover:s} {base:s} {nav:s}'.format(prog=exeRNX2RTKP, conf=amc.dRTK['config'], pos=amc.dRTK['filePos'], rover=amc.dRTK['roverObs'], base=amc.dRTK['baseObs'], nav=' '.join(amc.dRTK['ephems']))
+    cmdRNX2RTKP = '{prog:s} -k {conf:s} -o {pos:s} {rover:s} {base:s} {nav:s}'.format(prog=amd.dRTK['exeRNX2RTKP'], conf=amc.dRTK['config'], pos=amc.dRTK['filePos'], rover=amc.dRTK['roverObs'], base=amc.dRTK['baseObs'], nav=' '.join(amc.dRTK['ephems']))
 
     logger.info('{func:s}: Running:\n{cmd:s}'.format(func=cFuncName, cmd=colored(cmdRNX2RTKP, 'green')))
 
     # run the program
-    if amc.dLogLevel[logLevels[0]] >= amc.dLogLevel['INFO']:
+    if logLevels[0] >= amc.dLogLevel['INFO']:
         exeprogram.subProcessDisplayStdErr(cmd=cmdRNX2RTKP, verbose=True)
     else:
         exeprogram.subProcessDisplayStdErr(cmd=cmdRNX2RTKP, verbose=False)
