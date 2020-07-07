@@ -3,12 +3,11 @@ from termcolor import colored
 import sys
 import os
 import logging
-import utm
 import tempfile
 import datetime as dt
 
 from ampyutils import amutils
-from glab import glab_constants
+from glab import glab_constants as glc
 import am_config as amc
 
 __author__ = 'amuls'
@@ -47,11 +46,11 @@ def parse_glab_output(glab_output: tempfile._TemporaryFileWrapper, logger: loggi
 
     logger.info('{func:s}: Parsing gLab OUTPUT section {file:s} ({info:s})'.format(func=cFuncName, file=glab_output.name, info=colored('be patient', 'red')))
 
-    # read gLABs OUTPUT into dataframe
-    df_output = pd.read_csv(glab_output.name, header=None, delim_whitespace=True, usecols=[*range(1, 11), *range(20, len(glab_constants.dgLab['OUTPUT']['columns']))])
+    # read gLABs OUTPUT into dataframe (cropping cartesian colmuns)
+    df_output = pd.read_csv(glab_output.name, header=None, delim_whitespace=True, usecols=[*range(1, 11), *range(20, len(glc.dgLab['OUTPUT']['columns']))])
 
     # name the colmuns
-    df_output.columns = glab_constants.dgLab['OUTPUT']['use_cols']
+    df_output.columns = glc.dgLab['OUTPUT']['use_cols']
 
     # tranform time column to python datetime.time
     df_output['Time'] = df_output['Time'].apply(lambda x: dt.datetime.strptime(x, '%H:%M:%S.%f').time())

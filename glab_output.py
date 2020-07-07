@@ -5,18 +5,16 @@ import os
 import argparse
 from termcolor import colored
 import json
-from json import encoder
 import logging
 import tempfile
 from shutil import copyfile
 import pathlib
-import utm
 import numpy as np
 import pandas as pd
 
 import am_config as amc
 from ampyutils import amutils
-from glab import glab_parser
+from glab import glab_parser, glab_plot_output
 
 __author__ = 'amuls'
 
@@ -128,8 +126,11 @@ def main(argv) -> bool:
     # split gLABs out file in parts
     dglab_tmpfiles = glab_parser.split_glab_outfile(glab_outfile=amc.dRTK['glab_out'], logger=logger)
 
-    # read in the OUTPUT file
+    # read in the OUTPUT messages from OUTPUT temp file
     df_output = glab_parser.parse_glab_output(glab_output=dglab_tmpfiles['OUTPUT'], logger=logger)
+
+    # plot the gLABs OUTPUT messages
+    glab_plot_output.plot_glab_position(df_outp=df_output, logger=logger)
 
     # report to the user
     logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
