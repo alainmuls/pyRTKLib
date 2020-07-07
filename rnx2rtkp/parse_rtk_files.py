@@ -13,6 +13,8 @@ from GNSS import gpstime
 from rnx2rtkp import rtklibconstants as rtkc
 import am_config as amc
 
+__author__ = 'amuls'
+
 
 def parseRTKLibPositionFile(logger: logging.Logger) -> pd.DataFrame:
     """
