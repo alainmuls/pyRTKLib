@@ -47,13 +47,17 @@ def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bo
     ax[-1].annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='large')
 
     # get max/min values of the columns glc.dgLab['OUTPUT']['plot']['dENU']
-    crd_max = -np.inf
-    crd_min = +np.inf
+    crd_mean = {}
 
     for crd in glc.dgLab['OUTPUT']['plot']['dENU']:
         # get max/min for this crd and the previous ones
-        crd_max = max(dfCrd[crd].max(), crd_max)
-        crd_min = min(dfCrd[crd].min(), crd_min)
+        crd_mean[crd] = dfCrd[crd].mean()
+        # crd_max = max(dfCrd[crd].max(), crd_max)
+        # crd_min = min(dfCrd[crd].min(), crd_min)
+
+    # same values all the time
+    # crd_max = 5
+    # crd_min = -crd_max
 
     # plot the ENU difference xwrt nominal initial position and display the standard deviation, xDOP
     for i, (crd, sdCrd) in enumerate(zip(glc.dgLab['OUTPUT']['plot']['dENU'], glc.dgLab['OUTPUT']['plot']['sdENU'])):
@@ -68,7 +72,7 @@ def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bo
         axis.errorbar(x=dfCrd['Time'].values, y=dfCrd[crd], yerr=dfCrd[sdCrd], linestyle='-', fmt='o', ecolor=rgb_alpha, capthick=1, markersize=1, color=colors[i])
 
         # set dimensions of y-axis
-        axis.set_ylim([crd_min, crd_max])
+        axis.set_ylim([crd_mean[crd] - 5, crd_mean[crd] + 5])
         axis.set_ylabel('{crd:s} [m]'.format(crd=crd, fontsize='large'), color=colors[i])
 
         # # annotate each subplot with its reference position
