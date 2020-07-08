@@ -45,7 +45,7 @@ def treatCmdOpts(argv):
     parser.add_argument('-d', '--dir', help='Root directory (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
     parser.add_argument('-f', '--file', help='gLAB processed out file', required=True, type=str)
     # parser.add_argument('-r', '--resFile', help='RTKLib residuals file', type=str, required=False, default=None)
-    parser.add_argument('-m', '--marker', help='Geodetic coordinates (lat,lon,ellH) of reference point in degrees: 50.8440152778 4.3929283333 151.39179 for RMA, 50.93277777 4.46258333 123 for Peutie, default 0 0 0 means use mean position', nargs=3, type=str, required=False, default=["0", "0", "0"])
+    # parser.add_argument('-m', '--marker', help='Geodetic coordinates (lat,lon,ellH) of reference point in degrees: 50.8440152778 4.3929283333 151.39179 for RMA, 50.93277777 4.46258333 123 for Peutie, default 0 0 0 means use mean position', nargs=3, type=str, required=False, default=["0", "0", "0"])
 
     parser.add_argument('-p', '--plots', help='displays interactive plots (default True)', action='store_true', required=False, default=False)
     parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default False)', action='store_true', required=False)
@@ -56,7 +56,7 @@ def treatCmdOpts(argv):
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.file, args.marker, args.plots, args.overwrite, args.logging
+    return args.dir, args.file, args.plots, args.overwrite, args.logging
 
 
 def check_arguments(logger: logging.Logger) -> int:
@@ -96,7 +96,7 @@ def main(argv) -> bool:
     pd.options.display.float_format = "{:,.3f}".format
 
     # treat command line options
-    dir_root, glab_out, posn_marker, show_plot, overwrite, log_levels = treatCmdOpts(argv)
+    dir_root, glab_out, show_plot, overwrite, log_levels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=dir_root, logLevels=log_levels)
@@ -105,18 +105,18 @@ def main(argv) -> bool:
     amc.dRTK = {}
     amc.dRTK['dir_root'] = dir_root
     amc.dRTK['glab_out'] = glab_out
-    # set the reference point
-    dMarker = {}
-    dMarker['lat'], dMarker['lon'], dMarker['ellH'] = map(float, posn_marker)
-    print('posn_marker = {!s}'.format(posn_marker))
+    # # set the reference point
+    # dMarker = {}
+    # dMarker['lat'], dMarker['lon'], dMarker['ellH'] = map(float, posn_marker)
+    # print('posn_marker = {!s}'.format(posn_marker))
 
-    if [dMarker['lat'], dMarker['lon'], dMarker['ellH']] == [0, 0, 0]:
-        dMarker['lat'] = dMarker['lon'] = dMarker['ellH'] = np.NaN
-        # dMarker['UTM.E'] = dMarker['UTM.N'] = np.NaN
-        # dMarker['UTM.Z'] = dMarker['UTM.L'] = ''
-    # else:
-    #     dMarker['UTM.E'], dMarker['UTM.N'], dMarker['UTM.Z'], dMarker['UTM.L'] = utm.from_latlon(dMarker['lat'], dMarker['lon'])
-    amc.dRTK['marker'] = dMarker
+    # if [dMarker['lat'], dMarker['lon'], dMarker['ellH']] == [0, 0, 0]:
+    #     dMarker['lat'] = dMarker['lon'] = dMarker['ellH'] = np.NaN
+    #     # dMarker['UTM.E'] = dMarker['UTM.N'] = np.NaN
+    #     # dMarker['UTM.Z'] = dMarker['UTM.L'] = ''
+    # # else:
+    # #     dMarker['UTM.E'], dMarker['UTM.N'], dMarker['UTM.Z'], dMarker['UTM.L'] = utm.from_latlon(dMarker['lat'], dMarker['lon'])
+    # amc.dRTK['marker'] = dMarker
 
     # check some arguments
     ret_val = check_arguments(logger=logger)
@@ -130,7 +130,7 @@ def main(argv) -> bool:
     df_output = glab_parser.parse_glab_output(glab_output=dglab_tmpfiles['OUTPUT'], logger=logger)
 
     # plot the gLABs OUTPUT messages
-    glab_plot_output.plot_glab_position(df_outp=df_output, logger=logger)
+    glab_plot_output.plot_glab_position(dfCrd=df_output, showplot=show_plot, logger=logger)
 
     # report to the user
     logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
