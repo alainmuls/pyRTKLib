@@ -79,9 +79,13 @@ def parse_glab_info(glab_info: str, logger: logging.Logger):
 
     find_lines = ('INFO RINEX observation input file', 'INFO RINEX navigation message input file')
 
+    # read in all lines from gLAB INFO output
     with open(glab_info.name) as fh:
-        for line in fh:
-            if line.startswith(find_lines[0]):
-                print(line)
+        lines = [line.rstrip() for line in fh]  # fh.readlines()  # [line.rstrip() for line in fh]
+
+    print(len(lines))
+    print(lines[0])
+    print(lines[1])
 
     input("Press Enter to continue...")
+    print(lines)
