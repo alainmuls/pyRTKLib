@@ -127,6 +127,7 @@ def main(argv) -> bool:
     dglab_tmpfiles = glab_parser.split_glab_outfile(glab_outfile=amc.dRTK['glab_out'], logger=logger)
 
     # read in the OUTPUT messages from OUTPUT temp file
+    glab_parser.parse_glab_info(glab_info=dglab_tmpfiles['INFO'], logger=logger)
     df_output = glab_parser.parse_glab_output(glab_output=dglab_tmpfiles['OUTPUT'], logger=logger)
 
     # plot the gLABs OUTPUT messages

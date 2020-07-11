@@ -67,3 +67,21 @@ def parse_glab_output(glab_output: tempfile._TemporaryFileWrapper, logger: loggi
     amutils.printHeadTailDataFrame(df=df_output, name='OUTPUT section of {name:s}'.format(name=amc.dRTK['glab_out']))
 
     return df_output
+
+
+def parse_glab_info(glab_info: str, logger: logging.Logger):
+    """
+    parse_glab_info parses the INFO section from gLAB out file
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    logger.info('{func:s}: Parsing gLab INFO section {file:s} ({info:s})'.format(func=cFuncName, file=glab_info.name, info=colored('be patient', 'red')))
+
+    find_lines = ('INFO RINEX observation input file', 'INFO RINEX navigation message input file')
+
+    with open(glab_info.name) as fh:
+        for line in fh:
+            if line.startswith(find_lines[0]):
+                print(line)
+
+    input("Press Enter to continue...")

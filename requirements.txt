@@ -2,6 +2,7 @@ astroid==2.3.3
 certifi==2020.4.5.1
 chardet==3.0.4
 cycler==0.10.0
+Cython==0.29.21
 DateTimeRange==1.0.0
 entrypoints==0.3
 flake8==3.7.7

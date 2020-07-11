@@ -103,7 +103,6 @@ def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bo
     # set title
     axis.set_title('Visible satellites & PDOP', fontsize='large')
 
-
     if showplot:
         plt.show(block=True)
     else:
