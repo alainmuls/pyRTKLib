@@ -123,7 +123,7 @@ def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bo
 
     # plot the number of SVs and color as function of the number of GNSSs used
     for i_gnss in range(1, dfCrd['#GNSSs'].max() + 1):
-        axis.fill_between(dfCrd['DT'].values, 0, dfCrd['#SVs'], where=(dfCrd['#GNSSs'] == i_gnss), alpha=0.4, linestyle='-', linewidth=1, color=colors[i_gnss], label='#SVs', interpolate=False)
+        axis.fill_between(dfCrd['DT'].values, 0, dfCrd['#SVs'], where=(dfCrd['#GNSSs'] == i_gnss), alpha=0.25, linestyle='-', linewidth=1, color=colors[i_gnss], label='#SVs', interpolate=False)
 
     # plot PDOP on second y-axis
     axis_right = axis.twinx()
@@ -151,11 +151,12 @@ def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bo
         tick.label1.set_horizontalalignment('center')
 
     # save the plot in subdir png of GNSSSystem
-    amutils.mkdir_p(os.path.join(amc.dRTK['dir_root'], 'png'))
-    pngName = os.path.join(amc.dRTK['dir_root'], 'png', '{obs:s}-ENU.png'.format(obs=obs_name.replace('.', '-')))
-    fig.savefig(pngName, dpi=fig.dpi)
+    dir_png = os.path.join(amc.dRTK['dir_root'], amc.dRTK['dglabng']['dir_glab'], 'png')
+    png_filename = os.path.join(dir_png, '{out:s}-ENU.png'.format(out=amc.dRTK['glab_out'].replace('.', '-')))
+    amutils.mkdir_p(dir_png)
+    fig.savefig(png_filename, dpi=fig.dpi)
 
-    logger.info('{func:s}: created plot {plot:s}'.format(func=cFuncName, plot=colored(pngName, 'green')))
+    logger.info('{func:s}: created plot {plot:s}'.format(func=cFuncName, plot=colored(png_filename, 'green')))
 
     if showplot:
         plt.show(block=True)

@@ -8,6 +8,7 @@ import json
 import logging
 import pathlib
 import pandas as pd
+from shutil import copyfile
 
 import am_config as amc
 from ampyutils import amutils
@@ -80,6 +81,25 @@ def check_arguments(logger: logging.Logger) -> int:
     return amc.E_SUCCESS
 
 
+def store_to_cvs(df: pd.DataFrame, ext: str, logger: logging.Logger, index: bool = True):
+    """
+    store the dataframe to a CSV file
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    csv_name = amc.dRTK['glab_out'].split('.')[0] + '.' + ext
+    amc.dRTK['dglabng'][ext] = csv_name
+
+    # make dir if not exist
+    dir_glabng = os.path.join(amc.dRTK['dir_root'], amc.dRTK['dglabng']['dir_glab'])
+    amutils.mkdir_p(dir_glabng)
+
+    df.to_csv(os.path.join(dir_glabng, csv_name), index=index, header=True)
+
+    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df, dfName=csv_name)
+    logger.info('{func:s}: stored dataframe as csv file {csv:s}'.format(csv=colored(csv_name, 'green'), func=cFuncName))
+
+
 def main(argv) -> bool:
     """
     glabplotposn plots data from gLAB (v6) OUTPUT messages
@@ -103,6 +123,11 @@ def main(argv) -> bool:
     amc.dRTK['dir_root'] = dir_root
     amc.dRTK['glab_out'] = glab_out
 
+    dgLabng = {}
+    dgLabng['dir_glab'] = 'glabng'
+
+    amc.dRTK['dglabng'] = dgLabng
+
     # check some arguments
     ret_val = check_arguments(logger=logger)
     if ret_val != amc.E_SUCCESS:
@@ -114,12 +139,25 @@ def main(argv) -> bool:
     # read in the OUTPUT messages from OUTPUT temp file
     amc.dRTK['INFO'] = glab_parser.parse_glab_info(glab_info=dglab_tmpfiles['INFO'], logger=logger)
     df_output = glab_parser.parse_glab_output(glab_output=dglab_tmpfiles['OUTPUT'], logger=logger)
+    # save as CSV file
+    store_to_cvs(df=df_output, ext='pos', logger=logger, index=False)
 
     # plot the gLABs OUTPUT messages
     glab_plot_output.plot_glab_position(dfCrd=df_output, showplot=show_plot, logger=logger)
 
     # report to the user
     logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
+
+    # create JSON file from amc.dRTK
+    json_name = amc.dRTK['glab_out'].split('.')[0] + '.json'
+    with open(json_name, 'w') as f:
+        json.dump(amc.dRTK, f, ensure_ascii=False, indent=4)
+
+    logger.info('{func:s}: created json file {json:s}'.format(func=cFuncName, json=colored(json_name, 'green')))
+
+    # copy temp log file to the YYDOY directory
+    copyfile(log_name, os.path.join(amc.dRTK['dir_root'], '{obs:s}-{prog:s}'.format(obs=amc.dRTK['glab_out'].split('.')[0], prog='output.log')))
+    os.remove(log_name)
 
     return amc.E_SUCCESS
 
