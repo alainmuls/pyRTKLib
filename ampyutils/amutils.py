@@ -13,11 +13,20 @@ import subprocess
 from datetime import datetime
 from typing import Tuple
 import matplotlib._color_data as mcd
+import enum
 
 from GNSS import gpstime
 import am_config as amc
 
 __author__ = 'amuls'
+
+
+# Enum for size units
+class SIZE_UNIT(enum.Enum):
+    BYTES = 1
+    KB = 2
+    MB = 3
+    GB = 4
 
 
 def mkdir_p(path):
@@ -367,3 +376,15 @@ def create_colormap_font(nrcolors: int, font_size: int) -> Tuple[list, dict]:
             }
 
     return color_used, font
+
+
+def convert_unit(size_in_bytes, unit):
+    """ Convert the size from bytes to other units like KB, MB or GB"""
+    if unit == SIZE_UNIT.KB:
+        return size_in_bytes / 1024
+    elif unit == SIZE_UNIT.MB:
+        return size_in_bytes / (1024 * 1024)
+    elif unit == SIZE_UNIT.GB:
+        return size_in_bytes / (1024 * 1024 * 1024)
+    else:
+        return size_in_bytes

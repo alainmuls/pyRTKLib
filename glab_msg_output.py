@@ -6,10 +6,7 @@ import argparse
 from termcolor import colored
 import json
 import logging
-import tempfile
-from shutil import copyfile
 import pathlib
-import numpy as np
 import pandas as pd
 
 import am_config as amc
@@ -105,18 +102,6 @@ def main(argv) -> bool:
     amc.dRTK = {}
     amc.dRTK['dir_root'] = dir_root
     amc.dRTK['glab_out'] = glab_out
-    # # set the reference point
-    # dMarker = {}
-    # dMarker['lat'], dMarker['lon'], dMarker['ellH'] = map(float, posn_marker)
-    # print('posn_marker = {!s}'.format(posn_marker))
-
-    # if [dMarker['lat'], dMarker['lon'], dMarker['ellH']] == [0, 0, 0]:
-    #     dMarker['lat'] = dMarker['lon'] = dMarker['ellH'] = np.NaN
-    #     # dMarker['UTM.E'] = dMarker['UTM.N'] = np.NaN
-    #     # dMarker['UTM.Z'] = dMarker['UTM.L'] = ''
-    # # else:
-    # #     dMarker['UTM.E'], dMarker['UTM.N'], dMarker['UTM.Z'], dMarker['UTM.L'] = utm.from_latlon(dMarker['lat'], dMarker['lon'])
-    # amc.dRTK['marker'] = dMarker
 
     # check some arguments
     ret_val = check_arguments(logger=logger)
@@ -127,7 +112,7 @@ def main(argv) -> bool:
     dglab_tmpfiles = glab_parser.split_glab_outfile(glab_outfile=amc.dRTK['glab_out'], logger=logger)
 
     # read in the OUTPUT messages from OUTPUT temp file
-    glab_parser.parse_glab_info(glab_info=dglab_tmpfiles['INFO'], logger=logger)
+    amc.dRTK['INFO'] = glab_parser.parse_glab_info(glab_info=dglab_tmpfiles['INFO'], logger=logger)
     df_output = glab_parser.parse_glab_output(glab_output=dglab_tmpfiles['OUTPUT'], logger=logger)
 
     # plot the gLABs OUTPUT messages

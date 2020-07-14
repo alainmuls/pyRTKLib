@@ -5,6 +5,8 @@ import os
 import logging
 import tempfile
 import datetime as dt
+import re
+from datetime import datetime
 
 from ampyutils import amutils
 from glab import glab_constants as glc
@@ -21,21 +23,25 @@ def split_glab_outfile(glab_outfile: str, logger: logging.Logger) -> dict:
 
     logger.debug('{func:s}: splitting gLABs file {statf:s}'.format(func=cFuncName, statf=glab_outfile))
 
-    # read in the glab_outfile and split it into its parts (stored in temporary files)
-    glab_msgs = ('INFO', 'OUTPUT', 'SATSEL', 'MEAS', 'MODEL', 'FILTER')
-    dglab = {}
+    dgLab_tmpf = {}
+    for glab_msg in glc.dgLab['messages']:
+        dgLab_tmpf[glab_msg] = tempfile.NamedTemporaryFile(prefix='{:s}_'.format(glab_outfile), suffix='_{:s}'.format(glab_msg), delete=True)
 
-    for glab_msg in glab_msgs:
-        dglab[glab_msg] = tempfile.NamedTemporaryFile(prefix='{:s}_'.format(glab_outfile), suffix='_{:s}'.format(glab_msg), delete=True)
-
-        with open(dglab[glab_msg].name, 'w') as fTmp:
+        with open(dgLab_tmpf[glab_msg].name, 'w') as fTmp:
             fTmp.writelines(line for line in open(glab_outfile) if line.startswith(glab_msg))
-            logger.info('{func:s}: size of {msg:s} file = {size:d}'.format(size=fTmp.tell(), msg=glab_msg, func=cFuncName))
+            logger.info('{func:s}: size of {msg:s} file = {size:.2f} MB'.format(size=amutils.convert_unit(fTmp.tell(), amutils.SIZE_UNIT.MB), msg=glab_msg, func=cFuncName))
 
             # reset at start of file
             fTmp.seek(0)
 
-    return dglab
+    return dgLab_tmpf
+
+
+def make_datetime(year: int, doy: int, t: datetime.time) -> dt.datetime:
+    """
+    converts the YYYY, DoY and Time to a datetime
+    """
+    return dt.datetime.strptime('{!s} {!s} {!s}'.format(year, doy, t.strftime('%H:%M:%S')), '%Y %j %H:%M:%S')
 
 
 def parse_glab_output(glab_output: tempfile._TemporaryFileWrapper, logger: logging.Logger) -> pd.DataFrame:
@@ -52,8 +58,9 @@ def parse_glab_output(glab_output: tempfile._TemporaryFileWrapper, logger: loggi
     # name the colmuns
     df_output.columns = glc.dgLab['OUTPUT']['use_cols']
 
-    # tranform time column to python datetime.time
+    # tranform time column to python datetime.time and add a DT column
     df_output['Time'] = df_output['Time'].apply(lambda x: dt.datetime.strptime(x, '%H:%M:%S.%f').time())
+    df_output['DT'] = df_output.apply(lambda x: make_datetime(x['Year'], x['DoY'], x['Time']), axis=1)
 
     # # add UTM coordinates (drop zone info)
     # df_output['UTM.E'], df_output['UTM.N'], _, _ = utm.from_latlon(df_output['lat'].to_numpy(), df_output['lon'].to_numpy())
@@ -69,7 +76,7 @@ def parse_glab_output(glab_output: tempfile._TemporaryFileWrapper, logger: loggi
     return df_output
 
 
-def parse_glab_info(glab_info: str, logger: logging.Logger):
+def parse_glab_info(glab_info: str, logger: logging.Logger) -> dict:
     """
     parse_glab_info parses the INFO section from gLAB out file
     """
@@ -77,15 +84,29 @@ def parse_glab_info(glab_info: str, logger: logging.Logger):
 
     logger.info('{func:s}: Parsing gLab INFO section {file:s} ({info:s})'.format(func=cFuncName, file=glab_info.name, info=colored('be patient', 'red')))
 
-    find_lines = ('INFO RINEX observation input file', 'INFO RINEX navigation message input file')
-
     # read in all lines from gLAB INFO output
     with open(glab_info.name) as fh:
         lines = [line.rstrip() for line in fh]  # fh.readlines()  # [line.rstrip() for line in fh]
 
-    print(len(lines))
-    print(lines[0])
-    print(lines[1])
+    # find the values for the dgLab['INFO'] we collect
+    dInfo = {}
+    for key, val in glc.dgLab['INFO'].items():
+        line = [x for x in lines if x.startswith(val)]
+        # store the found info
+        # print(line)
+        # print(type(line))
+        if len(line) > 0:
+            if ':' in line[0]:
+                dInfo[key] = re.sub(" +", " ", line[0].partition(':')[2].strip())  # remove white spaces
+            else:
+                dInfo[key] = re.sub(" +", " ", line[0].partition(val)[2].strip())  # remove white spaces
+        else:
+            dInfo[key] = ''
 
-    input("Press Enter to continue...")
-    print(lines)
+    # print(dInfo)
+
+    # print(len(lines))
+    # for i in range(10):
+    #     print(lines[i])
+
+    return dInfo
