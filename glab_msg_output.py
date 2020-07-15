@@ -9,6 +9,7 @@ import logging
 import pathlib
 import pandas as pd
 from shutil import copyfile
+import math
 
 import am_config as amc
 from ampyutils import amutils
@@ -96,7 +97,7 @@ def store_to_cvs(df: pd.DataFrame, ext: str, logger: logging.Logger, index: bool
 
     df.to_csv(os.path.join(dir_glabng, csv_name), index=index, header=True)
 
-    amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df, dfName=csv_name)
+    # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df, dfName=csv_name)
     logger.info('{func:s}: stored dataframe as csv file {csv:s}'.format(csv=colored(csv_name, 'green'), func=cFuncName))
 
 
@@ -123,10 +124,14 @@ def main(argv) -> bool:
     amc.dRTK['dir_root'] = dir_root
     amc.dRTK['glab_out'] = glab_out
 
+    # create sub dict for gLAB related info
     dgLabng = {}
     dgLabng['dir_glab'] = 'glabng'
 
     amc.dRTK['dglabng'] = dgLabng
+
+    # create the DOP bins for plotting
+    amc.dRTK['dop_bins'] = [0, 2, 3, 4, 5, 6, math.inf]
 
     # check some arguments
     ret_val = check_arguments(logger=logger)
@@ -144,6 +149,7 @@ def main(argv) -> bool:
 
     # plot the gLABs OUTPUT messages
     glab_plot_output.plot_glab_position(dfCrd=df_output, showplot=show_plot, logger=logger)
+    glab_plot_output.plot_glab_scatter(dfCrd=df_output, showplot=show_plot, logger=logger)
 
     # report to the user
     logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))

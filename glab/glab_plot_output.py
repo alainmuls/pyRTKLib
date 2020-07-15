@@ -8,6 +8,7 @@ import logging
 from datetime import datetime
 from typing import Tuple
 from matplotlib import dates
+import numpy as np
 
 from ampyutils import amutils
 import am_config as amc
@@ -36,8 +37,9 @@ def get_title_info(logger: logging.Logger) -> Tuple[str, str]:
     gnss_meas = amc.dRTK['INFO']['meas']
     obs_file = os.path.basename(amc.dRTK['INFO']['obs'])
     nav_file = os.path.basename(amc.dRTK['INFO']['nav'])
+    rx_geod = amc.dRTK['INFO']['rx_geod']
 
-    return date, time_first, time_last, gnss_used, gnss_meas, obs_file, nav_file
+    return date, time_first, time_last, gnss_used, gnss_meas, obs_file, nav_file, rx_geod
 
 
 def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
@@ -58,7 +60,7 @@ def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bo
     plt.style.use('ggplot')
 
     # get info for the plot titles
-    obs_date, start_time, end_time, GNSSs, GNSS_meas, obs_name, nav_name = get_title_info(logger=logger)
+    obs_date, start_time, end_time, GNSSs, GNSS_meas, obs_name, nav_name, rx_geod = get_title_info(logger=logger)
 
     # subplots
     fig, ax = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(16.0, 12.0))
@@ -164,3 +166,102 @@ def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bo
         plt.close(fig)
 
     return
+
+
+def plot_glab_scatter(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
+    """
+    plot_glab_scatter plots the horizontal position difference wrt to Nominal a priori position
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+    logger.info('{func:s}: plotting EN scattering'.format(func=cFuncName))
+
+    # select colors for E, N, U coordinate difference
+    colors = []
+    colors.append([51 / 256., 204 / 256., 51 / 256.])
+
+    # set up the plot
+    plt.style.use('ggplot')
+
+    # get info for the plot titles
+    obs_date, start_time, end_time, GNSSs, GNSS_meas, obs_name, nav_name, rx_geod = get_title_info(logger=logger)
+
+    # subplots
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(11.0, 11.0))
+
+    # plot annotations
+    ax.annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
+    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['iono'], tropo=amc.dRTK['INFO']['tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
+    ax.annotate('{syst:s}\n{meas:s}\n{filter:s}'.format(syst=GNSSs, meas=GNSS_meas, filter=txt_filter), xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
+
+    # copyright this
+    ax.annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 0), xycoords='axes fraction', xytext=(0, -50), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='x-small')
+
+    # annotate with reference position
+    txt_rx_posn = r'$\varphi = ${lat:.8f}, $\lambda = ${lon:.8f}'.format(lat=rx_geod[0], lon=rx_geod[1])
+
+    ax.annotate(txt_rx_posn, xy=(0, 0), xycoords='axes fraction', xytext=(0, -45), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='strong', fontsize='medium')
+
+    # draw circles for distancd evaluation on plot
+    for radius in range(1, 15, 1):
+        newCircle = plt.Circle((0, 0), radius, color='blue', fill=False, clip_on=True, alpha=0.4)
+        ax.add_artist(newCircle)
+        # annotate the radius for 1, 2, 5 and 10 meter
+        # if radius in [1, 2, 3, 4, 5, 10]:
+        ax.annotate('{radius:d}m'.format(radius=radius), xy=(np.pi / 4, radius), xytext=(np.pi / 4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
+
+    # get the marker styles
+    markerBins = predefined_marker_styles()
+
+    # go over all PDOP bins and plot according to the markersBin defined
+    for i in range(len(amc.dRTK['dop_bins']) - 1, 0, -1):
+        binInterval = 'bin{:d}-{:.0f}'.format(amc.dRTK['dop_bins'][i - 1], amc.dRTK['dop_bins'][i])
+        logger.debug('{func:s}: binInterval = {bin!s}'.format(bin=binInterval, func=cFuncName))
+
+        index4Bin = (dfCrd['PDOP'] > amc.dRTK['dop_bins'][i - 1]) & (dfCrd['PDOP'] <= amc.dRTK['dop_bins'][i])
+
+        # ax.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:.1f}%)'.format(amc.dRTK['dop_bins'][i - 1], amc.dRTK['dop_bins'][i], dRtk['PDOP'][binInterval]['perc'] * 100), **markerBins[i])
+        ax.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(amc.dRTK['dop_bins'][i - 1], amc.dRTK['dop_bins'][i], 'TODO'), **markerBins[i])
+
+    # lcoation of legend
+    ax.legend(loc='best', markerscale=6)
+
+    # add titles to axes
+    ax.set_xlim([-7.5, +7.5])
+    ax.set_ylim([-7.5, +7.5])
+    ax.set_aspect(aspect='equal', adjustable='box')
+
+    # nema the axis
+    ax.set_xlabel('East [m]', fontsize='large')
+    ax.set_ylabel('North [m]', fontsize='large')
+
+    # save the plot in subdir png of GNSSSystem
+    dir_png = os.path.join(amc.dRTK['dir_root'], amc.dRTK['dglabng']['dir_glab'], 'png')
+    png_filename = os.path.join(dir_png, '{out:s}-scatter.png'.format(out=amc.dRTK['glab_out'].replace('.', '-')))
+    amutils.mkdir_p(dir_png)
+    fig.savefig(png_filename, dpi=fig.dpi)
+
+    logger.info('{func:s}: created scatter plot {plot:s}'.format(func=cFuncName, plot=colored(png_filename, 'green')))
+
+    if showplot:
+        plt.show(block=True)
+    else:
+        plt.close(fig)
+
+
+def predefined_marker_styles() -> list:
+    """
+    predefined markerstyles for plotting
+    Returns: markerBins used for coloring as function of DOP bin
+    """
+    # # plot the centerpoint and circle
+    marker_style_center = dict(linestyle='', color='red', markersize=5, marker='^', markeredgecolor='red', alpha=0.75)
+    marker_style_doplt2 = dict(linestyle='', color='green', markersize=2, marker='.', markeredgecolor='green', alpha=0.30)
+    marker_style_doplt3 = dict(linestyle='', color='orange', markersize=2, marker='.', markeredgecolor='orange', alpha=0.45)
+    marker_style_doplt4 = dict(linestyle='', color='blue', markersize=2, marker='.', markeredgecolor='blue', alpha=0.60)
+    marker_style_doplt5 = dict(linestyle='', color='purple', markersize=2, marker='.', markeredgecolor='purple', alpha=0.75)
+    marker_style_doplt6 = dict(linestyle='', color='red', markersize=2, marker='.', markeredgecolor='red', alpha=0.90)
+    marker_style_doprest = dict(linestyle='', color='black', markersize=2, marker='.', markeredgecolor='black', alpha=0.90)
+
+    markerBins = [marker_style_center, marker_style_doplt2, marker_style_doplt3, marker_style_doplt4, marker_style_doplt5, marker_style_doplt6, marker_style_doprest]
+
+    return markerBins
