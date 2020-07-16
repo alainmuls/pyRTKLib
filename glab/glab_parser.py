@@ -16,16 +16,16 @@ from GNSS import wgs84
 __author__ = 'amuls'
 
 
-def split_glab_outfile(glab_outfile: str, logger: logging.Logger) -> dict:
+def split_glab_outfile(msgs: str, glab_outfile: str, logger: logging.Logger) -> dict:
     """
     splitStatusFile splits the statistics file into the POS, SAT, CLK & VELACC parts
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    logger.debug('{func:s}: splitting gLABs file {statf:s}'.format(func=cFuncName, statf=glab_outfile))
+    logger.info('{func:s}: splitting gLABs out file {statf:s} ({info:s})'.format(func=cFuncName, statf=colored(glab_outfile, 'yellow'), info=colored('be patient', 'red')))
 
     dgLab_tmpf = {}
-    for glab_msg in glc.dgLab['messages']:
+    for glab_msg in msgs:
         dgLab_tmpf[glab_msg] = tempfile.NamedTemporaryFile(prefix='{:s}_'.format(glab_outfile), suffix='_{:s}'.format(glab_msg), delete=True)
 
         with open(dgLab_tmpf[glab_msg].name, 'w') as fTmp:

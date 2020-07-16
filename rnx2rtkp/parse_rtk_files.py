@@ -505,7 +505,7 @@ def addPDOPStatistics(dRtk: dict, dfPos: pd.DataFrame, logger: logging.Logger):
         # create the dict for this PDOP interval
         dRtk['PDOP'][binInterval] = {}
         # find index for the diffrerent PDOP bins selected
-        index4Bin = (dfPos['PDOP'] > dRtk['PDOP']['bins'][i]) & (dfPos['PDOP'] <= dRtk['PDOP']['bins'][i +1])
+        index4Bin = (dfPos['PDOP'] > dRtk['PDOP']['bins'][i]) & (dfPos['PDOP'] <= dRtk['PDOP']['bins'][i + 1])
 
         dRtk['PDOP'][binInterval]['perc'] = index4Bin.mean()
 

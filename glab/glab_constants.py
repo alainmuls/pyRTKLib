@@ -7,18 +7,6 @@ dgLab = {}
 glab_msgs = ('INFO', 'OUTPUT', 'SATSEL', 'MEAS', 'MODEL', 'FILTER')
 dgLab['messages'] = glab_msgs
 
-# the OUTPUT message field
-dOUTPUT = {}
-dOUTPUT['columns'] = ('OUTPUT', 'Year', 'DoY', 'sod', 'Time', 'mode', 'dir', '#SVs', '#GNSSs', 'GNSSs', 'conv', 'X', 'Y', 'Z', 'dX0', 'dY0', 'dZ0', 'sdX', 'sdY', 'sdZ', 'lat', 'lon', 'ellH', 'dN0', 'dE0', 'dU0', 'sdN', 'sdE', 'sdU', 'dplan0', 'dvert0', 'd3D', 'ref_clk', 'rx_clk', 'drx_clk', 'GDOP', 'PDOP', 'TDOP', 'HDOP', 'VDOP', 'ZTD1', 'ZTD2', 'ZTD3')
-dOUTPUT['use_cols'] = ('Year', 'DoY', 'sod', 'Time', 'mode', 'dir', '#SVs', '#GNSSs', 'GNSSs', 'conv', 'lat', 'lon', 'ellH', 'dN0', 'dE0', 'dU0', 'sdN', 'sdE', 'sdU', 'dplan0', 'dvert0', 'd3D', 'ref_clk', 'rx_clk', 'drx_clk', 'GDOP', 'PDOP', 'TDOP', 'HDOP', 'VDOP', 'ZTD1', 'ZTD2', 'ZTD3')
-dOUTPUT['llh'] = ('lat', 'lon', 'ellH')
-dOUTPUT['dENU'] = ('dN0', 'dE0', 'dU0')
-dOUTPUT['sdENU'] = ('sdN', 'sdE', 'sdU')
-dOUTPUT['xDOP'] = ('GDOP', 'PDOP', 'TDOP', 'HDOP', 'VDOP')
-dOUTPUT['gnss'] = ('#SVs', '#GNSSs', 'GNSSs')
-
-dgLab['OUTPUT'] = dOUTPUT
-
 # Looking up the INFO messages
 dINFO = {}
 dINFO['obs'] = 'INFO RINEX observation input file'
@@ -44,3 +32,18 @@ dINFO['gnss_used'] = 'INFO Number of epochs with constellations used'
 dINFO['gnss_notused'] = 'INFO Number of epochs with constellations not used'
 
 dgLab['INFO'] = dINFO
+
+# the OUTPUT message field
+dOUTPUT = {}
+dOUTPUT['columns'] = ['OUTPUT', 'Year', 'DoY', 'sod', 'Time', 'mode', 'dir', '#SVs', '#GNSSs', 'GNSSs', 'conv', 'X', 'Y', 'Z', 'dX0', 'dY0', 'dZ0', 'sdX', 'sdY', 'sdZ', 'lat', 'lon', 'ellH', 'dN0', 'dE0', 'dU0', 'sdN', 'sdE', 'sdU', 'dplan0', 'dvert0', 'd3D', 'ref_clk', 'rx_clk', 'drx_clk', 'GDOP', 'PDOP', 'TDOP', 'HDOP', 'VDOP', 'ZTD1', 'ZTD2', 'ZTD3']
+dOUTPUT['use_cols'] = dOUTPUT['columns'][1:11] + dOUTPUT['columns'][20:]
+dOUTPUT['gnss'] = dOUTPUT['columns'][7:11]
+dOUTPUT['llh'] = dOUTPUT['columns'][20:23]
+dOUTPUT['dENU'] = dOUTPUT['columns'][23:26]
+dOUTPUT['sdENU'] = dOUTPUT['columns'][26:29]
+dOUTPUT['HV3D'] = dOUTPUT['columns'][29:32]
+dOUTPUT['CLK'] = dOUTPUT['columns'][32:35]
+dOUTPUT['XDOP'] = dOUTPUT['columns'][35:40]
+dOUTPUT['ZTD'] = dOUTPUT['columns'][40:43]
+
+dgLab['OUTPUT'] = dOUTPUT

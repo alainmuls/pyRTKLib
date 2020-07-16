@@ -103,7 +103,7 @@ def plotUTMScatterBin(dRtk: dict, dfPos: pd.DataFrame, dfCrd: dict, dCrdLim: dic
 
     # subplots
     fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(16.0, 11.0))
-    print('ax = {!s}'.format(ax))
+
     # make title for plot
     fig.suptitle('UTM Scatter {syst:s} - {posf:s} - {date:s}'.format(syst=dRtk['syst'], posf=dRtk['info']['rtkPosFile'], date=dRtk['Time']['date']), weight='strong', fontsize='xx-large')
 

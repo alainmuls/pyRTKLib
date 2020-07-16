@@ -13,7 +13,8 @@ import math
 
 import am_config as amc
 from ampyutils import amutils
-from glab import glab_parser, glab_plot_output
+from glab import glab_parser, glab_plot_output, glab_statistics
+from glab import glab_constants as glc
 
 __author__ = 'amuls'
 
@@ -89,16 +90,16 @@ def store_to_cvs(df: pd.DataFrame, ext: str, logger: logging.Logger, index: bool
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     csv_name = amc.dRTK['glab_out'].split('.')[0] + '.' + ext
-    amc.dRTK['dglabng'][ext] = csv_name
+    amc.dRTK['dgLABng'][ext] = csv_name
 
     # make dir if not exist
-    dir_glabng = os.path.join(amc.dRTK['dir_root'], amc.dRTK['dglabng']['dir_glab'])
+    dir_glabng = os.path.join(amc.dRTK['dir_root'], amc.dRTK['dgLABng']['dir_glab'])
     amutils.mkdir_p(dir_glabng)
 
     df.to_csv(os.path.join(dir_glabng, csv_name), index=index, header=True)
 
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df, dfName=csv_name)
-    logger.info('{func:s}: stored dataframe as csv file {csv:s}'.format(csv=colored(csv_name, 'green'), func=cFuncName))
+    logger.info('{func:s}: stored dataframe as csv file {csv:s}'.format(csv=colored(csv_name, 'yellow'), func=cFuncName))
 
 
 def main(argv) -> bool:
@@ -125,10 +126,10 @@ def main(argv) -> bool:
     amc.dRTK['glab_out'] = glab_out
 
     # create sub dict for gLAB related info
-    dgLabng = {}
-    dgLabng['dir_glab'] = 'glabng'
+    dgLABng = {}
+    dgLABng['dir_glab'] = 'glabng'
 
-    amc.dRTK['dglabng'] = dgLabng
+    amc.dRTK['dgLABng'] = dgLABng
 
     # create the DOP bins for plotting
     amc.dRTK['dop_bins'] = [0, 2, 3, 4, 5, 6, math.inf]
@@ -139,17 +140,24 @@ def main(argv) -> bool:
         sys.exit(ret_val)
 
     # split gLABs out file in parts
-    dglab_tmpfiles = glab_parser.split_glab_outfile(glab_outfile=amc.dRTK['glab_out'], logger=logger)
+    glab_msgs = glc.dgLab['messages'][0:2]  # INFO & OUTPUT messages needed
+    dglab_tmpfiles = glab_parser.split_glab_outfile(msgs=glab_msgs, glab_outfile=amc.dRTK['glab_out'], logger=logger)
 
-    # read in the OUTPUT messages from OUTPUT temp file
+    # read in the INFO messages from INFO temp file
     amc.dRTK['INFO'] = glab_parser.parse_glab_info(glab_info=dglab_tmpfiles['INFO'], logger=logger)
+    # read in the OUTPUT messages from OUTPUT temp file
     df_output = glab_parser.parse_glab_output(glab_output=dglab_tmpfiles['OUTPUT'], logger=logger)
-    # save as CSV file
+    # save df_output as CSV file
     store_to_cvs(df=df_output, ext='pos', logger=logger, index=False)
 
+    # calculate statitics
+    # gLAB OUTPUT messages
+    amc.dRTK['dgLABng']['stats'] = glab_statistics.statistics_glab_outfile(df_outp=df_output, logger=logger)
+
     # plot the gLABs OUTPUT messages
-    glab_plot_output.plot_glab_position(dfCrd=df_output, showplot=show_plot, logger=logger)
+    # glab_plot_output.plot_glab_position(dfCrd=df_output, showplot=show_plot, logger=logger)
     glab_plot_output.plot_glab_scatter(dfCrd=df_output, showplot=show_plot, logger=logger)
+    glab_plot_output.plot_glab_scatter_bin(dfCrd=df_output, showplot=show_plot, logger=logger)
 
     # report to the user
     logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
