@@ -56,6 +56,8 @@ def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bo
     colors.append([51 / 256., 51 / 256., 255 / 256.])
     colors.append([255 / 256., 51 / 256., 51 / 256.])
 
+    # colors, title_font = amutils.create_colormap_font(nrcolors=3, font_size=12)
+
     # set up the plot
     plt.style.use('ggplot')
 
@@ -175,10 +177,6 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: boo
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
     logger.info('{func:s}: plotting EN scattering'.format(func=cFuncName))
 
-    # select colors for E, N, U coordinate difference
-    colors = []
-    colors.append([51 / 256., 204 / 256., 51 / 256.])
-
     # set up the plot
     plt.style.use('ggplot')
 
@@ -224,7 +222,7 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: boo
         index4Bin = (dfCrd['PDOP'] > amc.dRTK['dop_bins'][i - 1]) & (dfCrd['PDOP'] <= amc.dRTK['dop_bins'][i])
 
         # get th epercentage of observations within this dop_bin
-        bin_percentage = '{perc:.1f}'.format(perc=amc.dRTK['dgLABng']['stats']['DOP'][binInterval]['perc'] * 100)
+        bin_percentage = '{perc:.1f}'.format(perc=amc.dRTK['dgLABng']['stats']['dop_bin'][binInterval]['perc'] * 100)
         ax.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(amc.dRTK['dop_bins'][i - 1], amc.dRTK['dop_bins'][i], bin_percentage), **markerBins[i])
 
     # lcoation of legend
@@ -304,8 +302,8 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, logger: logging.Logger, showplot:
         axis = ax[i // 3][i % 3]
 
         # get th epercentage of observations within this dop_bin
-        bin_percentage = '{perc:.1f}'.format(perc=amc.dRTK['dgLABng']['stats']['DOP'][binInterval]['perc'] * 100)
-        lblBin = r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%, #{:d})'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1], bin_percentage, amc.dRTK['dgLABng']['stats']['DOP'][binInterval]['count'])
+        bin_percentage = '{perc:.1f}'.format(perc=amc.dRTK['dgLABng']['stats']['dop_bin'][binInterval]['perc'] * 100)
+        lblBin = r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%, #{:d})'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1], bin_percentage, amc.dRTK['dgLABng']['stats']['dop_bin'][binInterval]['count'])
         logger.info('{func:s}: {bin:s}'.format(func=cFuncName, bin=lblBin))
 
         axis.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1], bin_percentage), **markerBins[(i + 1)])
@@ -335,8 +333,6 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, logger: logging.Logger, showplot:
     else:
         plt.close(fig)
 
-    sys.exit(6)
-
 
 def predefined_marker_styles() -> list:
     """
@@ -355,3 +351,91 @@ def predefined_marker_styles() -> list:
     markerBins = [marker_style_center, marker_style_doplt2, marker_style_doplt3, marker_style_doplt4, marker_style_doplt5, marker_style_doplt6, marker_style_doprest]
 
     return markerBins
+
+
+def plot_glab_xdop(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
+    """
+    plot_xdop plot the DOP values vs time
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+    logger.info('{func:s}: plotting xDOP'.format(func=cFuncName))
+
+    # set up the plot
+    plt.style.use('ggplot')
+
+    # get info for the plot titles
+    obs_date, start_time, end_time, GNSSs, GNSS_meas, obs_name, nav_name, rx_geod = get_title_info(logger=logger)
+
+    # get the colors for xDOP
+    # dop_colors, title_font = amutils.create_colormap_font(nrcolors=len(glc.dgLab['OUTPUT']['XDOP']), font_size=12)
+    dop_colors = []
+    # dop_colors.append([51 / 256., 204 / 256., 51 / 256.])
+    # dop_colors.append([51 / 256., 51 / 256., 255 / 256.])
+    # dop_colors.append([255 / 256., 51 / 256., 51 / 256.])
+
+    dop_colors.append([255 / 256, 0 / 256, 0 / 256])
+    dop_colors.append([0 / 256, 0 / 256, 255 / 256])
+    dop_colors.append([0 / 256, 128 / 256, 0 / 256])
+    dop_colors.append([255 / 256, 255 / 256, 128 / 256])
+    dop_colors.append([128 / 256, 0 / 256, 0 / 256])
+    dop_colors.append([192 / 256, 192 / 256, 192 / 256])
+    dop_colors.append([0 / 256, 0 / 256, 0 / 256])
+
+    # subplots
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(12.0, 8.0))
+
+    # figure title
+    plot_title = '{rnx:s} - {marker:s} - {date:s} ({year:s}/{doy:s})'.format(rnx=os.path.basename(amc.dRTK['INFO']['obs']), marker=amc.dRTK['INFO']['marker'], date=amc.dRTK['INFO']['epoch_first'][:10], year=amc.dRTK['INFO']['epoch_first'][25:29], doy=amc.dRTK['INFO']['epoch_first'][30:33])
+    fig.suptitle('{title:s}'.format(title=plot_title, weight='ultrabold', fontsize='x-large'))
+
+    # plot annotations
+    ax.annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
+    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['iono'], tropo=amc.dRTK['INFO']['tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
+    ax.annotate('{syst:s}\n{meas:s}\n{filter:s}'.format(syst=GNSSs, meas=GNSS_meas, filter=txt_filter), xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
+
+    # copyright this
+    ax.annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 0), xycoords='axes fraction', xytext=(0, -50), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='x-small')
+
+    # plot the xDOP values vs time
+    for (xdop, dop_color) in zip(dfCrd[glc.dgLab['OUTPUT']['XDOP']], dop_colors):
+        if xdop == 'PDOP':
+            ax.fill_between(x=dfCrd['DT'], y1=0, y2=dfCrd[xdop], color=dop_color, linestyle='-', linewidth=0, label=xdop, interpolate=False, alpha=0.15)
+        ax.plot(dfCrd['DT'], dfCrd[xdop], color=dop_color, linestyle='', marker='.', markersize=2, label=xdop)
+
+    # lcoation of legend
+    ax.legend(loc='best', markerscale=6, fontsize='x-small')
+
+    # add titles to axes
+    ax.set_ylim([0, 10])
+
+    # name the axis
+    ax.set_ylabel('DOP [-]', fontsize='large')
+
+    # create the ticks for the time axis
+    dtFormat = plot_utils.determine_datetime_ticks(startDT=dfCrd['DT'].iloc[0], endDT=dfCrd['DT'].iloc[-1])
+    if not dtFormat['minutes']:
+        #     # ax.xaxis.set_major_locator(dates.MinuteLocator(byminute=range(10, 60, 10), interval=1))
+        #     pass
+        # else:
+        ax.xaxis.set_major_locator(dates.HourLocator(interval=dtFormat['hourInterval']))   # every
+
+    ax.xaxis.set_minor_locator(dates.DayLocator(interval=1))    # every day
+    ax.xaxis.set_minor_formatter(dates.DateFormatter('\n%d-%m-%Y'))
+    ax.xaxis.set_major_formatter(dates.DateFormatter('%H:%M'))  # hours and minutes
+
+    ax.xaxis.set_tick_params(rotation=0)
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label1.set_horizontalalignment('center')
+
+    # save the plot in subdir png of GNSSSystem
+    dir_png = os.path.join(amc.dRTK['dir_root'], amc.dRTK['dgLABng']['dir_glab'], 'png')
+    png_filename = os.path.join(dir_png, '{out:s}-DOP.png'.format(out=amc.dRTK['glab_out'].replace('.', '-')))
+    amutils.mkdir_p(dir_png)
+    fig.savefig(png_filename, dpi=fig.dpi)
+
+    logger.info('{func:s}: created plot {plot:s}'.format(func=cFuncName, plot=colored(png_filename, 'green')))
+
+    if showplot:
+        plt.show(block=True)
+    else:
+        plt.close(fig)
