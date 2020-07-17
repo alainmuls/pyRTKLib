@@ -14,6 +14,8 @@ from datetime import datetime
 from typing import Tuple
 import matplotlib._color_data as mcd
 import enum
+import numpy as np
+import pandas as pd
 
 from GNSS import gpstime
 import am_config as amc
@@ -388,3 +390,26 @@ def convert_unit(size_in_bytes, unit):
         return size_in_bytes / (1024 * 1024 * 1024)
     else:
         return size_in_bytes
+
+
+def wavg(group: dict, avg_name: str, weight_name: str) -> float:
+    """ http://stackoverflow.com/questions/10951341/pandas-dataframe-aggregate-function-using-multiple-columns
+    In rare instance, we may not have weights, so just return the mean. Customize this if your business case
+    should return otherwise.
+    """
+    coordinate = group[avg_name]
+    invVariance = 1 / np.square(group[weight_name])
+
+    try:
+        return (coordinate * invVariance).sum() / invVariance.sum()
+    except ZeroDivisionError:
+        return coordinate.mean()
+
+
+def stddev(crd: pd.Series, avgCrd: float) -> float:
+    """
+    stddev calculates the standard deviation of series
+    """
+    dCrd = crd.subtract(avgCrd)
+
+    return dCrd.std()
