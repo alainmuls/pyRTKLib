@@ -294,8 +294,8 @@ def main(argv):
         gfzrnx_ops.rnxobs_header_info(dTmpRnx=dRnxTmp, logger=logger)
         gfzrnx_ops.rnxobs_statistics_file(dTmpRnx=dRnxTmp, logger=logger)
         gfzrnx_ops.gnss_rinex_creation(dTmpRnx=dRnxTmp, logger=logger)
-        gfzrnx_ops.create_rnxobs_subfreq(logger=logger)
-        gfzrnx_ops.compress_rinex_obsnav(logger=logger)
+        # gfzrnx_ops.create_rnxobs_subfreq(logger=logger)
+        # gfzrnx_ops.compress_rinex_obsnav(logger=logger)
     else:
         ubx2rinex(logger=logger)
 

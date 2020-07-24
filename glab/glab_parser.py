@@ -65,12 +65,12 @@ def parse_glab_output(glab_output: tempfile._TemporaryFileWrapper, logger: loggi
     df_output['DT'] = df_output.apply(lambda x: make_datetime(x['Year'], x['DoY'], x['Time']), axis=1)
 
     # find gaps in the data by comparing to mean value of difference in time
-    df_output['td_diff'] = df_output['DT'].diff(1)
-    dtMean = df_output['td_diff'].mean()
+    df_output['dt_diff'] = df_output['DT'].diff(1)
+    dtMean = df_output['dt_diff'].mean()
 
     # look for it using location indexing
-    df_output.loc[df_output['td_diff'] > dtMean, '#SVs'] = np.nan
-    df_output.loc[df_output['td_diff'] > dtMean, 'PDOP'] = np.nan
+    df_output.loc[df_output['dt_diff'] > dtMean, '#SVs'] = np.nan
+    df_output.loc[df_output['dt_diff'] > dtMean, 'PDOP'] = np.nan
 
     logger.info('{func:s}: df_output info\n{dtypes!s}'.format(dtypes=df_output.info(), func=cFuncName))
     amutils.printHeadTailDataFrame(df=df_output, name='OUTPUT section of {name:s}'.format(name=amc.dRTK['glab_out']))

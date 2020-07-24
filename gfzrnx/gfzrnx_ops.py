@@ -152,10 +152,18 @@ def gnss_rinex_creation(dTmpRnx: dict, logger: logging.Logger):
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-
     for rnx_type in ('obs', 'nav'):
+        # if we have both systems GPS Galileo then we only create the COMB files
+        print('{!s}'.format(amc.dRTK['rnx']['gnss']['select']))
+        if 'M' in amc.dRTK['rnx']['gnss']['select']:
+            logger.info('{func:s}: creating COMB file'.format(func=cFuncName))
+
+            satsys2create = 'M'
+        else:
+            satsys2create = amc.dRTK['rnx']['gnss']['select']
+
         # create the corresponding RINEX Obs/Nav file for each individual satellite system
-        for _, satsys in enumerate(amc.dRTK['rnx']['gnss']['select']):
+        for _, satsys in enumerate(satsys2create):
             # determin ethe name of the RINEX file to be created
             amc.dRTK['rnx']['gnss'][satsys][rnx_type] = '{marker:s}{doy:03d}0.{yy:02d}{ext:s}'.format(marker=amc.dRTK['rnx']['gnss'][satsys]['marker'], doy=amc.dRTK['rnx']['times']['doy'], yy=amc.dRTK['rnx']['times']['yy'], ext=amc.dRnx_ext[satsys][rnx_type])
 
@@ -282,7 +290,6 @@ def create_rnxobs_subfreq(logger: logging.Logger):
 
     for _, satsys in enumerate(amc.dRTK['rnx']['gnss']['select']):
 
-        rnxobs = amc.dRTK['rnx']['gnss'][satsys]['obs']
         obs_sysfrq = amc.dRTK['rnx']['gnss'][satsys]['sysfrq']
 
         if satsys == 'M':
