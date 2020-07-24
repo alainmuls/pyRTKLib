@@ -47,6 +47,7 @@ def treatCmdOpts(argv):
     parser.add_argument('-f', '--file', help='gLAB processed out file', required=True, type=str)
     # parser.add_argument('-r', '--resFile', help='RTKLib residuals file', type=str, required=False, default=None)
     # parser.add_argument('-m', '--marker', help='Geodetic coordinates (lat,lon,ellH) of reference point in degrees: 50.8440152778 4.3929283333 151.39179 for RMA, 50.93277777 4.46258333 123 for Peutie, default 0 0 0 means use mean position', nargs=3, type=str, required=False, default=["0", "0", "0"])
+    parser.add_argument('-s', '--scale', help='display ENU plots with +/- this scale range (default 5m)', required=False, default=5, type=float)
 
     parser.add_argument('-p', '--plots', help='displays interactive plots (default True)', action='store_true', required=False, default=False)
     parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default False)', action='store_true', required=False)
@@ -57,7 +58,7 @@ def treatCmdOpts(argv):
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.file, args.plots, args.overwrite, args.logging
+    return args.dir, args.file, args.scale, args.plots, args.overwrite, args.logging
 
 
 def check_arguments(logger: logging.Logger) -> int:
@@ -116,7 +117,7 @@ def main(argv) -> bool:
     pd.options.display.float_format = "{:,.3f}".format
 
     # treat command line options
-    dir_root, glab_out, show_plot, overwrite, log_levels = treatCmdOpts(argv)
+    dir_root, glab_out, scale_enu, show_plot, overwrite, log_levels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=dir_root, logLevels=log_levels)
@@ -156,9 +157,9 @@ def main(argv) -> bool:
     amc.dRTK['dgLABng']['stats'] = glab_statistics.statistics_glab_outfile(df_outp=df_output, logger=logger)
 
     # plot the gLABs OUTPUT messages
-    glab_plot_output.plot_glab_position(dfCrd=df_output, showplot=show_plot, logger=logger)
-    glab_plot_output.plot_glab_scatter(dfCrd=df_output, showplot=show_plot, logger=logger)
-    glab_plot_output.plot_glab_scatter_bin(dfCrd=df_output, showplot=show_plot, logger=logger)
+    glab_plot_output.plot_glab_position(dfCrd=df_output, scale=scale_enu, showplot=show_plot, logger=logger)
+    glab_plot_output.plot_glab_scatter(dfCrd=df_output, scale=scale_enu, showplot=show_plot, logger=logger)
+    glab_plot_output.plot_glab_scatter_bin(dfCrd=df_output, scale=scale_enu, showplot=show_plot, logger=logger)
     glab_plot_output.plot_glab_xdop(dfCrd=df_output, showplot=show_plot, logger=logger)
 
     # report to the user

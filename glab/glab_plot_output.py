@@ -42,7 +42,7 @@ def get_title_info(logger: logging.Logger) -> Tuple[str, str]:
     return date, time_first, time_last, gnss_used, gnss_meas, obs_file, nav_file, rx_geod
 
 
-def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
+def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger, showplot: bool = False):
     """
     plot_glab_position plots the position difference wrt to Nominal a priori position
     """
@@ -77,11 +77,11 @@ def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bo
     ax[-1].annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 0), xycoords='axes fraction', xytext=(0, -50), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='x-small')
 
     # get mean/stddev values of the columns glc.dgLab['OUTPUT']['dENU']
-    crd_mean = {}
+    crd_median = {}
     crd_std = {}
     for crd in glc.dgLab['OUTPUT']['dENU']:
         # get max/min for this crd and the previous ones
-        crd_mean[crd] = dfCrd[crd].quantile(q=0.5, interpolation='linear')
+        crd_median[crd] = dfCrd[crd].quantile(q=0.5, interpolation='linear')
         crd_std[crd] = dfCrd[crd].std()
 
     # plot the ENU difference xwrt nominal initial position and display the standard deviation, xDOP
@@ -98,15 +98,15 @@ def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bo
 
         # set dimensions of y-axis
         if crd == 'dU0':
-            axis.set_ylim([crd_mean[crd] - 10, crd_mean[crd] + 10])
+            axis.set_ylim([crd_median[crd] - scale * 2, crd_median[crd] + scale * 2])
         else:
-            axis.set_ylim([crd_mean[crd] - 5, crd_mean[crd] + 5])
+            axis.set_ylim([crd_median[crd] - scale, crd_median[crd] + scale])
 
         axis.set_ylabel('{crd:s} [m]'.format(crd=crd, fontsize='large'), color=colors[i], weight='ultrabold')
 
         # annotate each subplot with its reference position
         textstr = '\n'.join((
-                            r'$\mu={:.2f}$'.format(crd_mean[crd]),
+                            r'$\mu={:.2f}$'.format(crd_median[crd]),
                             r'$\sigma={:.2f}$'.format(crd_std[crd])))
         # place a text box in upper left in axes coords
         axis.text(1.01, 0.95, textstr, transform=axis.transAxes, fontsize='small', verticalalignment='top', color=colors[i], weight='strong')
@@ -127,7 +127,7 @@ def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bo
 
     # plot the number of SVs and color as function of the number of GNSSs used
     for i_gnss in range(1, dfCrd['#GNSSs'].max() + 1):
-        axis.fill_between(dfCrd['DT'].values, 0, dfCrd['#SVs'], where=(dfCrd['#GNSSs'] == i_gnss), alpha=0.25, linestyle='-', linewidth=1, color=colors[i_gnss], label='#SVs', interpolate=False)
+        axis.fill_between(dfCrd['DT'].values, 0, dfCrd['#SVs'], where=(dfCrd['#GNSSs'] == i_gnss), alpha=0.25, linestyle='-', linewidth=2, color=colors[i_gnss], label='#SVs', interpolate=False)
 
     # plot PDOP on second y-axis
     axis_right = axis.twinx()
@@ -170,7 +170,7 @@ def plot_glab_position(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bo
     return
 
 
-def plot_glab_scatter(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
+def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger, showplot: bool = False):
     """
     plot_glab_scatter plots the horizontal position difference wrt to Nominal a priori position
     """
@@ -204,12 +204,12 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: boo
     ax.annotate(txt_rx_posn, xy=(0, 0), xycoords='axes fraction', xytext=(0, -45), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='strong', fontsize='medium')
 
     # draw circles for distancd evaluation on plot
-    for radius in range(1, 15, 1):
+    for radius in np.linspace(scale / 5, scale * 2, num=10):
         newCircle = plt.Circle((0, 0), radius, color='blue', fill=False, clip_on=True, alpha=0.4)
         ax.add_artist(newCircle)
         # annotate the radius for 1, 2, 5 and 10 meter
         # if radius in [1, 2, 3, 4, 5, 10]:
-        ax.annotate('{radius:d}m'.format(radius=radius), xy=(np.pi / 4, radius), xytext=(np.pi / 4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
+        ax.annotate('{radius:.2f}m'.format(radius=radius), xy=(np.pi / 4, radius), xytext=(np.pi / 4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
 
     # get the marker styles
     markerBins = predefined_marker_styles()
@@ -229,8 +229,8 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: boo
     ax.legend(loc='best', markerscale=6, fontsize='x-small')
 
     # add titles to axes
-    ax.set_xlim([-7.5, +7.5])
-    ax.set_ylim([-7.5, +7.5])
+    ax.set_xlim([-scale, +scale])
+    ax.set_ylim([-scale, +scale])
     ax.set_aspect(aspect='equal', adjustable='box')
 
     # nema the axis
@@ -251,7 +251,7 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: boo
     # plt.close(fig)
 
 
-def plot_glab_scatter_bin(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
+def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale, logger: logging.Logger, showplot: bool = False):
     """
     plot_glab_scatter plots the horizontal position difference wrt to Nominal a priori position
     """
@@ -309,19 +309,19 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, logger: logging.Logger, showplot:
         axis.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1], bin_percentage), **markerBins[(i + 1)])
 
         # draw circles for distancd evaluation on plot
-        for radius in range(1, 15, 1):
+        for radius in np.linspace(scale / 5, scale * 2, num=10):
             newCircle = plt.Circle((0, 0), radius, color='blue', fill=False, clip_on=True, alpha=0.4)
             axis.add_artist(newCircle)
             # annotate the radius for 1, 2, 5 and 10 meter
             # if radius in [1, 2, 3, 4, 5, 10]:
-            axis.annotate('{radius:d}m'.format(radius=radius), xy=(np.pi / 4, radius), xytext=(np.pi / 4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
+            axis.annotate('{radius:.2f}m'.format(radius=radius), xy=(np.pi / 4, radius), xytext=(np.pi / 4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
 
         # lcoation of legend
         axis.legend(loc='best', markerscale=6, fontsize='x-small')
 
         # add titles to axes
-        axis.set_xlim([-7.5, +7.5])
-        axis.set_ylim([-7.5, +7.5])
+        axis.set_xlim([-scale, +scale])
+        axis.set_ylim([-scale, +scale])
         axis.set_aspect(aspect='equal', adjustable='box')
 
         # nema the axis
@@ -399,8 +399,8 @@ def plot_glab_xdop(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool =
     # plot the xDOP values vs time
     for (xdop, dop_color) in zip(dfCrd[glc.dgLab['OUTPUT']['XDOP']], dop_colors):
         if xdop == 'PDOP':
-            ax.fill_between(x=dfCrd['DT'], y1=0, y2=dfCrd[xdop], color=dop_color, linestyle='-', linewidth=0, label=xdop, interpolate=False, alpha=0.15)
-        ax.plot(dfCrd['DT'], dfCrd[xdop], color=dop_color, linestyle='', marker='.', markersize=2, label=xdop)
+            ax.fill_between(x=dfCrd['DT'], y1=0, y2=dfCrd[xdop], color=dop_color, linestyle='-', linewidth=0, interpolate=False, alpha=0.15)
+        ax.plot(dfCrd['DT'], dfCrd[xdop], color=dop_color, linestyle='', marker='.', markersize=1, label=xdop)
 
     # lcoation of legend
     ax.legend(loc='best', markerscale=6, fontsize='x-small')
