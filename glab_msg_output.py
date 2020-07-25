@@ -164,7 +164,7 @@ def main(argv) -> bool:
 
     # report to the user
     # report to the user
-    logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
+    logger.info('{func:s}: Project information =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
     # create pickle file from amc.dRTK
     pickle_out = amc.dRTK['glab_out'].split('.')[0] + '.pickle'

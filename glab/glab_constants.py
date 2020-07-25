@@ -11,7 +11,6 @@ dgLab['messages'] = glab_msgs
 dINFO = {}
 dINFO['obs'] = 'INFO RINEX observation input file'
 dINFO['nav'] = 'INFO RINEX navigation message input file'
-dINFO['marker'] = 'INFO INPUT Station marker'
 dINFO['ant_type'] = 'INFO INPUT Antenna type'
 dINFO['rx_type'] = 'INFO INPUT Receiver type'
 dINFO['decimation'] = 'INFO PREPROCESSING Decimation'

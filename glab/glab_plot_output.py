@@ -66,7 +66,7 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
 
     # subplots
     fig, ax = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(16.0, 12.0))
-    fig.suptitle('{posf:s} - {obs_date:s}'.format(posf=obs_name, obs_date='{date:s} ({first:s}-{last:s})'.format(date=obs_date.strftime('%d/%m/%Y'), first=start_time.strftime('%H:%M:%S'), last=end_time.strftime('%H:%M:%S'))), weight='ultrabold', fontsize='x-large')
+    fig.suptitle('{marker:s} -{obs_date:s}'.format(posf=obs_name, marker=amc.dRTK['INFO']['marker'], obs_date='{date:s} ({first:s}-{last:s})'.format(date=obs_date.strftime('%d/%m/%Y'), first=start_time.strftime('%H:%M:%S'), last=end_time.strftime('%H:%M:%S'))), weight='ultrabold', fontsize='x-large')
 
     # plot annotations
     ax[0].annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
@@ -186,7 +186,7 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger,
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(11.0, 11.0))
 
     # figure title
-    plot_title = '{rnx:s} - {marker:s} - {date:s} ({year:s}/{doy:s})'.format(rnx=os.path.basename(amc.dRTK['INFO']['obs']), marker=amc.dRTK['INFO']['marker'], date=amc.dRTK['INFO']['epoch_first'][:10], year=amc.dRTK['INFO']['epoch_first'][25:29], doy=amc.dRTK['INFO']['epoch_first'][30:33])
+    plot_title = '{marker:s} - {date:s} ({year:s}/{doy:s})'.format(marker=amc.dRTK['INFO']['marker'], date=amc.dRTK['INFO']['epoch_first'][:10], year=amc.dRTK['INFO']['epoch_first'][25:29], doy=amc.dRTK['INFO']['epoch_first'][30:33])
     fig.suptitle('{title:s}'.format(title=plot_title, weight='ultrabold', fontsize='x-large'))
 
     # plot annotations
@@ -271,7 +271,7 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale, logger: logging.Logger, sh
     fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(16.0, 11.0))
 
     # figure title
-    plot_title = '{rnx:s} - {marker:s} - {date:s} ({year:s}/{doy:s})'.format(rnx=os.path.basename(amc.dRTK['INFO']['obs']), marker=amc.dRTK['INFO']['marker'], date=amc.dRTK['INFO']['epoch_first'][:10], year=amc.dRTK['INFO']['epoch_first'][25:29], doy=amc.dRTK['INFO']['epoch_first'][30:33])
+    plot_title = '{marker:s} - {date:s} ({year:s}/{doy:s})'.format(marker=amc.dRTK['INFO']['marker'], date=amc.dRTK['INFO']['epoch_first'][:10], year=amc.dRTK['INFO']['epoch_first'][25:29], doy=amc.dRTK['INFO']['epoch_first'][30:33])
     fig.suptitle('{title:s}'.format(title=plot_title, weight='ultrabold', fontsize='x-large'))
 
     # plot annotations
@@ -384,7 +384,7 @@ def plot_glab_xdop(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool =
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(12.0, 8.0))
 
     # figure title
-    plot_title = '{rnx:s} - {marker:s} - {date:s} ({year:s}/{doy:s})'.format(rnx=os.path.basename(amc.dRTK['INFO']['obs']), marker=amc.dRTK['INFO']['marker'], date=amc.dRTK['INFO']['epoch_first'][:10], year=amc.dRTK['INFO']['epoch_first'][25:29], doy=amc.dRTK['INFO']['epoch_first'][30:33])
+    plot_title = '{marker:s} - {date:s} ({year:s}/{doy:s})'.format(marker=amc.dRTK['INFO']['marker'], date=amc.dRTK['INFO']['epoch_first'][:10], year=amc.dRTK['INFO']['epoch_first'][25:29], doy=amc.dRTK['INFO']['epoch_first'][30:33])
     fig.suptitle('{title:s}'.format(title=plot_title, weight='ultrabold', fontsize='x-large'))
 
     # plot annotations

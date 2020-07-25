@@ -8,6 +8,7 @@ import datetime as dt
 import re
 from datetime import datetime
 import numpy as np
+import json
 
 from ampyutils import amutils
 from glab import glab_constants as glc
@@ -97,9 +98,7 @@ def parse_glab_info(glab_info: str, logger: logging.Logger) -> dict:
     dInfo = {}
     for key, val in glc.dgLab['INFO'].items():
         line = [x for x in lines if x.startswith(val)]
-        # store the found info
-        # print(line)
-        # print(type(line))
+
         if len(line) > 0:
             if ':' in line[0]:
                 dInfo[key] = re.sub(" +", " ", line[0].partition(':')[2].strip())  # remove white spaces
@@ -114,10 +113,18 @@ def parse_glab_info(glab_info: str, logger: logging.Logger) -> dict:
         else:
             dInfo[key] = ''
 
-    # print(dInfo)
+    # check which GNSS are used and create a marker field in dInfo accoring to the found GNSSs
+    list_of_marker = ['GPSN', 'GALI']
+    dInfo['marker'] = ''
 
-    # print(len(lines))
-    # for i in range(10):
-    #     print(lines[i])
+    # Check if all listed GNSSs are in dInfo['gnss_used']
+    if all(([True if gnss[:3] in dInfo['gnss_used'] else False for gnss in list_of_marker])):
+        dInfo['marker'] = 'COMB'
+    else:
+        for marker in list_of_marker:
+            if marker[:3] in dInfo['gnss_used']:
+                dInfo['marker'] = marker
+
+    logger.info('{func:s}: Information summary =\n{json!s}'.format(func=cFuncName, json=json.dumps(dInfo, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
     return dInfo
