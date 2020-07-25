@@ -70,24 +70,20 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
 
     # plot annotations
     ax[0].annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
+
     txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['iono'], tropo=amc.dRTK['INFO']['tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
     ax[0].annotate('{syst:s}\n{meas:s}\n{filter:s}'.format(syst=GNSSs, meas=GNSS_meas, filter=txt_filter), xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
 
     # copyright this
     ax[-1].annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 0), xycoords='axes fraction', xytext=(0, -50), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='x-small')
 
-    # get mean/stddev values of the columns glc.dgLab['OUTPUT']['dENU']
-    crd_median = {}
-    crd_std = {}
-    for crd in glc.dgLab['OUTPUT']['dENU']:
-        # get max/min for this crd and the previous ones
-        crd_median[crd] = dfCrd[crd].quantile(q=0.5, interpolation='linear')
-        crd_std[crd] = dfCrd[crd].std()
-
     # plot the ENU difference xwrt nominal initial position and display the standard deviation, xDOP
     for i, (crd, sdCrd) in enumerate(zip(glc.dgLab['OUTPUT']['dENU'], glc.dgLab['OUTPUT']['sdENU'])):
         # select the axis to use for this coordinate
         axis = ax[i]
+
+        # get the statistics for this coordinate
+        crd_stats = amc.dRTK['dgLABng']['stats']['crd'][crd]
 
         # color for markers and alpha colors for error bars
         rgb = mpcolors.colorConverter.to_rgb(colors[i])
@@ -98,18 +94,21 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
 
         # set dimensions of y-axis
         if crd == 'dU0':
-            axis.set_ylim([crd_median[crd] - scale * 2, crd_median[crd] + scale * 2])
+            axis.set_ylim([crd_stats['wavg'] - scale * 2, crd_stats['wavg'] + scale * 2])
         else:
-            axis.set_ylim([crd_median[crd] - scale, crd_median[crd] + scale])
+            axis.set_ylim([crd_stats['wavg'] - scale, crd_stats['wavg'] + scale])
 
         axis.set_ylabel('{crd:s} [m]'.format(crd=crd, fontsize='large'), color=colors[i], weight='ultrabold')
 
         # annotate each subplot with its reference position
-        textstr = '\n'.join((
-                            r'$\mu={:.2f}$'.format(crd_median[crd]),
-                            r'$\sigma={:.2f}$'.format(crd_std[crd])))
+        stat_str = '\n'.join((
+                             r'WAvg={:.2f}'.format(crd_stats['wavg']),
+                             r'$\sigma$={:.2f}'.format(crd_stats['sdwavg']),
+                             r'max={:.2f}'.format(crd_stats['max']),
+                             r'min={:.2f}'.format(crd_stats['min'])
+                             ))
         # place a text box in upper left in axes coords
-        axis.text(1.01, 0.95, textstr, transform=axis.transAxes, fontsize='small', verticalalignment='top', color=colors[i], weight='strong')
+        axis.text(1.01, 0.95, stat_str, transform=axis.transAxes, fontsize='small', verticalalignment='top', color=colors[i], weight='strong')
 
         # annotatetxt = markerAnnotation(crd, sdCrd)
         # axis.annotate(annotatetxt, xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='large')
