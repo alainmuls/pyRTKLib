@@ -102,14 +102,11 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
 
         # annotate each subplot with its reference position
         stat_str = '\n'.join((
-                             r'gLab={:.2f}'.format(crd_stats['kf']),
-                             r'$\sigma$={:.2f}'.format(crd_stats['sdkf']),
+                             r'gLab={:.3f} ($\pm${:.3f})'.format(crd_stats['kf'], crd_stats['sdkf']),
                              r'',
-                             r'WAvg={:.2f}'.format(crd_stats['wavg']),
-                             r'$\sigma$={:.2f}'.format(crd_stats['sdwavg']),
+                             r'WAvg={:.3f} ($\pm${:.3f})'.format(crd_stats['wavg'], crd_stats['sdwavg']),
                              r'',
-                             r'max={:.2f}'.format(crd_stats['max']),
-                             r'min={:.2f}'.format(crd_stats['min'])
+                             r'Range=[{:.2f}..{:.2f}]'.format(crd_stats['max'], crd_stats['min'])
                              ))
         # place a text box in upper left in axes coords
         axis.text(1.01, 0.95, stat_str, transform=axis.transAxes, fontsize='small', verticalalignment='top', color=colors[i], weight='strong')
