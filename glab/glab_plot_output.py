@@ -102,8 +102,12 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
 
         # annotate each subplot with its reference position
         stat_str = '\n'.join((
+                             r'gLab={:.2f}'.format(crd_stats['kf']),
+                             r'$\sigma$={:.2f}'.format(crd_stats['sdkf']),
+                             r'',
                              r'WAvg={:.2f}'.format(crd_stats['wavg']),
                              r'$\sigma$={:.2f}'.format(crd_stats['sdwavg']),
+                             r'',
                              r'max={:.2f}'.format(crd_stats['max']),
                              r'min={:.2f}'.format(crd_stats['min'])
                              ))
@@ -169,7 +173,7 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
     return
 
 
-def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger, showplot: bool = False):
+def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, center: str, logger: logging.Logger, showplot: bool = False):
     """
     plot_glab_scatter plots the horizontal position difference wrt to Nominal a priori position
     """
@@ -203,12 +207,20 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger,
     ax.annotate(txt_rx_posn, xy=(0, 0), xycoords='axes fraction', xytext=(0, -45), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='strong', fontsize='medium')
 
     # draw circles for distancd evaluation on plot
+    if center == 'origin':
+        wavg_E = wavg_N = 0
+    else:
+        wavg_E = amc.dRTK['dgLABng']['stats']['crd']['dE0']['wavg']
+        wavg_N = amc.dRTK['dgLABng']['stats']['crd']['dN0']['wavg']
+    circle_center = (wavg_E, wavg_N)
+
     for radius in np.linspace(scale / 5, scale * 2, num=10):
-        newCircle = plt.Circle((0, 0), radius, color='blue', fill=False, clip_on=True, alpha=0.4)
+        newCircle = plt.Circle(circle_center, radius, color='blue', fill=False, clip_on=True, alpha=0.4)
         ax.add_artist(newCircle)
         # annotate the radius for 1, 2, 5 and 10 meter
         # if radius in [1, 2, 3, 4, 5, 10]:
-        ax.annotate('{radius:.2f}m'.format(radius=radius), xy=(np.pi / 4, radius), xytext=(np.pi / 4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
+        # ax.annotate('{radius:.2f}m'.format(radius=radius), xy=(np.pi / 4, radius), xytext=(np.pi / 4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
+        ax.annotate('{radius:.2f}m'.format(radius=radius), xy=(wavg_E + np.cos(np.pi / 4) * radius, wavg_N + np.sin(np.pi / 4) * radius), xytext=(wavg_E + np.cos(np.pi / 4) * radius, wavg_N + np.sin(np.pi / 4) * radius), clip_on=True, color='blue', alpha=0.4)
 
     # get the marker styles
     markerBins = predefined_marker_styles()
@@ -228,8 +240,8 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger,
     ax.legend(loc='best', markerscale=6, fontsize='x-small')
 
     # add titles to axes
-    ax.set_xlim([-scale, +scale])
-    ax.set_ylim([-scale, +scale])
+    ax.set_xlim([wavg_E - scale, wavg_E + scale])
+    ax.set_ylim([wavg_N - scale, wavg_N + scale])
     ax.set_aspect(aspect='equal', adjustable='box')
 
     # nema the axis
@@ -250,7 +262,7 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger,
     # plt.close(fig)
 
 
-def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale, logger: logging.Logger, showplot: bool = False):
+def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale: float, center: str, logger: logging.Logger, showplot: bool = False):
     """
     plot_glab_scatter plots the horizontal position difference wrt to Nominal a priori position
     """
@@ -285,7 +297,7 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale, logger: logging.Logger, sh
     # annotate with reference position
     txt_rx_posn = r'$\varphi = ${lat:.8f}, $\lambda = ${lon:.8f}'.format(lat=rx_geod[0], lon=rx_geod[1])
 
-    ax[0][2].annotate(txt_rx_posn, xy=(0, 0), xycoords='axes fraction', xytext=(0, -45), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='strong', fontsize='medium')
+    ax[0][2].annotate(txt_rx_posn, xy=(1, 0), xycoords='axes fraction', xytext=(0, -45), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='medium')
 
     # get the marker styles
     markerBins = predefined_marker_styles()
@@ -305,27 +317,38 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale, logger: logging.Logger, sh
         lblBin = r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%, #{:d})'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1], bin_percentage, amc.dRTK['dgLABng']['stats']['dop_bin'][binInterval]['count'])
         logger.info('{func:s}: {bin:s}'.format(func=cFuncName, bin=lblBin))
 
-        axis.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1], bin_percentage), **markerBins[(i + 1)])
+        # define center position
+        if center == 'origin':
+            wavg_E = wavg_N = 0
+        else:
+            wavg_E = amc.dRTK['dgLABng']['stats']['crd']['dE0']['wavg']
+            wavg_N = amc.dRTK['dgLABng']['stats']['crd']['dN0']['wavg']
+        circle_center = (wavg_E, wavg_N)
 
         # draw circles for distancd evaluation on plot
         for radius in np.linspace(scale / 5, scale * 2, num=10):
-            newCircle = plt.Circle((0, 0), radius, color='blue', fill=False, clip_on=True, alpha=0.4)
+            newCircle = plt.Circle(circle_center, radius, color='blue', fill=False, clip_on=True, alpha=0.4)
             axis.add_artist(newCircle)
             # annotate the radius for 1, 2, 5 and 10 meter
             # if radius in [1, 2, 3, 4, 5, 10]:
-            axis.annotate('{radius:.2f}m'.format(radius=radius), xy=(np.pi / 4, radius), xytext=(np.pi / 4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
+            # axis.annotate('{radius:.2f}m'.format(radius=radius), xy=(np.pi / 4, radius), xytext=(np.pi / 4, radius), textcoords='polar', xycoords='polar', clip_on=True, color='blue', alpha=0.4)
+            axis.annotate('{radius:.2f}m'.format(radius=radius), xy=(wavg_E + np.cos(np.pi / 4) * radius, wavg_N + np.sin(np.pi / 4) * radius), xytext=(wavg_E + np.cos(np.pi / 4) * radius, wavg_N + np.sin(np.pi / 4) * radius), clip_on=True, color='blue', alpha=0.4)
+
+        # plot the coordinates for each bin
+        axis.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1], bin_percentage), **markerBins[(i + 1)])
 
         # lcoation of legend
         axis.legend(loc='best', markerscale=6, fontsize='x-small')
 
         # add titles to axes
-        axis.set_xlim([-scale, +scale])
-        axis.set_ylim([-scale, +scale])
+        axis.set_xlim([wavg_E - scale, wavg_E + scale])
+        axis.set_ylim([wavg_N - scale, wavg_N + scale])
         axis.set_aspect(aspect='equal', adjustable='box')
 
         # nema the axis
-        axis.set_xlabel('East [m]', fontsize='large')
-        axis.set_ylabel('North [m]', fontsize='large')
+        if i > 2:
+            axis.set_xlabel('East [m]', fontsize='large')
+            axis.set_ylabel('North [m]', fontsize='large')
 
     if showplot:
         plt.show(block=True)

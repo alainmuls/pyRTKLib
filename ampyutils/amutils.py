@@ -16,6 +16,7 @@ import matplotlib._color_data as mcd
 import enum
 import numpy as np
 import pandas as pd
+from tabulate import tabulate
 
 from GNSS import gpstime
 import am_config as amc
@@ -125,7 +126,7 @@ def get_filebasename(path):
     return filename
 
 
-def printHeadTailDataFrame(df, name='DataFrame', head=10, tail=10, index=True):
+def printHeadTailDataFrame(df: pd.DataFrame, name: str, index: str = True, head: int = 10, tail: int = 10):
     """
     printHeadTailDataFrame prints the head first/tail last rows of the dataframe df
 
@@ -137,14 +138,21 @@ def printHeadTailDataFrame(df, name='DataFrame', head=10, tail=10, index=True):
     :type head: int
     :param tail: nr of lies from start of df
     :type tail: int
-    :param index: display th eindex of the dataframe or not
+    :param index: display the index of the dataframe or not
     :type: bool
     """
+    print('index = {!s}'.format(index))
+
     if df.shape[0] <= (head + tail):
         print('\n   ...  %s (size %d)\n%s' % (colored(name, 'green'), df.shape[0], df.to_string(index=index)))
     else:
-        print('\n   ... Head of %s (size %d)\n%s' % (colored(name, 'green'), df.shape[0], df.head(n=head).to_string(index=index)))
+        print('\n   ... Head of %s (size %d)' % (colored(name, 'green'), df.shape[0]))
+        print(df.head(n=head).to_string(index=index))
         print('   ... Tail of %s (size %d)\n%s' % (colored(name, 'green'), df.shape[0], df.tail(n=tail).to_string(index=index)))
+
+
+def pprint_df(dframe: pd.DataFrame, tablefmt: str = 'simple'):
+    print(tabulate(dframe, headers='keys', tablefmt=tablefmt, showindex=False))
 
 
 def logHeadTailDataFrame(logger: logging.Logger, callerName: str, df: DataFrame, dfName: str = 'DataFrame', head: int = 10, tail: int = 10, index: bool = True):

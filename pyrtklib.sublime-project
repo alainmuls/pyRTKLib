@@ -24,5 +24,15 @@
 		{
 			"path": "/home/amuls/RxTURP/BEGPIOS"
 		}
-	]
+	],
+    "settings": {
+        // ...
+        "python_virtualenv": "/home:amuls/venvmint/pyRTKLib",
+        "python_interpreter": "/home:amuls/venvmint/pyRTKLib/bin/python",
+
+        "python_package_paths": [
+            "$project_path/plot",
+            "$project_path/ampyutils"
+        ]
+    }
 }

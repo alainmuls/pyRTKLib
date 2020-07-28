@@ -9,6 +9,7 @@ import re
 from datetime import datetime
 import numpy as np
 import json
+import utm
 
 from ampyutils import amutils
 from glab import glab_constants as glc
@@ -73,8 +74,11 @@ def parse_glab_output(glab_output: tempfile._TemporaryFileWrapper, logger: loggi
     df_output.loc[df_output['dt_diff'] > dtMean, '#SVs'] = np.nan
     df_output.loc[df_output['dt_diff'] > dtMean, 'PDOP'] = np.nan
 
+    # add UTM coordinates
+    df_output['UTM.E'], df_output['UTM.N'], _, _ = utm.from_latlon(df_output['lat'].to_numpy(), df_output['lon'].to_numpy())
+
     logger.info('{func:s}: df_output info\n{dtypes!s}'.format(dtypes=df_output.info(), func=cFuncName))
-    amutils.printHeadTailDataFrame(df=df_output, name='OUTPUT section of {name:s}'.format(name=amc.dRTK['glab_out']))
+    amutils.printHeadTailDataFrame(df=df_output, name='OUTPUT section of {name:s}'.format(name=amc.dRTK['glab_out']), index=False)
 
     return df_output
 

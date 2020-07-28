@@ -29,6 +29,26 @@ class logging_action(argparse.Action):
         setattr(namespace, self.dest, log_actions)
 
 
+class scale_action(argparse.Action):
+    def __call__(self, parser, namespace, scale_action, option_string=None):
+        base_choices = [1, 2, 5]
+        scale_choices = [.1, 1, 10, 100, 1000]
+        all_choices = []
+        for s in scale_choices:
+            all_choices += [b * s for b in base_choices]
+        if scale_action not in all_choices:
+            raise argparse.ArgumentError(self, "scale_action must be in {!s}".format(all_choices))
+        setattr(namespace, self.dest, scale_action)
+
+
+class center_action(argparse.Action):
+    def __call__(self, parser, namespace, center_action, option_string=None):
+        choices = ['origin', 'wavg']
+        if center_action not in choices:
+            raise argparse.ArgumentError(self, "center_action must be in {!s}".format(choices))
+        setattr(namespace, self.dest, center_action)
+
+
 def treatCmdOpts(argv):
     """
     Treats the command line options
@@ -47,7 +67,8 @@ def treatCmdOpts(argv):
     parser.add_argument('-f', '--file', help='gLAB processed out file', required=True, type=str)
     # parser.add_argument('-r', '--resFile', help='RTKLib residuals file', type=str, required=False, default=None)
     # parser.add_argument('-m', '--marker', help='Geodetic coordinates (lat,lon,ellH) of reference point in degrees: 50.8440152778 4.3929283333 151.39179 for RMA, 50.93277777 4.46258333 123 for Peutie, default 0 0 0 means use mean position', nargs=3, type=str, required=False, default=["0", "0", "0"])
-    parser.add_argument('-s', '--scale', help='display ENU plots with +/- this scale range (default 5m)', required=False, default=5, type=float)
+    parser.add_argument('-s', '--scale', help='display ENU plots with +/- this scale range (default 5m)', required=False, default=5, type=float, action=scale_action)
+    parser.add_argument('-c', '--center', help='center ENU plots (Select "origin" or "wavg")', required=False, default='origin', type=str, action=center_action)
 
     parser.add_argument('-p', '--plots', help='displays interactive plots (default True)', action='store_true', required=False, default=False)
     parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default False)', action='store_true', required=False)
@@ -58,7 +79,7 @@ def treatCmdOpts(argv):
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.file, args.scale, args.plots, args.overwrite, args.logging
+    return args.dir, args.file, args.scale, args.center, args.plots, args.overwrite, args.logging
 
 
 def check_arguments(logger: logging.Logger) -> int:
@@ -114,10 +135,10 @@ def main(argv) -> bool:
 
     # limit float precision
     # encoder.FLOAT_REPR = lambda o: format(o, '.3f')
-    pd.options.display.float_format = "{:,.3f}".format
+    # pd.options.display.float_format = "{:,.3f}".format
 
     # treat command line options
-    dir_root, glab_out, scale_enu, show_plot, overwrite, log_levels = treatCmdOpts(argv)
+    dir_root, glab_out, scale_enu, center_enu, show_plot, overwrite, log_levels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=dir_root, logLevels=log_levels)
@@ -158,8 +179,8 @@ def main(argv) -> bool:
 
     # plot the gLABs OUTPUT messages
     glab_plot_output.plot_glab_position(dfCrd=df_output, scale=scale_enu, showplot=show_plot, logger=logger)
-    glab_plot_output.plot_glab_scatter(dfCrd=df_output, scale=scale_enu, showplot=show_plot, logger=logger)
-    glab_plot_output.plot_glab_scatter_bin(dfCrd=df_output, scale=scale_enu, showplot=show_plot, logger=logger)
+    glab_plot_output.plot_glab_scatter(dfCrd=df_output, scale=scale_enu, center=center_enu, showplot=show_plot, logger=logger)
+    glab_plot_output.plot_glab_scatter_bin(dfCrd=df_output, scale=scale_enu, center=center_enu, showplot=show_plot, logger=logger)
     glab_plot_output.plot_glab_xdop(dfCrd=df_output, showplot=show_plot, logger=logger)
 
     # report to the user

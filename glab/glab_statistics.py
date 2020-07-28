@@ -5,6 +5,7 @@ import os
 import logging
 import json
 import math
+import numpy as np
 
 from ampyutils import amutils
 from glab import glab_constants as glc
@@ -25,7 +26,7 @@ def statistics_glab_outfile(df_outp: pd.DataFrame, logger: logging.Logger) -> di
     # dictionary containing the statistics
     dStats = {}
     dStats['dop_bin'] = statistics_dopbin(df_dop_enu=df_outp[glc.dgLab['OUTPUT']['XDOP'] + glc.dgLab['OUTPUT']['dENU'] + glc.dgLab['OUTPUT']['sdENU']], logger=logger)
-    dStats['crd'] = statistics_coordinates(df_crd=df_outp[glc.dgLab['OUTPUT']['llh'] + glc.dgLab['OUTPUT']['dENU'] + glc.dgLab['OUTPUT']['sdENU']], logger=logger)
+    dStats['crd'] = statistics_coordinates(df_crd=df_outp[glc.dgLab['OUTPUT']['llh'] + glc.dgLab['OUTPUT']['dENU'] + glc.dgLab['OUTPUT']['sdENU'] + glc.dgLab['OUTPUT']['UTM']], logger=logger)
 
     return dStats
 
@@ -59,15 +60,15 @@ def statistics_dopbin(df_dop_enu: pd.DataFrame, logger: logging.Logger) -> dict:
         for dENU, sdENU in zip(glc.dgLab['OUTPUT']['dENU'], glc.dgLab['OUTPUT']['sdENU']):
             dENU_stats = {}
 
-            dENU_stats['mean'] = df_dop_enu.loc[index4Bin, dENU].mean()
+            dENU_stats['wavg'] = amutils.wavg(df_dop_enu.loc[index4Bin], dENU, sdENU)
+            dENU_stats['sdwavg'] = amutils.stddev(df_dop_enu.loc[index4Bin, dENU], dENU_stats['wavg'])
+            # dENU_stats['mean'] = df_dop_enu.loc[index4Bin, dENU].mean()
             dENU_stats['median'] = df_dop_enu.loc[index4Bin, dENU].median()
-            dENU_stats['stddev'] = df_dop_enu.loc[index4Bin, dENU].std()
+            # dENU_stats['stddev'] = df_dop_enu.loc[index4Bin, dENU].std()
             dENU_stats['min'] = df_dop_enu.loc[index4Bin, dENU].min()
             dENU_stats['max'] = df_dop_enu.loc[index4Bin, dENU].max()
 
-            dENU_stats['wavg'] = amutils.wavg(df_dop_enu.loc[index4Bin], dENU, sdENU)
-            dENU_stats['sdwavg'] = amutils.stddev(df_dop_enu.loc[index4Bin, dENU], dENU_stats['wavg'])
-
+            # add for this crd dENU
             dStats_dop[bin_PDOP][dENU] = dENU_stats
 
             logger.debug('{func:s}: in {bin:s} statistics for {crd:s} are {stat!s}'.format(func=cFuncName, bin=bin_PDOP, crd=dENU, stat=dENU_stats))
@@ -89,13 +90,14 @@ def statistics_coordinates(df_crd: pd.DataFrame, logger: logging.Logger) -> dict
     # init class WGS84
     wgs_84 = wgs84.WGS84()
 
-    amutils.printHeadTailDataFrame(df=df_crd, name='df_crd')
-
+    amutils.printHeadTailDataFrame(df=df_crd, name='df_crd', index=False)
     dStat = {}
+    for crd in (glc.dgLab['OUTPUT']['llh'] + glc.dgLab['OUTPUT']['dENU'] + glc.dgLab['OUTPUT']['UTM']):
+        dStat[crd] = {}
 
+    # make sure to have the wavg for latitude since it is used for converting the stddev of geodetic coordinates into meter
+    dStat['lat']['wavg'] = amutils.wavg(df_crd, 'lat', 'dN0')
     for llh, sdENU in zip(glc.dgLab['OUTPUT']['llh'], glc.dgLab['OUTPUT']['sdENU']):
-        dStat[llh] = {}
-
         dStat[llh]['wavg'] = amutils.wavg(df_crd, llh, sdENU)
         if llh == 'lat':
             dStat[llh]['sdwavg'] = math.radians(amutils.stddev(df_crd[llh], dStat['lat']['wavg'])) * wgs_84.a
@@ -105,17 +107,28 @@ def statistics_coordinates(df_crd: pd.DataFrame, logger: logging.Logger) -> dict
             dStat[llh]['sdwavg'] = amutils.stddev(df_crd[llh], dStat[llh]['wavg'])
 
     for dENU, sdENU in zip(glc.dgLab['OUTPUT']['dENU'], glc.dgLab['OUTPUT']['sdENU']):
-        dStat[dENU] = {}
-
         dStat[dENU]['wavg'] = amutils.wavg(df_crd, dENU, sdENU)
         dStat[dENU]['sdwavg'] = amutils.stddev(df_crd[dENU], dStat[dENU]['wavg'])
 
+    for dUTM, sdENU in zip(glc.dgLab['OUTPUT']['UTM'], glc.dgLab['OUTPUT']['sdENU'][:2]):
+        dStat[dUTM]['wavg'] = amutils.wavg(df_crd, dUTM, sdENU)
+        dStat[dUTM]['sdwavg'] = amutils.stddev(df_crd[dUTM], dStat[dENU]['wavg'])
+
     # calculate statistics for the nuùeric values
-    for crd in (glc.dgLab['OUTPUT']['llh'] + glc.dgLab['OUTPUT']['dENU']):
+    for crd in (glc.dgLab['OUTPUT']['llh'] + glc.dgLab['OUTPUT']['dENU'] + glc.dgLab['OUTPUT']['UTM']):
         dStat[crd]['mean'] = df_crd[crd].mean()
         dStat[crd]['median'] = df_crd[crd].median()
         dStat[crd]['std'] = df_crd[crd].std()
         dStat[crd]['max'] = df_crd[crd].max()
         dStat[crd]['min'] = df_crd[crd].min()
+
+        # results of gLAB kalman filter
+        dStat[crd]['kf'] = df_crd[crd].iloc[-1]
+        try:
+            dStat[crd]['sdkf'] = df_crd['s{:s}'.format(crd[:2])].iloc[-1]
+        except KeyError:
+            dStat[crd]['sdkf'] = np.nan
+
+    logger.info('{func:s}: OUTPUT statistics information =\n{json!s}'.format(func=cFuncName, json=json.dumps(dStat, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
     return dStat
