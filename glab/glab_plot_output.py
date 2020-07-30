@@ -92,7 +92,7 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
         # plot coordinate differences and error bars
         axis.errorbar(x=dfCrd['DT'].values, y=dfCrd[crd], yerr=dfCrd[sdCrd], linestyle='none', fmt='.', ecolor=rgb_error, capthick=1, markersize=1, color=colors[i])
 
-        # set dimensions of y-axis
+        # set dimensions of y-axis (double for UP scale)
         if crd == 'dU0':
             axis.set_ylim([crd_stats['wavg'] - scale * 2, crd_stats['wavg'] + scale * 2])
         else:
