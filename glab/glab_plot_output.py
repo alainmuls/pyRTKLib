@@ -71,7 +71,7 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
     # plot annotations
     ax[0].annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
 
-    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['iono'], tropo=amc.dRTK['INFO']['tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
+    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['atm_iono'], tropo=amc.dRTK['INFO']['atm_tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
     ax[0].annotate('{syst:s}\n{meas:s}\n{filter:s}'.format(syst=GNSSs, meas=GNSS_meas, filter=txt_filter), xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
 
     # copyright this
@@ -138,10 +138,14 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
     # plot PDOP value
     axis_right.plot(dfCrd['DT'], dfCrd['PDOP'], linestyle='', marker='.', markersize=1, color='darkorchid', label='PDOP')
 
+    # set limits for the x-axis
+    axis.set_xlim([dfCrd['DT'].iloc[0], dfCrd['DT'].iloc[-1]])
+
     # create the ticks for the time axis
     dtFormat = plot_utils.determine_datetime_ticks(startDT=dfCrd['DT'].iloc[0], endDT=dfCrd['DT'].iloc[-1])
+    print('dtFormat = {!s}'.format(dtFormat))
     if dtFormat['minutes']:
-        # axis.xaxis.set_major_locator(dates.MinuteLocator(byminute=range(10, 60, 10), interval=1))
+        axis.xaxis.set_major_locator(dates.MinuteLocator(byminute=range(10, 60, 10), interval=1))
         pass
     else:
         axis.xaxis.set_major_locator(dates.HourLocator(interval=dtFormat['hourInterval']))   # every
@@ -151,6 +155,7 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
     axis.xaxis.set_major_formatter(dates.DateFormatter('%H:%M'))  # hours and minutes
 
     axis.xaxis.set_tick_params(rotation=0)
+    print('ticks = {!s}'.format(axis.xaxis.get_major_ticks()))
     for tick in axis.xaxis.get_major_ticks():
         tick.label1.set_horizontalalignment('center')
 
@@ -192,7 +197,7 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, center: str, logger: lo
 
     # plot annotations
     ax.annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
-    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['iono'], tropo=amc.dRTK['INFO']['tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
+    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['atm_iono'], tropo=amc.dRTK['INFO']['atm_tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
     ax.annotate('{syst:s}\n{meas:s}\n{filter:s}'.format(syst=GNSSs, meas=GNSS_meas, filter=txt_filter), xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
 
     # copyright this
@@ -285,7 +290,7 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale: float, center: str, logger
 
     # plot annotations
     ax[0][0].annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
-    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['iono'], tropo=amc.dRTK['INFO']['tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
+    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['atm_iono'], tropo=amc.dRTK['INFO']['atm_tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
     ax[0][2].annotate('{syst:s}\n{meas:s}\n{filter:s}'.format(syst=GNSSs, meas=GNSS_meas, filter=txt_filter), xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
 
     # copyright this
@@ -409,7 +414,7 @@ def plot_glab_xdop(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool =
 
     # plot annotations
     ax.annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
-    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['iono'], tropo=amc.dRTK['INFO']['tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
+    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['atm_iono'], tropo=amc.dRTK['INFO']['atm_tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
     ax.annotate('{syst:s}\n{meas:s}\n{filter:s}'.format(syst=GNSSs, meas=GNSS_meas, filter=txt_filter), xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
 
     # copyright this

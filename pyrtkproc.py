@@ -179,8 +179,8 @@ def main(argv):
     amc.dRTK['ephems'] = ephemeris
     amc.dRTK['GNSS'] = gnss
     amc.dRTK['typeEphem'] = typeEphem
-    amc.dRTK['Tropo'] = tropo
-    amc.dRTK['Iono'] = iono
+    amc.dRTK['atm_tropo'] = tropo
+    amc.dRTK['atm_iono'] = iono
     amc.dRTK['template'] = template
 
     # locate the rnx2rtkp program used for execution

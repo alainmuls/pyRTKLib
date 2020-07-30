@@ -104,11 +104,13 @@ def parse_glab_info(glab_info: str, logger: logging.Logger) -> dict:
         line = [x for x in lines if x.startswith(val)]
 
         if len(line) > 0:
+            print('line = {!s}'.format(line))
             if ':' in line[0]:
                 dInfo[key] = re.sub(" +", " ", line[0].partition(':')[2].strip())  # remove white spaces
             else:
                 dInfo[key] = re.sub(" +", " ", line[0].partition(val)[2].strip())  # remove white spaces
 
+            # treat the ECEF coordinates
             if key == 'rx_ecef':
                 # convert cartesian position to geodetic coordiantes
                 cart_crd = [float(w) for w in dInfo['rx_ecef'].split()[:3]]
