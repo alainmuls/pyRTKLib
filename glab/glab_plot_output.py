@@ -435,6 +435,9 @@ def plot_glab_xdop(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool =
     # name the axis
     ax.set_ylabel('DOP [-]', fontsize='large')
 
+    # set limits for the x-axis
+    ax.set_xlim([dfCrd['DT'].iloc[0], dfCrd['DT'].iloc[-1]])
+
     # create the ticks for the time axis
     dtFormat = plot_utils.determine_datetime_ticks(startDT=dfCrd['DT'].iloc[0], endDT=dfCrd['DT'].iloc[-1])
     if not dtFormat['minutes']:

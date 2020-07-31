@@ -71,7 +71,7 @@ def treatCmdOpts(argv):
     parser.add_argument('-c', '--center', help='center ENU plots (Select "origin" or "wavg")', required=False, default='origin', type=str, action=center_action)
 
     parser.add_argument('-p', '--plots', help='displays interactive plots (default True)', action='store_true', required=False, default=False)
-    parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default False)', action='store_true', required=False)
+    # parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default False)', action='store_true', required=False)
 
     parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], action=logging_action)
 
@@ -79,7 +79,7 @@ def treatCmdOpts(argv):
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.file, args.scale, args.center, args.plots, args.overwrite, args.logging
+    return args.dir, args.file, args.scale, args.center, args.plots, args.logging
 
 
 def check_arguments(logger: logging.Logger) -> int:
@@ -138,7 +138,7 @@ def main(argv) -> bool:
     # pd.options.display.float_format = "{:,.3f}".format
 
     # treat command line options
-    dir_root, glab_out, scale_enu, center_enu, show_plot, overwrite, log_levels = treatCmdOpts(argv)
+    dir_root, glab_out, scale_enu, center_enu, show_plot, log_levels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=dir_root, logLevels=log_levels)

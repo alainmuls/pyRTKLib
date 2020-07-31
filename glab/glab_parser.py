@@ -27,18 +27,35 @@ def split_glab_outfile(msgs: str, glab_outfile: str, logger: logging.Logger) -> 
 
     logger.info('{func:s}: splitting gLABs out file {statf:s} ({info:s})'.format(func=cFuncName, statf=colored(glab_outfile, 'yellow'), info=colored('be patient', 'red')))
 
-    dgLab_tmpf = {}
+    # create the temporary files needed for this parsing
+    dtmp_fnames = {}
+    dtmp_fds = {}
     for glab_msg in msgs:
-        dgLab_tmpf[glab_msg] = tempfile.NamedTemporaryFile(prefix='{:s}_'.format(glab_outfile), suffix='_{:s}'.format(glab_msg), delete=True)
+        dtmp_fnames[glab_msg] = tempfile.NamedTemporaryFile(prefix='{:s}_'.format(glab_outfile), suffix='_{:s}'.format(glab_msg), delete=True)
+        dtmp_fds[glab_msg] = open(dtmp_fnames[glab_msg].name, 'w')
 
-        with open(dgLab_tmpf[glab_msg].name, 'w') as fTmp:
-            fTmp.writelines(line for line in open(glab_outfile) if line.startswith(glab_msg))
-            logger.info('{func:s}: size of {msg:s} file = {size:.2f} MB'.format(size=amutils.convert_unit(fTmp.tell(), amutils.SIZE_UNIT.MB), msg=glab_msg, func=cFuncName))
+    # open gLABng '*.out' file for reading and start processing its lines parsing the selected messages
+    with open(glab_outfile, 'r') as fd:
+        line = fd.readline()
+        while line:
+            for glab_msg in msgs:
+                if line.startswith(glab_msg):
+                    dtmp_fds[glab_msg].write(line)
+            line = fd.readline()
 
-            # reset at start of file
-            fTmp.seek(0)
+    # for glab_msg in msgs:
+    #     with open(dgLab_tmpf[glab_msg].name, 'w') as fTmp:
+    #         fTmp.writelines(line for line in open(glab_outfile) if line.startswith(glab_msg))
+    #         logger.info('{func:s}: size of {msg:s} file = {size:.2f} MB'.format(size=amutils.convert_unit(fTmp.tell(), amutils.SIZE_UNIT.MB), msg=glab_msg, func=cFuncName))
 
-    return dgLab_tmpf
+    #         # reset at start of file
+    #         fTmp.seek(0)
+
+    # close the opened files
+    for glab_msg in msgs:
+        dtmp_fds[glab_msg].close()
+
+    return dtmp_fnames
 
 
 def make_datetime(year: int, doy: int, t: datetime.time) -> dt.datetime:
