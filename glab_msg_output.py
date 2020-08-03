@@ -4,7 +4,6 @@ import sys
 import os
 import argparse
 from termcolor import colored
-import pickle
 import json
 import logging
 import pathlib
@@ -14,8 +13,9 @@ import math
 
 import am_config as amc
 from ampyutils import amutils
-from glab import glab_parser, glab_plot_output, glab_statistics
 from glab import glab_constants as glc
+from glab import glab_split_outfile, glab_parser_output, glab_parser_info, glab_statistics
+from glab_plot import glab_plot_output
 
 __author__ = 'amuls'
 
@@ -164,12 +164,12 @@ def main(argv) -> bool:
 
     # split gLABs out file in parts
     glab_msgs = glc.dgLab['messages'][0:2]  # INFO & OUTPUT messages needed
-    dglab_tmpfiles = glab_parser.split_glab_outfile(msgs=glab_msgs, glab_outfile=amc.dRTK['glab_out'], logger=logger)
+    dglab_tmpfiles = glab_split_outfile.split_glab_outfile(msgs=glab_msgs, glab_outfile=amc.dRTK['glab_out'], logger=logger)
 
     # read in the INFO messages from INFO temp file
-    amc.dRTK['INFO'] = glab_parser.parse_glab_info(glab_info=dglab_tmpfiles['INFO'], logger=logger)
+    amc.dRTK['INFO'] = glab_parser_info.parse_glab_info(glab_info=dglab_tmpfiles['INFO'], logger=logger)
     # read in the OUTPUT messages from OUTPUT temp file
-    df_output = glab_parser.parse_glab_output(glab_output=dglab_tmpfiles['OUTPUT'], logger=logger)
+    df_output = glab_parser_output.parse_glab_output(glab_output=dglab_tmpfiles['OUTPUT'], logger=logger)
     # save df_output as CSV file
     store_to_cvs(df=df_output, ext='pos', logger=logger, index=False)
 
@@ -188,10 +188,11 @@ def main(argv) -> bool:
     logger.info('{func:s}: Project information =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
     # create pickle file from amc.dRTK
-    pickle_out = amc.dRTK['glab_out'].split('.')[0] + '.pickle'
-    with open(pickle_out, 'wb') as f:
-        pickle.dump(amc.dRTK, f, protocol=pickle.HIGHEST_PROTOCOL)
-    logger.info('{func:s}: created pickle file {pickle:s}'.format(func=cFuncName, pickle=colored(pickle_out, 'green')))
+    # store the json structure
+    json_out = amc.dRTK['glab_out'].split('.')[0] + '.json'
+    with open(json_out, 'w') as f:
+        json.dump(amc.dRTK, f, ensure_ascii=False, indent=4, default=amutils.DT_convertor)
+    logger.info('{func:s}: created json file {json:s}'.format(func=cFuncName, json=colored(json_out, 'green')))
 
     # copy temp log file to the YYDOY directory
     copyfile(log_name, os.path.join(amc.dRTK['dir_root'], '{obs:s}-{prog:s}'.format(obs=amc.dRTK['glab_out'].split('.')[0], prog='output.log')))

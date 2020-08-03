@@ -55,7 +55,7 @@ dINFO['rx'] = dRx
 dPP = {}
 dPP['mask'] = 'INFO PREPROCESSING Elevation mask'
 dPP['freqs'] = 'INFO PREPROCESSING Usable frequencies'
-dPP['freqs_order'] = 'NFO PREPROCESSING Measurement frequency filling order'
+dPP['freqs_order'] = 'INFO PREPROCESSING Measurement frequency filling order'
 dPP['freqs_excluded'] = 'INFO PREPROCESSING Excluded frequencies by user'
 dPP['rx_ecef'] = 'INFO PREPROCESSING Receiver a priori position (metres)'
 
@@ -72,6 +72,26 @@ dModel['nav_msg'] = 'INFO MODELLING Broadcast message type order for orbits, clo
 dModel['use_health'] = "INFO MODELLING Use satellite 'SV Health' flag of navigation message"
 
 dINFO['model'] = dModel
+
+# get information about applied filter
+dFilter = {}
+
+dFilter['meas'] = 'INFO FILTER Meas'
+dFilter['carrier_phase'] = 'INFO FILTER Carrierphase is used'
+dFilter['tropo_estimate'] = 'INFO FILTER Estimate troposphere'
+dFilter['ref_clk'] = 'INFO FILTER Reference clock constellation priority list'
+dFilter['HDOP'] = 'INFO FILTER HDOP'
+dFilter['PDOP'] = 'INFO FILTER PDOP'
+dFilter['GDOP'] = 'INFO FILTER GDOP'
+
+dINFO['filter'] = dFilter
+
+# get info from summary
+dSum = {}
+dSum['epoch_first'] = 'INFO First epoch of summary'
+dSum['epoch_last'] = 'INFO Last  epoch of summary'
+
+dINFO['summary'] = dSum
 
 # put all in what we want to parse from the INFO messages
 dgLab['parse'] = dINFO

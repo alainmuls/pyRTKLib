@@ -1,96 +1,16 @@
-import pandas as pd
 from termcolor import colored
 import sys
 import os
 import logging
-import tempfile
-import datetime as dt
 import re
-from datetime import datetime
-import numpy as np
 import json
-import utm
+from typing import Tuple
 
 from ampyutils import amutils
 from glab import glab_constants as glc
-import am_config as amc
 from GNSS import wgs84
 
 __author__ = 'amuls'
-
-
-def split_glab_outfile(msgs: str, glab_outfile: str, logger: logging.Logger) -> dict:
-    """
-    splitStatusFile splits the statistics file into the POS, SAT, CLK & VELACC parts
-    """
-    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
-
-    logger.info('{func:s}: splitting gLABs out file {statf:s} ({info:s})'.format(func=cFuncName, statf=colored(glab_outfile, 'yellow'), info=colored('be patient', 'red')))
-
-    # create the temporary files needed for this parsing
-    dtmp_fnames = {}
-    dtmp_fds = {}
-    for glab_msg in msgs:
-        dtmp_fnames[glab_msg] = tempfile.NamedTemporaryFile(prefix='{:s}_'.format(glab_outfile), suffix='_{:s}'.format(glab_msg), delete=True)
-        dtmp_fds[glab_msg] = open(dtmp_fnames[glab_msg].name, 'w')
-
-    # open gLABng '*.out' file for reading and start processing its lines parsing the selected messages
-    with open(glab_outfile, 'r') as fd:
-        line = fd.readline()
-        while line:
-            for glab_msg in msgs:
-                if line.startswith(glab_msg):
-                    dtmp_fds[glab_msg].write(line)
-            line = fd.readline()
-
-    # close the opened files
-    for glab_msg in msgs:
-        dtmp_fds[glab_msg].close()
-
-        # return the dict with the temporary filenames created
-    return dtmp_fnames
-
-
-def make_datetime(year: int, doy: int, t: datetime.time) -> dt.datetime:
-    """
-    converts the YYYY, DoY and Time to a datetime
-    """
-    return dt.datetime.strptime('{!s} {!s} {!s}'.format(year, doy, t.strftime('%H:%M:%S')), '%Y %j %H:%M:%S')
-
-
-def parse_glab_output(glab_output: tempfile._TemporaryFileWrapper, logger: logging.Logger) -> pd.DataFrame:
-    """
-    parse_glab_output parses the OUTPUT section of the glab out file
-    """
-    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
-
-    logger.info('{func:s}: Parsing gLab OUTPUT section {file:s} ({info:s})'.format(func=cFuncName, file=glab_output.name, info=colored('be patient', 'red')))
-
-    # read gLABs OUTPUT into dataframe (cropping cartesian colmuns)
-    df_output = pd.read_csv(glab_output.name, header=None, delim_whitespace=True, usecols=[*range(1, 11), *range(20, len(glc.dgLab['OUTPUT']['columns']))])
-
-    # name the colmuns
-    df_output.columns = glc.dgLab['OUTPUT']['use_cols']
-
-    # tranform time column to python datetime.time and add a DT column
-    df_output['Time'] = df_output['Time'].apply(lambda x: dt.datetime.strptime(x, '%H:%M:%S.%f').time())
-    df_output['DT'] = df_output.apply(lambda x: make_datetime(x['Year'], x['DoY'], x['Time']), axis=1)
-
-    # find gaps in the data by comparing to mean value of difference in time
-    df_output['dt_diff'] = df_output['DT'].diff(1)
-    dtMean = df_output['dt_diff'].mean()
-
-    # look for it using location indexing
-    df_output.loc[df_output['dt_diff'] > dtMean, '#SVs'] = np.nan
-    df_output.loc[df_output['dt_diff'] > dtMean, 'PDOP'] = np.nan
-
-    # add UTM coordinates
-    df_output['UTM.E'], df_output['UTM.N'], _, _ = utm.from_latlon(df_output['lat'].to_numpy(), df_output['lon'].to_numpy())
-
-    logger.info('{func:s}: df_output info\n{dtypes!s}'.format(dtypes=df_output.info(), func=cFuncName))
-    amutils.printHeadTailDataFrame(df=df_output, name='OUTPUT section of {name:s}'.format(name=amc.dRTK['glab_out']), index=False)
-
-    return df_output
 
 
 def parse_glab_info(glab_info: str, logger: logging.Logger) -> dict:
@@ -117,10 +37,16 @@ def parse_glab_info(glab_info: str, logger: logging.Logger) -> dict:
     dInfo['rx'] = parse_glab_info_rx(glab_lines=glab_info_lines, dRx=glc.dgLab['parse']['rx'])
 
     # get the preprocessing output
-    dInfo['pp'] = parse_glab_info_pp(glab_lines=glab_info_lines, dPP=glc.dgLab['parse']['pp'])
+    dInfo['pp'] = parse_glab_info_preprocessing(glab_lines=glab_info_lines, dPP=glc.dgLab['parse']['pp'])
 
     # get info about th eModelling
     dInfo['model'] = parse_glab_info_model(glab_lines=glab_info_lines, dModel=glc.dgLab['parse']['model'])
+
+    # get info about gLABs Filter
+    dInfo['filter'], dInfo['rx']['marker'] = parse_glab_info_filter(glab_lines=glab_info_lines, dFilter=glc.dgLab['parse']['filter'])
+
+    # get info about th summary
+    dInfo['summary'] = parse_glab_info_summary(glab_lines=glab_info_lines, dSummary=glc.dgLab['parse']['summary'])
 
     # report
     logger.info('{func:s}: Information summary =\n{json!s}'.format(func=cFuncName, json=json.dumps(dInfo, sort_keys=False, indent=4, default=amutils.DT_convertor)))
@@ -198,22 +124,34 @@ def parse_glab_info_rx(glab_lines: list, dRx: dict) -> dict:
     return drx_info
 
 
-def parse_glab_info_pp(glab_lines: list, dPP: dict) -> dict:
+def parse_glab_info_preprocessing(glab_lines: list, dPP: dict) -> dict:
     """
-    parse_glab_info_pp parses the lines containg info about the preprocessing
+    parse_glab_info_preprocessing parses the lines containg info about the preprocessing
     """
     # get the info about the PP(cfr glc.dgLab['parse']['pp'])
     dpp_info = {}
     for key, val in dPP.items():
         # create subset of glab_lines for this key
         val_lines = [line for line in glab_lines if val in line and 'No' not in line]
-        # print(val_lines)
 
         if len(val_lines) == 1:
-            line = [x for x in glab_lines if x.startswith(val)][0]
+            line = val_lines[0]
 
-            # usefull file information is behind the colon ":"
-            dpp_info[key] = re.sub("\\s\\s+", " ", line.partition(':')[-1].strip())
+            if ':' in line:
+                # usefull file information is behind the colon ":"
+                dpp_info[key] = re.sub("\\s\\s+", " ", line.partition(':')[-1].strip())
+            else:
+                if key == 'freqs_order':
+                    dpp_info[key] = {}
+
+                    # find fisrt/last occurences of the symbol "|"
+                    first_occ = line.find('|')
+                    last_occ = line.rfind('|')
+
+                    freqs_avail = line[first_occ - 1: last_occ + 2]
+                    freqs_svs = line[last_occ + 2:].strip()
+
+                    dpp_info[key][freqs_avail] = freqs_svs
 
             # treat the ECEF coordinates
             if key == 'rx_ecef':
@@ -256,13 +194,10 @@ def parse_glab_info_model(glab_lines: list, dModel: dict) -> dict:
     for key, val in dModel.items():
         # create subset of glab_lines for this key
         val_lines = [line for line in glab_lines if val in line]
-        print(val_lines)
 
         if len(val_lines) == 1:
-            line = [x for x in glab_lines if x.startswith(val)][0]
-
             # usefull file information is behind the colon ":"
-            dmodel_info[key] = re.sub("\\s\\s+", " ", line.partition(':')[-1].strip())
+            dmodel_info[key] = re.sub("\\s\\s+", " ", val_lines[0].partition(':')[-1].strip())
 
         else:
             if key == 'tropo':
@@ -273,3 +208,64 @@ def parse_glab_info_model(glab_lines: list, dModel: dict) -> dict:
                 dmodel_info[key] = tropo_info.strip()
 
     return dmodel_info
+
+
+def parse_glab_info_filter(glab_lines: list, dFilter: dict) -> Tuple[dict, str]:
+    """
+    parse_glab_info_filter parses the lines containg info about the Filterling
+    """
+    # get the info about the PP(cfr glc.dgLab['parse']['pp'])
+    dFilter_info = {}
+    for key, val in dFilter.items():
+        # create subset of glab_lines for this key
+        val_lines = [line for line in glab_lines if val in line]
+
+        if len(val_lines) == 1:
+            line = val_lines[0]
+
+            if ':' in line:
+                # usefull file information is behind the colon ":"
+                dFilter_info[key] = re.sub("\\s\\s+", " ", line.partition(':')[-1].strip())
+
+        if key == 'meas':
+            # determine the marker name according to used systems
+            dMarker = {'G': 'GPSN', 'E': 'GALI', 'GE': 'COMB'}
+
+            # split the found FILTER info on spaces
+            syst_meas = dFilter_info[key].split(' ')
+
+            # regex for checking the systems we have
+            re_meas = r'[A-Z]\d\d-\d\d'
+
+            dFilter_info['gnss'] = ''
+            for info in syst_meas:
+                if re.match(re_meas, info):
+                    dFilter_info['gnss'] += info[0]
+
+            marker = dMarker[dFilter_info['gnss']]
+
+    return dFilter_info, marker
+
+
+def parse_glab_info_summary(glab_lines: list, dSummary: dict) -> dict:
+    """
+    parse_glab_info_summary parses the lines containg info about the Filterling
+    """
+    # get the info about the PP(cfr glc.dgLab['parse']['pp'])
+    dSummary_info = {}
+    for key, val in dSummary.items():
+        # create subset of glab_lines for this key
+        val_lines = [line for line in glab_lines if val in line]
+
+        print(val_lines)
+
+        if len(val_lines) == 1:
+            line = val_lines[0]
+
+            if ':' in line:
+                # usefull file information is behind the colon ":"
+                dSummary_info[key] = re.sub("\\s\\s+", " ", line.partition(':')[-1].strip())
+
+                #
+
+    return dSummary_info

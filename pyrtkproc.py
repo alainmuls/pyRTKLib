@@ -96,7 +96,7 @@ def rover_adjust_obstypes(logger: logging.Logger):
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-
+    pass
 
 
 def checkValidityArgs(logger: logging.Logger) -> bool:
@@ -218,8 +218,7 @@ def main(argv):
 
     logger.info('{func:s}: amc.dRTK = \n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4)))
 
-
-    cmdRNX2RTKP = '{prog:s} -k {conf:s} -o {pos:s} {rover:s} {base:s} {nav:s}'.format(prog=amd.dRTK['exeRNX2RTKP'], conf=amc.dRTK['config'], pos=amc.dRTK['filePos'], rover=amc.dRTK['roverObs'], base=amc.dRTK['baseObs'], nav=' '.join(amc.dRTK['ephems']))
+    cmdRNX2RTKP = '{prog:s} -k {conf:s} -o {pos:s} {rover:s} {base:s} {nav:s}'.format(prog=amc.dRTK['exeRNX2RTKP'], conf=amc.dRTK['config'], pos=amc.dRTK['filePos'], rover=amc.dRTK['roverObs'], base=amc.dRTK['baseObs'], nav=' '.join(amc.dRTK['ephems']))
 
     logger.info('{func:s}: Running:\n{cmd:s}'.format(func=cFuncName, cmd=colored(cmdRNX2RTKP, 'green')))
 
