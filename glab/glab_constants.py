@@ -35,7 +35,46 @@ dINFO['freqs_order'] = 'INFO PREPROCESSING Measurement frequency filling order'
 dINFO['freqs_priority'] = 'INFO PREPROCESSING Rover priority list for frequency'
 dINFO['space'] = 'INFO MODELLING Broadcast message type order for orbits, clocks and DCB data'
 
-dgLab['INFO'] = dINFO
+# get the input files used
+dFiles = {}
+dFiles['obs'] = 'INFO RINEX observation input file'
+dFiles['nav'] = 'INFO RINEX navigation message input file'
+dFiles['antex'] = 'INFO ANTEX input file for satellite block type'
+
+dINFO['files'] = dFiles
+
+# get information about station/receiver/antenna
+dRx = {}
+dRx['marker'] = 'INFO INPUT Station marker'
+dRx['rx'] = 'INFO INPUT Receiver type'
+dRx['antenna'] = 'INFO INPUT Antenna type'
+
+dINFO['rx'] = dRx
+
+# get the preprocessing info
+dPP = {}
+dPP['mask'] = 'INFO PREPROCESSING Elevation mask'
+dPP['freqs'] = 'INFO PREPROCESSING Usable frequencies'
+dPP['freqs_order'] = 'NFO PREPROCESSING Measurement frequency filling order'
+dPP['freqs_excluded'] = 'INFO PREPROCESSING Excluded frequencies by user'
+dPP['rx_ecef'] = 'INFO PREPROCESSING Receiver a priori position (metres)'
+
+dINFO['pp'] = dPP
+
+# get info about modelling
+dModel = {}
+
+dModel['sv_clock'] = 'INFO MODELLING Satellite clock offset correction'
+dModel['ARP'] = 'INFO MODELLING Receiver Antenna Reference Point (ARP)'
+dModel['iono'] = 'INFO MODELLING Ionosphere model'
+dModel['tropo'] = 'INFO MODELLING Troposphere model'
+dModel['nav_msg'] = 'INFO MODELLING Broadcast message type order for orbits, clocks and DCB data'
+dModel['use_health'] = "INFO MODELLING Use satellite 'SV Health' flag of navigation message"
+
+dINFO['model'] = dModel
+
+# put all in what we want to parse from the INFO messages
+dgLab['parse'] = dINFO
 
 # the OUTPUT message field
 dOUTPUT = {}

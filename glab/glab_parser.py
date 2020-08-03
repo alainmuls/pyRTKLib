@@ -43,18 +43,11 @@ def split_glab_outfile(msgs: str, glab_outfile: str, logger: logging.Logger) -> 
                     dtmp_fds[glab_msg].write(line)
             line = fd.readline()
 
-    # for glab_msg in msgs:
-    #     with open(dgLab_tmpf[glab_msg].name, 'w') as fTmp:
-    #         fTmp.writelines(line for line in open(glab_outfile) if line.startswith(glab_msg))
-    #         logger.info('{func:s}: size of {msg:s} file = {size:.2f} MB'.format(size=amutils.convert_unit(fTmp.tell(), amutils.SIZE_UNIT.MB), msg=glab_msg, func=cFuncName))
-
-    #         # reset at start of file
-    #         fTmp.seek(0)
-
     # close the opened files
     for glab_msg in msgs:
         dtmp_fds[glab_msg].close()
 
+        # return the dict with the temporary filenames created
     return dtmp_fnames
 
 
@@ -113,15 +106,33 @@ def parse_glab_info(glab_info: str, logger: logging.Logger) -> dict:
 
     # read in all lines from gLAB INFO output
     with open(glab_info.name) as fh:
-        lines = [line.rstrip() for line in fh]  # fh.readlines()  # [line.rstrip() for line in fh]
+        glab_info_lines = [line.rstrip() for line in fh]  # fh.readlines()  # [line.rstrip() for line in fh]
+
+    # create a dictionary for storing/returning the information
+    dInfo = {}
+
+    # get the info about the input files (cfr glc.dgLab['parse']['files'])
+    dInfo['files'] = parse_glab_info_files(glab_lines=glab_info_lines, dFiles=glc.dgLab['parse']['files'])
+    # get the receiver information
+    dInfo['rx'] = parse_glab_info_rx(glab_lines=glab_info_lines, dRx=glc.dgLab['parse']['rx'])
+
+    # get the preprocessing output
+    dInfo['pp'] = parse_glab_info_pp(glab_lines=glab_info_lines, dPP=glc.dgLab['parse']['pp'])
+
+    # get info about th eModelling
+    dInfo['model'] = parse_glab_info_model(glab_lines=glab_info_lines, dModel=glc.dgLab['parse']['model'])
+
+    # report
+    logger.info('{func:s}: Information summary =\n{json!s}'.format(func=cFuncName, json=json.dumps(dInfo, sort_keys=False, indent=4, default=amutils.DT_convertor)))
+
+    sys.exit(6)
 
     # find the values for the dgLab['INFO'] we collect
-    dInfo = {}
-    for key, val in glc.dgLab['INFO'].items():
-        line = [x for x in lines if x.startswith(val)]
+    for key, val in glc.dgLab['parse'].items():
+        line = [x for x in glab_info_lines if x.startswith(val)]
 
         if len(line) > 0:
-            print('line = {!s}'.format(line))
+            # print('line = {!s}'.format(line))
             if ':' in line[0]:
                 dInfo[key] = re.sub(" +", " ", line[0].partition(':')[2].strip())  # remove white spaces
             else:
@@ -151,3 +162,114 @@ def parse_glab_info(glab_info: str, logger: logging.Logger) -> dict:
     logger.info('{func:s}: Information summary =\n{json!s}'.format(func=cFuncName, json=json.dumps(dInfo, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
     return dInfo
+
+
+def parse_glab_info_files(glab_lines: list, dFiles: dict) -> dict:
+    """
+    parse_glab_info_files parses the lines containg info about the input files
+    """
+    # get the info about the input files (cfr glc.dgLab['parse']['files'])
+    dfile_info = {}
+    for key, val in dFiles.items():
+        line = [x for x in glab_lines if x.startswith(val)][0]
+
+        # usefull file information is behind the colon ":"
+        file_info = line.partition(':')[-1].strip()
+
+        # store the info for corresponding key
+        dfile_info[key] = [os.path.basename(fname) for fname in file_info.split(' ')]
+
+    return dfile_info
+
+
+def parse_glab_info_rx(glab_lines: list, dRx: dict) -> dict:
+    """
+    parse_glab_info_ex parses the lines containg info about the receiver
+    """
+    # get the info about the receiver(cfr glc.dgLab['parse']['rx'])
+    drx_info = {}
+    for key, val in dRx.items():
+        line = [x for x in glab_lines if x.startswith(val)][0]
+
+        # usefull file information is behind the colon ":"
+        drx_info[key] = re.sub("\\s\\s+", " ", line.partition(':')[-1].strip())
+
+    # return the info about the receiver
+    return drx_info
+
+
+def parse_glab_info_pp(glab_lines: list, dPP: dict) -> dict:
+    """
+    parse_glab_info_pp parses the lines containg info about the preprocessing
+    """
+    # get the info about the PP(cfr glc.dgLab['parse']['pp'])
+    dpp_info = {}
+    for key, val in dPP.items():
+        # create subset of glab_lines for this key
+        val_lines = [line for line in glab_lines if val in line and 'No' not in line]
+        # print(val_lines)
+
+        if len(val_lines) == 1:
+            line = [x for x in glab_lines if x.startswith(val)][0]
+
+            # usefull file information is behind the colon ":"
+            dpp_info[key] = re.sub("\\s\\s+", " ", line.partition(':')[-1].strip())
+
+            # treat the ECEF coordinates
+            if key == 'rx_ecef':
+                # init class WGS84
+                wgs_84 = wgs84.WGS84()
+                # convert cartesian position to geodetic coordiantes
+                cart_crd = [float(w) for w in dpp_info[key].split()[:3]]
+                dpp_info['rx_geod'] = wgs_84.ecef2lla(ecef=cart_crd)
+
+        else:
+            dpp_info[key] = {}
+            if key == 'freqs':
+                for gnss_line in val_lines:
+                    GNSS = gnss_line[gnss_line.find('[') + 1: gnss_line.find(']')]
+                    GNSS_freqs = re.sub("\\s\\s+", " ", gnss_line.partition(':')[-1].strip())
+
+                    dpp_info[key][GNSS] = GNSS_freqs
+
+            elif key == 'freqs_order':
+                for freq_line in val_lines:
+                    # find fisrt/last occurences of the symbol "|"
+                    first_occ = freq_line.find('|')
+                    last_occ = freq_line.rfind('|')
+
+                    freqs_avail = freq_line[first_occ - 1: last_occ + 2]
+                    freqs_svs = freq_line[last_occ + 2:].strip()
+
+                    dpp_info[key][freqs_avail] = freqs_svs
+
+    # return the preprocessing info
+    return dpp_info
+
+
+def parse_glab_info_model(glab_lines: list, dModel: dict) -> dict:
+    """
+    parse_glab_info_model parses the lines containg info about the modelling
+    """
+    # get the info about the PP(cfr glc.dgLab['parse']['pp'])
+    dmodel_info = {}
+    for key, val in dModel.items():
+        # create subset of glab_lines for this key
+        val_lines = [line for line in glab_lines if val in line]
+        print(val_lines)
+
+        if len(val_lines) == 1:
+            line = [x for x in glab_lines if x.startswith(val)][0]
+
+            # usefull file information is behind the colon ":"
+            dmodel_info[key] = re.sub("\\s\\s+", " ", line.partition(':')[-1].strip())
+
+        else:
+            if key == 'tropo':
+                # combine all into 1 value
+                tropo_info = ''
+                for line in val_lines:
+                    tropo_info += re.sub("\\s\\s+", " ", line.partition(':')[-1].strip()) + ' '
+                dmodel_info[key] = tropo_info.strip()
+
+    return dmodel_info

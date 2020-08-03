@@ -143,7 +143,6 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
 
     # create the ticks for the time axis
     dtFormat = plot_utils.determine_datetime_ticks(startDT=dfCrd['DT'].iloc[0], endDT=dfCrd['DT'].iloc[-1])
-    print('dtFormat = {!s}'.format(dtFormat))
     if dtFormat['minutes']:
         axis.xaxis.set_major_locator(dates.MinuteLocator(byminute=range(10, 60, 10), interval=1))
         pass
@@ -155,7 +154,6 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
     axis.xaxis.set_major_formatter(dates.DateFormatter('%H:%M'))  # hours and minutes
 
     axis.xaxis.set_tick_params(rotation=0)
-    print('ticks = {!s}'.format(axis.xaxis.get_major_ticks()))
     for tick in axis.xaxis.get_major_ticks():
         tick.label1.set_horizontalalignment('center')
 
