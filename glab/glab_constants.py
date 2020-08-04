@@ -87,11 +87,7 @@ dFilter['GDOP'] = 'INFO FILTER GDOP'
 dINFO['filter'] = dFilter
 
 # get info from summary
-dSum = {}
-dSum['epoch_first'] = 'INFO First epoch of summary'
-dSum['epoch_last'] = 'INFO Last  epoch of summary'
-
-dINFO['summary'] = dSum
+dINFO['summary'] = 'INFO Station'
 
 # put all in what we want to parse from the INFO messages
 dgLab['parse'] = dINFO

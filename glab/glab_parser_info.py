@@ -5,6 +5,7 @@ import logging
 import re
 import json
 from typing import Tuple
+from datetime import datetime
 
 from ampyutils import amutils
 from glab import glab_constants as glc
@@ -253,19 +254,30 @@ def parse_glab_info_summary(glab_lines: list, dSummary: dict) -> dict:
     """
     # get the info about the PP(cfr glc.dgLab['parse']['pp'])
     dSummary_info = {}
-    for key, val in dSummary.items():
-        # create subset of glab_lines for this key
-        val_lines = [line for line in glab_lines if val in line]
 
-        print(val_lines)
+    summary_line = [line for line in glab_lines if dSummary in line][0]
+    posn_colon = summary_line.find('Lon:')
+    info_line = summary_line[posn_colon:]
 
-        if len(val_lines) == 1:
-            line = val_lines[0]
+    list_tmp = info_line.split()[::2]
+    list_of_keys = [key.strip(':') for key in list_tmp]
+    list_of_str_values = info_line.split()[1::2]
 
-            if ':' in line:
-                # usefull file information is behind the colon ":"
-                dSummary_info[key] = re.sub("\\s\\s+", " ", line.partition(':')[-1].strip())
+    list_of_values = [RepresentsNumber(value) for value in list_of_str_values]
 
-                #
+    # create dictionary of key:values
+    dSummary_info = dict(zip(list_of_keys, list_of_values))
 
     return dSummary_info
+
+
+def RepresentsNumber(s: str):
+    try:
+        int(s)
+        return int(s)
+    except ValueError:
+        try:
+            float(s)
+            return float(s)
+        except ValueError:
+            return s
