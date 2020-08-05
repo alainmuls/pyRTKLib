@@ -5,7 +5,6 @@ import logging
 import re
 import json
 from typing import Tuple
-from datetime import datetime
 
 from ampyutils import amutils
 from glab import glab_constants as glc
@@ -21,9 +20,6 @@ def parse_glab_info(glab_info: str, logger: logging.Logger) -> dict:
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     logger.info('{func:s}: Parsing gLab INFO section {file:s} ({info:s})'.format(func=cFuncName, file=glab_info.name, info=colored('be patient', 'red')))
-
-    # init class WGS84
-    wgs_84 = wgs84.WGS84()
 
     # read in all lines from gLAB INFO output
     with open(glab_info.name) as fh:
@@ -44,47 +40,13 @@ def parse_glab_info(glab_info: str, logger: logging.Logger) -> dict:
     dInfo['model'] = parse_glab_info_model(glab_lines=glab_info_lines, dModel=glc.dgLab['parse']['model'])
 
     # get info about gLABs Filter
-    dInfo['filter'], dInfo['rx']['marker'] = parse_glab_info_filter(glab_lines=glab_info_lines, dFilter=glc.dgLab['parse']['filter'])
+    dInfo['filter'], dInfo['rx']['marker'], dInfo['rx']['gnss'] = parse_glab_info_filter(glab_lines=glab_info_lines, dFilter=glc.dgLab['parse']['filter'])
 
     # get info about th summary
     dInfo['summary'] = parse_glab_info_summary(glab_lines=glab_info_lines, dSummary=glc.dgLab['parse']['summary'])
 
     # report
     logger.info('{func:s}: Information summary =\n{json!s}'.format(func=cFuncName, json=json.dumps(dInfo, sort_keys=False, indent=4, default=amutils.DT_convertor)))
-
-    sys.exit(6)
-
-    # find the values for the dgLab['INFO'] we collect
-    for key, val in glc.dgLab['parse'].items():
-        line = [x for x in glab_info_lines if x.startswith(val)]
-
-        if len(line) > 0:
-            # print('line = {!s}'.format(line))
-            if ':' in line[0]:
-                dInfo[key] = re.sub(" +", " ", line[0].partition(':')[2].strip())  # remove white spaces
-            else:
-                dInfo[key] = re.sub(" +", " ", line[0].partition(val)[2].strip())  # remove white spaces
-
-            # treat the ECEF coordinates
-            if key == 'rx_ecef':
-                # convert cartesian position to geodetic coordiantes
-                cart_crd = [float(w) for w in dInfo['rx_ecef'].split()[:3]]
-                dInfo['rx_geod'] = wgs_84.ecef2lla(ecef=cart_crd)
-
-        else:
-            dInfo[key] = ''
-
-    # check which GNSS are used and create a marker field in dInfo accoring to the found GNSSs
-    list_of_marker = ['GPSN', 'GALI']
-    dInfo['marker'] = ''
-
-    # Check if all listed GNSSs are in dInfo['gnss_used']
-    if all(([True if gnss[:3] in dInfo['gnss_used'] else False for gnss in list_of_marker])):
-        dInfo['marker'] = 'COMB'
-    else:
-        for marker in list_of_marker:
-            if marker[:3] in dInfo['gnss_used']:
-                dInfo['marker'] = marker
 
     logger.info('{func:s}: Information summary =\n{json!s}'.format(func=cFuncName, json=json.dumps(dInfo, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
@@ -211,7 +173,7 @@ def parse_glab_info_model(glab_lines: list, dModel: dict) -> dict:
     return dmodel_info
 
 
-def parse_glab_info_filter(glab_lines: list, dFilter: dict) -> Tuple[dict, str]:
+def parse_glab_info_filter(glab_lines: list, dFilter: dict) -> Tuple[dict, str, str]:
     """
     parse_glab_info_filter parses the lines containg info about the Filterling
     """
@@ -230,8 +192,6 @@ def parse_glab_info_filter(glab_lines: list, dFilter: dict) -> Tuple[dict, str]:
 
         if key == 'meas':
             # determine the marker name according to used systems
-            dMarker = {'G': 'GPSN', 'E': 'GALI', 'GE': 'COMB'}
-
             # split the found FILTER info on spaces
             syst_meas = dFilter_info[key].split(' ')
 
@@ -243,9 +203,10 @@ def parse_glab_info_filter(glab_lines: list, dFilter: dict) -> Tuple[dict, str]:
                 if re.match(re_meas, info):
                     dFilter_info['gnss'] += info[0]
 
-            marker = dMarker[dFilter_info['gnss']]
+            marker = glc.dgLab['GNSS'][dFilter_info['gnss']]['marker']
+            gnss = glc.dgLab['GNSS'][dFilter_info['gnss']]['gnss']
 
-    return dFilter_info, marker
+    return dFilter_info, marker, gnss
 
 
 def parse_glab_info_summary(glab_lines: list, dSummary: dict) -> dict:

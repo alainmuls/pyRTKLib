@@ -2,18 +2,10 @@
 	"build_systems":
 	[
 		{
-			"cmd":
-			[
-				"/home/amuls/scripts/pandoc2pdf.sh",
-				"$file"
-			],
-			"name": "pandoc to pdf"
-		},
-		{
 			"file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
 			"name": "Anaconda Python Builder",
 			"selector": "source.python",
-			"shell_cmd": "\"/usr/bin/python3\" -u \"$file\""
+			"shell_cmd": "\"/home/amuls/venvmint/pyRTKLib/bin/python\" -u \"$file\""
 		}
 	],
 	"folders":
@@ -25,14 +17,22 @@
 			"path": "/home/amuls/RxTURP/BEGPIOS"
 		}
 	],
-    "settings": {
-        // ...
-        "python_virtualenv": "/home:amuls/venvmint/pyRTKLib",
-        "python_interpreter": "/home:amuls/venvmint/pyRTKLib/bin/python",
-
-        "python_package_paths": [
-            "$project_path/plot",
-            "$project_path/ampyutils"
-        ]
-    }
+	"settings":
+	{
+		"python_interpreter": "/home/amuls/venvmint/pyRTKLib/bin/python",
+		"python_package_paths":
+		[
+			"$project_path/plot",
+			"$project_path/ampyutils",
+			"$project_path/gfzrnx",
+			"$project_path/glab",
+			"$project_path/glab_plot",
+			"$project_path/glabcfg",
+			"$project_path/GNSS",
+			"$project_path/rnx2rtkp",
+			"$project_path/stats",
+			"$project_path/tle",
+		],
+		"python_virtualenv": "/home/amuls/venvmint/pyRTKLib"
+	}
 }

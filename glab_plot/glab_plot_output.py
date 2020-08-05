@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import sys
 import logging
-from datetime import datetime
+import re
 from typing import Tuple
 from matplotlib import dates
 import numpy as np
@@ -29,17 +29,45 @@ def get_title_info(logger: logging.Logger) -> Tuple[str, str]:
 
     logger.info('{func:s}: get information for reporting on plot'.format(func=cFuncName))
 
-    # make title for plot
-    date = datetime.strptime(amc.dRTK['INFO']['epoch_first'][:10], '%d/%m/%Y')
-    time_first = datetime.strptime(amc.dRTK['INFO']['epoch_first'][11:19], '%H:%M:%S')
-    time_last = datetime.strptime(amc.dRTK['INFO']['epoch_last'][11:19], '%H:%M:%S')
-    gnss_used = amc.dRTK['INFO']['gnss_used']
-    gnss_meas = amc.dRTK['INFO']['meas']
-    obs_file = os.path.basename(amc.dRTK['INFO']['obs'])
-    nav_file = os.path.basename(amc.dRTK['INFO']['nav'])
-    rx_geod = amc.dRTK['INFO']['rx_geod']
+    # # make title for plot
+    # date = datetime.strptime(amc.dRTK['INFO']['epoch_first'][:10], '%d/%m/%Y')
+    # time_first = datetime.strptime(amc.dRTK['INFO']['epoch_first'][11:19], '%H:%M:%S')
+    # time_last = datetime.strptime(amc.dRTK['INFO']['epoch_last'][11:19], '%H:%M:%S')
+    # gnss_used = amc.dRTK['INFO']['gnss_used']
+    # gnss_meas = amc.dRTK['INFO']['meas']
+    # obs_file = os.path.basename(amc.dRTK['INFO']['obs'])
+    # nav_file = os.path.basename(amc.dRTK['INFO']['nav'])
+    # rx_geod = amc.dRTK['INFO']['rx_geod']
 
-    return date, time_first, time_last, gnss_used, gnss_meas, obs_file, nav_file, rx_geod
+    # extract from collected information
+    dInfo = amc.dRTK['INFO']
+
+    marker = dInfo['rx']['marker']
+    gnss = dInfo['rx']['gnss']
+
+    date = '{day:02d}/{month:02d}/{year:04d}'.format(day=dInfo['summary']['Day'], month=dInfo['summary']['Month'], year=dInfo['summary']['Year'])
+    WkTOW = '{week:04d}/{doy:03d}'.format(week=dInfo['summary']['GPSWeek'], doy=dInfo['summary']['DoY'])
+
+    obs_file = dInfo['files']['obs'][0]
+    nav_file = dInfo['files']['nav'][0]
+    for i in range(1, len(dInfo['files']['obs'])):
+        obs_file += dInfo['files']['obs'][i]
+    for i in range(1, len(dInfo['files']['nav'])):
+        nav_file += dInfo['files']['nav'][i]
+
+    meas = dInfo['filter']['meas']
+    ref_clk = dInfo['filter']['ref_clk']
+
+    tropo = dInfo['model']['tropo']
+    iono = dInfo['model']['iono']
+
+    mask = dInfo['pp']['mask']
+    geod_crd = dInfo['pp']['rx_geod']
+
+    plot_title = '{posf:s}: {marker:s} - {obs_date:s} ({wktow:s})'.format(posf=obs_file, marker=marker, obs_date=date, wktow=WkTOW)
+    proc_info = '{GNSS:s} - {meas:s}\nIono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(GNSS=gnss, meas=meas, iono=iono, tropo=tropo, clk=ref_clk, mask=mask)
+
+    return plot_title, proc_info, geod_crd
 
 
 def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger, showplot: bool = False):
@@ -60,19 +88,23 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
 
     # set up the plot
     plt.style.use('ggplot')
+    # Set the font dictionaries (for plot title and axis titles)
+    title_font = {'fontname': 'Arial', 'size': '16', 'color': 'black', 'weight': 'heavy',
+                  'verticalalignment': 'top'}  # Bottom vertical alignment for more space
+    axis_font = {'fontname': 'Arial', 'size': '14'}
 
     # get info for the plot titles
-    obs_date, start_time, end_time, GNSSs, GNSS_meas, obs_name, nav_name, rx_geod = get_title_info(logger=logger)
+    plot_title, proc_options, rx_geod = get_title_info(logger=logger)
 
     # subplots
     fig, ax = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(16.0, 12.0))
-    fig.suptitle('{marker:s} -{obs_date:s}'.format(posf=obs_name, marker=amc.dRTK['INFO']['marker'], obs_date='{date:s} ({first:s}-{last:s})'.format(date=obs_date.strftime('%d/%m/%Y'), first=start_time.strftime('%H:%M:%S'), last=end_time.strftime('%H:%M:%S'))), weight='ultrabold', fontsize='x-large')
+
+    fig.suptitle('{title:s}'.format(title=plot_title), **title_font)
 
     # plot annotations
     ax[0].annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
 
-    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['atm_iono'], tropo=amc.dRTK['INFO']['atm_tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
-    ax[0].annotate('{syst:s}\n{meas:s}\n{filter:s}'.format(syst=GNSSs, meas=GNSS_meas, filter=txt_filter), xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
+    ax[0].annotate(proc_options, xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
 
     # copyright this
     ax[-1].annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 0), xycoords='axes fraction', xytext=(0, -50), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='x-small')
@@ -125,9 +157,12 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
     axis.set_ylabel('#SVs [-]', fontsize='large', color='grey', weight='ultrabold')
     # axis.set_xlabel('Time [sec]', fontsize='large')
 
-    # plot the number of SVs and color as function of the number of GNSSs used
-    for i_gnss in range(1, dfCrd['#GNSSs'].max() + 1):
-        axis.fill_between(dfCrd['DT'].values, 0, dfCrd['#SVs'], where=(dfCrd['#GNSSs'] == i_gnss), alpha=0.25, linestyle='-', linewidth=2, color=colors[i_gnss], label='#SVs', interpolate=False)
+    # plot the number of SVs and color as function of the GNSSs used
+    for (i_gnss, gnss, gnss_color) in zip([1, 1, 2], ['GAL', 'GPS', ''], ['blue', 'red', 'grey']):
+        if i_gnss == 2:
+            axis.fill_between(dfCrd['DT'].values, 0, dfCrd['#SVs'], where=(dfCrd['#GNSSs'] == i_gnss), alpha=0.25, linestyle='-', linewidth=2, color=gnss_color, interpolate=False)
+        else:
+            axis.fill_between(dfCrd['DT'].values, 0, dfCrd['#SVs'], where=((dfCrd['#GNSSs'] == i_gnss) & (gnss == dfCrd['GNSSs'])), alpha=0.25, linestyle='-', linewidth=2, color=gnss_color, interpolate=False)
 
     # plot PDOP on second y-axis
     axis_right = axis.twinx()
@@ -145,7 +180,6 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
     dtFormat = plot_utils.determine_datetime_ticks(startDT=dfCrd['DT'].iloc[0], endDT=dfCrd['DT'].iloc[-1])
     if dtFormat['minutes']:
         axis.xaxis.set_major_locator(dates.MinuteLocator(byminute=range(10, 60, 10), interval=1))
-        pass
     else:
         axis.xaxis.set_major_locator(dates.HourLocator(interval=dtFormat['hourInterval']))   # every
 
@@ -184,19 +218,18 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, center: str, logger: lo
     plt.style.use('ggplot')
 
     # get info for the plot titles
-    obs_date, start_time, end_time, GNSSs, GNSS_meas, obs_name, nav_name, rx_geod = get_title_info(logger=logger)
+    plot_title, proc_options, rx_geod = get_title_info(logger=logger)
 
     # subplots
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(11.0, 11.0))
 
     # figure title
-    plot_title = '{marker:s} - {date:s} ({year:s}/{doy:s})'.format(marker=amc.dRTK['INFO']['marker'], date=amc.dRTK['INFO']['epoch_first'][:10], year=amc.dRTK['INFO']['epoch_first'][25:29], doy=amc.dRTK['INFO']['epoch_first'][30:33])
     fig.suptitle('{title:s}'.format(title=plot_title, weight='ultrabold', fontsize='x-large'))
 
     # plot annotations
     ax.annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
-    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['atm_iono'], tropo=amc.dRTK['INFO']['atm_tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
-    ax.annotate('{syst:s}\n{meas:s}\n{filter:s}'.format(syst=GNSSs, meas=GNSS_meas, filter=txt_filter), xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
+
+    ax.annotate(proc_options, xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
 
     # copyright this
     ax.annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 0), xycoords='axes fraction', xytext=(0, -50), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='x-small')
@@ -277,19 +310,18 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale: float, center: str, logger
     plt.style.use('ggplot')
 
     # get info for the plot titles
-    obs_date, start_time, end_time, GNSSs, GNSS_meas, obs_name, nav_name, rx_geod = get_title_info(logger=logger)
+    plot_title, proc_options, rx_geod = get_title_info(logger=logger)
 
     # subplots
     fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(16.0, 11.0))
 
     # figure title
-    plot_title = '{marker:s} - {date:s} ({year:s}/{doy:s})'.format(marker=amc.dRTK['INFO']['marker'], date=amc.dRTK['INFO']['epoch_first'][:10], year=amc.dRTK['INFO']['epoch_first'][25:29], doy=amc.dRTK['INFO']['epoch_first'][30:33])
     fig.suptitle('{title:s}'.format(title=plot_title, weight='ultrabold', fontsize='x-large'))
 
     # plot annotations
     ax[0][0].annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
-    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['atm_iono'], tropo=amc.dRTK['INFO']['atm_tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
-    ax[0][2].annotate('{syst:s}\n{meas:s}\n{filter:s}'.format(syst=GNSSs, meas=GNSS_meas, filter=txt_filter), xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
+
+    ax[0][2].annotate(proc_options, xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
 
     # copyright this
     ax[1][2].annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 0), xycoords='axes fraction', xytext=(0, -70), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='x-small')
@@ -386,7 +418,7 @@ def plot_glab_xdop(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool =
     plt.style.use('ggplot')
 
     # get info for the plot titles
-    obs_date, start_time, end_time, GNSSs, GNSS_meas, obs_name, nav_name, rx_geod = get_title_info(logger=logger)
+    plot_title, proc_options, rx_geod = get_title_info(logger=logger)
 
     # get the colors for xDOP
     # dop_colors, title_font = amutils.create_colormap_font(nrcolors=len(glc.dgLab['OUTPUT']['XDOP']), font_size=12)
@@ -407,13 +439,12 @@ def plot_glab_xdop(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool =
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(12.0, 8.0))
 
     # figure title
-    plot_title = '{marker:s} - {date:s} ({year:s}/{doy:s})'.format(marker=amc.dRTK['INFO']['marker'], date=amc.dRTK['INFO']['epoch_first'][:10], year=amc.dRTK['INFO']['epoch_first'][25:29], doy=amc.dRTK['INFO']['epoch_first'][30:33])
     fig.suptitle('{title:s}'.format(title=plot_title, weight='ultrabold', fontsize='x-large'))
 
     # plot annotations
     ax.annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
-    txt_filter = 'Iono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(iono=amc.dRTK['INFO']['atm_iono'], tropo=amc.dRTK['INFO']['atm_tropo'], clk=amc.dRTK['INFO']['ref_clk'], mask=amc.dRTK['INFO']['mask'])
-    ax.annotate('{syst:s}\n{meas:s}\n{filter:s}'.format(syst=GNSSs, meas=GNSS_meas, filter=txt_filter), xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
+
+    ax.annotate(proc_options, xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
 
     # copyright this
     ax.annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 0), xycoords='axes fraction', xytext=(0, -50), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='x-small')

@@ -7,33 +7,18 @@ dgLab = {}
 glab_msgs = ('INFO', 'OUTPUT', 'SATSEL', 'MEAS', 'MODEL', 'FILTER')
 dgLab['messages'] = glab_msgs
 
+# connect abbreviation of GNSS to the names used
+dGNSS = {
+        'E': {'marker': 'GALI', 'gnss': 'Galileo', 'color': 'blue'},
+        'G': {'marker': 'GPSN', 'gnss': 'GPS NavSTAR', 'color': 'red'},
+        'GE': {'marker': 'COMB', 'gnss': 'Combined GE', 'color': 'grey'},
+        'EG': {'marker': 'COMB', 'gnss': 'Combined EG', 'color': 'grey'},
+        }  # noqa: E123
+
+dgLab['GNSS'] = dGNSS
+
 # Looking up the INFO messages
 dINFO = {}
-dINFO['obs'] = 'INFO RINEX observation input file'
-dINFO['nav'] = 'INFO RINEX navigation message input file'
-dINFO['proc'] = 'INFO Processing with'
-dINFO['ant_type'] = 'INFO INPUT Antenna type'
-dINFO['rx_type'] = 'INFO INPUT Receiver type'
-dINFO['decimation'] = 'INFO PREPROCESSING Decimation'
-dINFO['freqs_gps'] = 'INFO PREPROCESSING Usable frequencies [GPS]'
-dINFO['freqs_gal'] = 'INFO PREPROCESSING Usable frequencies [Galileo]'
-dINFO['mask'] = 'INFO PREPROCESSING Elevation mask'
-dINFO['rx_ecef'] = 'INFO PREPROCESSING Receiver a priori position (metres)'
-dINFO['atm_iono'] = 'INFO MODELLING Ionosphere model'
-dINFO['atm_tropo'] = 'INFO MODELLING Troposphere model'
-dINFO['ref_clk'] = 'INFO FILTER Reference clock constellation priority list'
-dINFO['epochs'] = 'INFO Total epochs processed'
-dINFO['epochs_proc'] = 'INFO Total epochs processed with solution'
-dINFO['gaps'] = 'INFO Number of data gaps in observation file (during summary period)'
-dINFO['epoch_first'] = 'INFO First epoch of summary for computing positioning error percentiles'
-dINFO['epoch_last'] = 'INFO Last  epoch of summary for computing positioning error percentiles'
-dINFO['meas'] = 'INFO FILTER Meas'
-dINFO['gnss_used'] = 'INFO Number of epochs with constellations used'
-dINFO['gnss_notused'] = 'INFO Number of epochs with constellations not used'
-dINFO['excluded'] = 'INFO PREPROCESSING Excluded satellites'
-dINFO['freqs_order'] = 'INFO PREPROCESSING Measurement frequency filling order'
-dINFO['freqs_priority'] = 'INFO PREPROCESSING Rover priority list for frequency'
-dINFO['space'] = 'INFO MODELLING Broadcast message type order for orbits, clocks and DCB data'
 
 # get the input files used
 dFiles = {}
