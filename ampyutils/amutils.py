@@ -141,8 +141,6 @@ def printHeadTailDataFrame(df: pd.DataFrame, name: str, index: str = True, head:
     :param index: display the index of the dataframe or not
     :type: bool
     """
-    print('index = {!s}'.format(index))
-
     if df.shape[0] <= (head + tail):
         print('\n   ...  %s (size %d)\n%s' % (colored(name, 'green'), df.shape[0], df.to_string(index=index)))
     else:

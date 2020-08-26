@@ -5,8 +5,6 @@ import os
 import pandas as pd
 import sys
 import logging
-import re
-from typing import Tuple
 from matplotlib import dates
 import numpy as np
 
@@ -21,55 +19,6 @@ register_matplotlib_converters()
 __author__ = 'amuls'
 
 
-def get_title_info(logger: logging.Logger) -> Tuple[str, str]:
-    """
-    get_title_info gets basic info from the gLab['INFO'] dict for the plot
-    """
-    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
-
-    logger.info('{func:s}: get information for reporting on plot'.format(func=cFuncName))
-
-    # # make title for plot
-    # date = datetime.strptime(amc.dRTK['INFO']['epoch_first'][:10], '%d/%m/%Y')
-    # time_first = datetime.strptime(amc.dRTK['INFO']['epoch_first'][11:19], '%H:%M:%S')
-    # time_last = datetime.strptime(amc.dRTK['INFO']['epoch_last'][11:19], '%H:%M:%S')
-    # gnss_used = amc.dRTK['INFO']['gnss_used']
-    # gnss_meas = amc.dRTK['INFO']['meas']
-    # obs_file = os.path.basename(amc.dRTK['INFO']['obs'])
-    # nav_file = os.path.basename(amc.dRTK['INFO']['nav'])
-    # rx_geod = amc.dRTK['INFO']['rx_geod']
-
-    # extract from collected information
-    dInfo = amc.dRTK['INFO']
-
-    marker = dInfo['rx']['marker']
-    gnss = dInfo['rx']['gnss']
-
-    date = '{day:02d}/{month:02d}/{year:04d}'.format(day=dInfo['summary']['Day'], month=dInfo['summary']['Month'], year=dInfo['summary']['Year'])
-    WkTOW = '{week:04d}/{doy:03d}'.format(week=dInfo['summary']['GPSWeek'], doy=dInfo['summary']['DoY'])
-
-    obs_file = dInfo['files']['obs'][0]
-    nav_file = dInfo['files']['nav'][0]
-    for i in range(1, len(dInfo['files']['obs'])):
-        obs_file += dInfo['files']['obs'][i]
-    for i in range(1, len(dInfo['files']['nav'])):
-        nav_file += dInfo['files']['nav'][i]
-
-    meas = dInfo['filter']['meas']
-    ref_clk = dInfo['filter']['ref_clk']
-
-    tropo = dInfo['model']['tropo']
-    iono = dInfo['model']['iono']
-
-    mask = dInfo['pp']['mask']
-    geod_crd = dInfo['pp']['rx_geod']
-
-    plot_title = '{posf:s}: {marker:s} - {obs_date:s} ({wktow:s})'.format(posf=obs_file, marker=marker, obs_date=date, wktow=WkTOW)
-    proc_info = '{GNSS:s} - {meas:s}\nIono {iono:s} - Tropo {tropo:s} - RefClk {clk:s} - mask {mask:s}'.format(GNSS=gnss, meas=meas, iono=iono, tropo=tropo, clk=ref_clk, mask=mask)
-
-    return plot_title, proc_info, geod_crd
-
-
 def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger, showplot: bool = False):
     """
     plot_glab_position plots the position difference wrt to Nominal a priori position
@@ -78,28 +27,16 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
 
     logger.info('{func:s}: plotting position offset'.format(func=cFuncName))
 
-    # select colors for E, N, U coordinate difference
-    colors = []
-    colors.append([51 / 256., 204 / 256., 51 / 256.])
-    colors.append([51 / 256., 51 / 256., 255 / 256.])
-    colors.append([255 / 256., 51 / 256., 51 / 256.])
-
-    # colors, title_font = amutils.create_colormap_font(nrcolors=3, font_size=12)
-
     # set up the plot
     plt.style.use('ggplot')
-    # Set the font dictionaries (for plot title and axis titles)
-    title_font = {'fontname': 'Arial', 'size': '16', 'color': 'black', 'weight': 'heavy',
-                  'verticalalignment': 'top'}  # Bottom vertical alignment for more space
-    axis_font = {'fontname': 'Arial', 'size': '14'}
 
     # get info for the plot titles
-    plot_title, proc_options, rx_geod = get_title_info(logger=logger)
+    plot_title, proc_options, rx_geod = amc.get_title_info(logger=logger)
 
     # subplots
     fig, ax = plt.subplots(nrows=4, ncols=1, sharex=True, figsize=(16.0, 12.0))
 
-    fig.suptitle('{title:s}'.format(title=plot_title), **title_font)
+    fig.suptitle('{title:s}'.format(title=plot_title), **glc.title_font)
 
     # plot annotations
     ax[0].annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
@@ -118,11 +55,11 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
         crd_stats = amc.dRTK['dgLABng']['stats']['crd'][crd]
 
         # color for markers and alpha colors for error bars
-        rgb = mpcolors.colorConverter.to_rgb(colors[i])
+        rgb = mpcolors.colorConverter.to_rgb(glc.enu_colors[i])
         rgb_error = amutils.make_rgb_transparent(rgb, (1, 1, 1), 0.4)
 
         # plot coordinate differences and error bars
-        axis.errorbar(x=dfCrd['DT'].values, y=dfCrd[crd], yerr=dfCrd[sdCrd], linestyle='none', fmt='.', ecolor=rgb_error, capthick=1, markersize=1, color=colors[i])
+        axis.errorbar(x=dfCrd['DT'].values, y=dfCrd[crd], yerr=dfCrd[sdCrd], linestyle='none', fmt='.', ecolor=rgb_error, capthick=1, markersize=1, color=glc.enu_colors[i])
 
         # set dimensions of y-axis (double for UP scale)
         if crd == 'dU0':
@@ -130,7 +67,7 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
         else:
             axis.set_ylim([crd_stats['wavg'] - scale, crd_stats['wavg'] + scale])
 
-        axis.set_ylabel('{crd:s} [m]'.format(crd=crd, fontsize='large'), color=colors[i], weight='ultrabold')
+        axis.set_ylabel('{crd:s} [m]'.format(crd=crd, fontsize='large'), color=glc.enu_colors[i], weight='ultrabold')
 
         # annotate each subplot with its reference position
         stat_str = '\n'.join((
@@ -141,7 +78,7 @@ def plot_glab_position(dfCrd: pd.DataFrame, scale: float, logger: logging.Logger
                              r'Range=[{:.2f}..{:.2f}]'.format(crd_stats['max'], crd_stats['min'])
                              ))
         # place a text box in upper left in axes coords
-        axis.text(1.01, 0.95, stat_str, transform=axis.transAxes, fontsize='small', verticalalignment='top', color=colors[i], weight='strong')
+        axis.text(1.01, 0.95, stat_str, transform=axis.transAxes, fontsize='small', verticalalignment='top', color=glc.enu_colors[i], weight='strong')
 
         # annotatetxt = markerAnnotation(crd, sdCrd)
         # axis.annotate(annotatetxt, xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='large')
@@ -218,13 +155,13 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, center: str, logger: lo
     plt.style.use('ggplot')
 
     # get info for the plot titles
-    plot_title, proc_options, rx_geod = get_title_info(logger=logger)
+    plot_title, proc_options, rx_geod = amc.get_title_info(logger=logger)
 
     # subplots
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(11.0, 11.0))
 
     # figure title
-    fig.suptitle('{title:s}'.format(title=plot_title, weight='ultrabold', fontsize='x-large'))
+    fig.suptitle('{title:s}'.format(title=plot_title, **glc.title_font))
 
     # plot annotations
     ax.annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
@@ -256,7 +193,7 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, center: str, logger: lo
         ax.annotate('{radius:.2f}m'.format(radius=radius), xy=(wavg_E + np.cos(np.pi / 4) * radius, wavg_N + np.sin(np.pi / 4) * radius), xytext=(wavg_E + np.cos(np.pi / 4) * radius, wavg_N + np.sin(np.pi / 4) * radius), clip_on=True, color='blue', alpha=0.4)
 
     # get the marker styles
-    markerBins = predefined_marker_styles()
+    markerBins = glc.predefined_marker_styles()
 
     # go over all PDOP bins and plot according to the markersBin defined
     for i in range(len(amc.dRTK['dop_bins']) - 1, 0, -1):
@@ -302,21 +239,21 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale: float, center: str, logger
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
     logger.info('{func:s}: plotting EN scattering'.format(func=cFuncName))
 
-    # select colors for E, N, U coordinate difference
-    colors = []
-    colors.append([51 / 256., 204 / 256., 51 / 256.])
+    # # select colors for E, N, U coordinate difference
+    # colors = []
+    # colors.append([51 / 256., 204 / 256., 51 / 256.])
 
     # set up the plot
     plt.style.use('ggplot')
 
     # get info for the plot titles
-    plot_title, proc_options, rx_geod = get_title_info(logger=logger)
+    plot_title, proc_options, rx_geod = amc.get_title_info(logger=logger)
 
     # subplots
     fig, ax = plt.subplots(nrows=2, ncols=3, figsize=(16.0, 11.0))
 
     # figure title
-    fig.suptitle('{title:s}'.format(title=plot_title, weight='ultrabold', fontsize='x-large'))
+    fig.suptitle('{title:s}'.format(title=plot_title), **glc.title_font)
 
     # plot annotations
     ax[0][0].annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
@@ -329,10 +266,10 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale: float, center: str, logger
     # annotate with reference position
     txt_rx_posn = r'$\varphi = ${lat:.8f}, $\lambda = ${lon:.8f}'.format(lat=rx_geod[0], lon=rx_geod[1])
 
-    ax[0][2].annotate(txt_rx_posn, xy=(1, 0), xycoords='axes fraction', xytext=(0, -45), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='strong', fontsize='medium')
+    ax[1][0].annotate(txt_rx_posn, xy=(0, 0), xycoords='axes fraction', xytext=(0, -70), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='strong', fontsize='medium')
 
     # get the marker styles
-    markerBins = predefined_marker_styles()
+    markerBins = glc.predefined_marker_styles()
 
     # go over all PDOP bins and plot according to the markersBin defined
     for i in range(0, len(amc.dRTK['dop_bins']) - 1):
@@ -382,29 +319,18 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale: float, center: str, logger
             axis.set_xlabel('East [m]', fontsize='large')
             axis.set_ylabel('North [m]', fontsize='large')
 
+    # save the plot in subdir png of GNSSSystem
+    dir_png = os.path.join(amc.dRTK['dir_root'], amc.dRTK['dgLABng']['dir_glab'], 'png')
+    png_filename = os.path.join(dir_png, '{out:s}-scatter-bins.png'.format(out=amc.dRTK['glab_out'].replace('.', '-')))
+    amutils.mkdir_p(dir_png)
+    fig.savefig(png_filename, dpi=fig.dpi)
+
+    logger.info('{func:s}: created scatter plot {plot:s}'.format(func=cFuncName, plot=colored(png_filename, 'green')))
+
     if showplot:
         plt.show(block=True)
     else:
         plt.close(fig)
-
-
-def predefined_marker_styles() -> list:
-    """
-    predefined markerstyles for plotting
-    Returns: markerBins used for coloring as function of DOP bin
-    """
-    # # plot the centerpoint and circle
-    marker_style_center = dict(linestyle='', color='red', markersize=5, marker='^', markeredgecolor='red', alpha=0.75)
-    marker_style_doplt2 = dict(linestyle='', color='green', markersize=2, marker='.', markeredgecolor='green', alpha=0.30)
-    marker_style_doplt3 = dict(linestyle='', color='orange', markersize=2, marker='.', markeredgecolor='orange', alpha=0.45)
-    marker_style_doplt4 = dict(linestyle='', color='blue', markersize=2, marker='.', markeredgecolor='blue', alpha=0.60)
-    marker_style_doplt5 = dict(linestyle='', color='purple', markersize=2, marker='.', markeredgecolor='purple', alpha=0.75)
-    marker_style_doplt6 = dict(linestyle='', color='red', markersize=2, marker='.', markeredgecolor='red', alpha=0.90)
-    marker_style_doprest = dict(linestyle='', color='black', markersize=2, marker='.', markeredgecolor='black', alpha=0.90)
-
-    markerBins = [marker_style_center, marker_style_doplt2, marker_style_doplt3, marker_style_doplt4, marker_style_doplt5, marker_style_doplt6, marker_style_doprest]
-
-    return markerBins
 
 
 def plot_glab_xdop(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool = False):
@@ -418,28 +344,13 @@ def plot_glab_xdop(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool =
     plt.style.use('ggplot')
 
     # get info for the plot titles
-    plot_title, proc_options, rx_geod = get_title_info(logger=logger)
-
-    # get the colors for xDOP
-    # dop_colors, title_font = amutils.create_colormap_font(nrcolors=len(glc.dgLab['OUTPUT']['XDOP']), font_size=12)
-    dop_colors = []
-    # dop_colors.append([51 / 256., 204 / 256., 51 / 256.])
-    # dop_colors.append([51 / 256., 51 / 256., 255 / 256.])
-    # dop_colors.append([255 / 256., 51 / 256., 51 / 256.])
-
-    dop_colors.append([255 / 256, 0 / 256, 0 / 256])
-    dop_colors.append([0 / 256, 0 / 256, 255 / 256])
-    dop_colors.append([0 / 256, 128 / 256, 0 / 256])
-    dop_colors.append([255 / 256, 255 / 256, 128 / 256])
-    dop_colors.append([128 / 256, 0 / 256, 0 / 256])
-    dop_colors.append([192 / 256, 192 / 256, 192 / 256])
-    dop_colors.append([0 / 256, 0 / 256, 0 / 256])
+    plot_title, proc_options, rx_geod = amc.get_title_info(logger=logger)
 
     # subplots
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(12.0, 8.0))
 
     # figure title
-    fig.suptitle('{title:s}'.format(title=plot_title, weight='ultrabold', fontsize='x-large'))
+    fig.suptitle('{title:s}'.format(title=plot_title), **glc.title_font)
 
     # plot annotations
     ax.annotate('{conf:s}'.format(conf=amc.dRTK['glab_out']), xy=(0, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='left', verticalalignment='bottom', weight='ultrabold', fontsize='small')
@@ -450,7 +361,7 @@ def plot_glab_xdop(dfCrd: pd.DataFrame, logger: logging.Logger, showplot: bool =
     ax.annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 0), xycoords='axes fraction', xytext=(0, -50), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='x-small')
 
     # plot the xDOP values vs time
-    for (xdop, dop_color) in zip(dfCrd[glc.dgLab['OUTPUT']['XDOP']], dop_colors):
+    for (xdop, dop_color) in zip(dfCrd[glc.dgLab['OUTPUT']['XDOP']], glc.dop_colors):
         if xdop == 'PDOP':
             ax.fill_between(x=dfCrd['DT'], y1=0, y2=dfCrd[xdop], color=dop_color, linestyle='-', linewidth=0, interpolate=False, alpha=0.15)
         ax.plot(dfCrd['DT'], dfCrd[xdop], color=dop_color, linestyle='', marker='.', markersize=1, label=xdop)
