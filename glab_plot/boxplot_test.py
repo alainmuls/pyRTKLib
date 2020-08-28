@@ -62,7 +62,12 @@ colors = ['b', 'y', 'm', 'c', 'g', 'b', 'r', 'k', ]
 
 # adjusting the Axes instances to your needs
 for row_key, (ax, row) in bp_dict.items():
+    print(row_key)
+    print(ax)
+    print(row)
+    print()
     ax.set_xlabel('')
+    ax.set_ylabel('AMAM')
 
     # removing shared axes:
     grouper = ax.get_shared_y_axes()
