@@ -38,9 +38,9 @@ def plot_glab_statistics(df_dopenu: pd.DataFrame, scale: float, logger: logging.
     # creating the boxplot array for the coordinate differences:
     bp_dict = df_dopenu[['dN0', 'dE0', 'dU0', 'bin']].boxplot(by='bin', layout=(3, 1), figsize=(10, 8), return_type='both', patch_artist=True)
 
-    # get the statistics for this coordinate
-    for crd in ['dN0', 'dE0', 'dU0']:
-        crd_stats = amc.dRTK['dgLABng']['stats']['crd'][crd]
+    # # get the statistics for this coordinate
+    # for crd in ['dN0', 'dE0', 'dU0']:
+    #     crd_stats = amc.dRTK['dgLABng']['stats']['crd'][crd]
 
     # adjusting the Axes instances to your needs
     for i, (row_key, (ax, row)), dCrd in zip([0, 1, 2], bp_dict.items(), ['dN0', 'dE0', 'dU0']):
@@ -57,7 +57,7 @@ def plot_glab_statistics(df_dopenu: pd.DataFrame, scale: float, logger: logging.
 
         # create the labels on Y-axis
         # set dimensions of y-axis (double for UP scale)
-        ax.set_ylim([crd_stats['wavg'] - 1.5 * scale, crd_stats['wavg'] + 1.5 * scale])
+        ax.set_ylim([-1.5 * scale, 1.5 * scale])
         ax.set_ylabel('{crd:s} [m]'.format(crd=dCrd, fontsize='large'), color=glc.enu_colors[i], weight='ultrabold')
         ax.set_ylabel(dCrd)
         # making tick labels visible:
@@ -79,6 +79,12 @@ def plot_glab_statistics(df_dopenu: pd.DataFrame, scale: float, logger: logging.
         ax.set_xlabel('')  # remove x label
 
     plt.suptitle('{title:s}'.format(title=plot_title), **glc.title_font)
+
+    # test plot histogram
+    kwargs = dict(alpha=0.5, bins=100, density=True, stacked=True)
+    df_dopenu[['dN0', 'dE0', 'dU0']].hist(by=df_dopenu.bin, grid=True, figsize=(12, 5), layout=(1, 6), sharex=True, sharey=True, **kwargs, color=glc.enu_colors)
+
+    df_dopenu[['dN0', 'dE0', 'dU0', 'bin']].boxplot(by='bin', layout=(3, 1), figsize=(10, 8), return_type='both', patch_artist=True)
 
     # save the plot in subdir png of GNSSSystem
     dir_png = os.path.join(amc.dRTK['dir_root'], amc.dRTK['dgLABng']['dir_glab'], 'png')

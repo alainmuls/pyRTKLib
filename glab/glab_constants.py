@@ -2,19 +2,22 @@
 
 # plot colors
 # select colors for E, N, U coordinate difference
-enu_colors = []
-enu_colors.append([51 / 256., 204 / 256., 51 / 256.])
-enu_colors.append([51 / 256., 51 / 256., 255 / 256.])
-enu_colors.append([255 / 256., 51 / 256., 51 / 256.])
+# enu_colors = []
+# enu_colors.append([51 / 256., 204 / 256., 51 / 256.])
+# enu_colors.append([51 / 256., 51 / 256., 255 / 256.])
+# enu_colors.append([255 / 256., 51 / 256., 51 / 256.])
+enu_colors = ['tab:green', 'tab:blue', 'tab:brown']
 
-dop_colors = []
-dop_colors.append([255 / 256, 0 / 256, 0 / 256])
-dop_colors.append([0 / 256, 0 / 256, 255 / 256])
-dop_colors.append([0 / 256, 128 / 256, 0 / 256])
-dop_colors.append([255 / 256, 255 / 256, 128 / 256])
-dop_colors.append([128 / 256, 0 / 256, 0 / 256])
-dop_colors.append([192 / 256, 192 / 256, 192 / 256])
-dop_colors.append([0 / 256, 0 / 256, 0 / 256])
+# dop_colors = []
+# dop_colors.append([255 / 256, 0 / 256, 0 / 256])
+# dop_colors.append([0 / 256, 0 / 256, 255 / 256])
+# dop_colors.append([0 / 256, 128 / 256, 0 / 256])
+# dop_colors.append([255 / 256, 255 / 256, 128 / 256])
+# dop_colors.append([128 / 256, 0 / 256, 0 / 256])
+# dop_colors.append([192 / 256, 192 / 256, 192 / 256])
+# dop_colors.append([0 / 256, 0 / 256, 0 / 256])
+
+dop_colors = ['tab:green', 'tab:orange', 'tab:blue', 'tab:purple', 'tab:red', 'tab:brown']
 
 # Set the font dictionaries (for plot title and axis titles)
 title_font = {'fontname': 'DejaVu Sans', 'size': '16', 'color': 'black', 'weight': 'heavy', 'verticalalignment': 'top'}  # Bottom vertical alignment for more space
@@ -28,15 +31,15 @@ def predefined_marker_styles() -> list:
     Returns: markerBins used for coloring as function of DOP bin
     """
     # # plot the centerpoint and circle
-    marker_style_center = dict(linestyle='', color='red', markersize=5, marker='^', markeredgecolor='red', alpha=0.75)
-    marker_style_doplt2 = dict(linestyle='', color='green', markersize=2, marker='.', markeredgecolor='green', alpha=0.30)
-    marker_style_doplt3 = dict(linestyle='', color='orange', markersize=2, marker='.', markeredgecolor='orange', alpha=0.45)
-    marker_style_doplt4 = dict(linestyle='', color='blue', markersize=2, marker='.', markeredgecolor='blue', alpha=0.60)
-    marker_style_doplt5 = dict(linestyle='', color='purple', markersize=2, marker='.', markeredgecolor='purple', alpha=0.75)
-    marker_style_doplt6 = dict(linestyle='', color='red', markersize=2, marker='.', markeredgecolor='red', alpha=0.90)
-    marker_style_doprest = dict(linestyle='', color='black', markersize=2, marker='.', markeredgecolor='black', alpha=0.90)
+    marker_style_doplt2 = dict(linestyle='', color='tab:green', markersize=2, marker='.', markeredgecolor='green', alpha=0.30)
+    marker_style_doplt3 = dict(linestyle='', color='tab:orange', markersize=2, marker='.', markeredgecolor='orange', alpha=0.45)
+    marker_style_doplt4 = dict(linestyle='', color='tab:blue', markersize=2, marker='.', markeredgecolor='blue', alpha=0.60)
+    marker_style_doplt5 = dict(linestyle='', color='tab:purple', markersize=2, marker='.', markeredgecolor='purple', alpha=0.75)
+    marker_style_doplt6 = dict(linestyle='', color='tab:red', markersize=2, marker='.', markeredgecolor='red', alpha=0.90)
+    marker_style_dopgt6 = dict(linestyle='', color='tab:brown', markersize=2, marker='.', markeredgecolor='black', alpha=0.90)
+    marker_style_center = dict(linestyle='', color='tab:red', markersize=5, marker='^', markeredgecolor='red', alpha=0.75)
 
-    markerBins = [marker_style_center, marker_style_doplt2, marker_style_doplt3, marker_style_doplt4, marker_style_doplt5, marker_style_doplt6, marker_style_doprest]
+    markerBins = [marker_style_doplt2, marker_style_doplt3, marker_style_doplt4, marker_style_doplt5, marker_style_doplt6, marker_style_dopgt6, marker_style_center]
 
     return markerBins
 

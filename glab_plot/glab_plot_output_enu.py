@@ -204,7 +204,9 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, center: str, logger: lo
 
         # get th epercentage of observations within this dop_bin
         bin_percentage = '{perc:.1f}'.format(perc=amc.dRTK['dgLABng']['stats']['dop_bin'][binInterval]['perc'] * 100)
-        ax.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(amc.dRTK['dop_bins'][i - 1], amc.dRTK['dop_bins'][i], bin_percentage), **markerBins[i])
+        ax.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(amc.dRTK['dop_bins'][i - 1], amc.dRTK['dop_bins'][i], bin_percentage), **markerBins[i - 1])
+
+        print('i = {:d} color = {!s}'.format(i, markerBins[i]['color']))
 
     # lcoation of legend
     ax.legend(loc='best', markerscale=6, fontsize='x-small')
@@ -304,7 +306,7 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale: float, center: str, logger
             axis.annotate('{radius:.2f}m'.format(radius=radius), xy=(wavg_E + np.cos(np.pi / 4) * radius, wavg_N + np.sin(np.pi / 4) * radius), xytext=(wavg_E + np.cos(np.pi / 4) * radius, wavg_N + np.sin(np.pi / 4) * radius), clip_on=True, color='blue', alpha=0.4)
 
         # plot the coordinates for each bin
-        axis.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1], bin_percentage), **markerBins[(i + 1)])
+        axis.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1], bin_percentage), **markerBins[(i)])
 
         # lcoation of legend
         axis.legend(loc='best', markerscale=6, fontsize='x-small')
