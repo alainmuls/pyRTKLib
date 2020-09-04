@@ -137,27 +137,22 @@ def plot_glab_statistics(df_dopenu: pd.DataFrame, scale: float, logger: logging.
 
     amutils.printHeadTailDataFrame(df=df_dopenu, name='df_dopenu', index=False)
 
-    fig, axes = plt.subplots(nrows=6, ncols=len(dop_bins), sharex=True, gridspec_kw={"height_ratios": (.15, .85, .15, .85, .15, .85)})
+    fig, axes = plt.subplots(nrows=4, ncols=len(dop_bins), sharex=True, sharey='row', gridspec_kw={"height_ratios": (.065, .065, .065, .805)})
 
-    print('axes = {!s}'.format(axes))
-    print('type(axes) = {!s}'.format(type(axes)))
-
-    ax_box = axes[0::2]
-    print('ax_box = {!s}'.format(ax_box))
-    ax_hist = axes[1::2]
-    print('ax_hist = {!s}'.format(ax_hist))
+    # define the axis used for the boxplots and histogram
+    ax_box = axes[:3]
+    ax_hist = axes[-1]
+    for axis in ax_hist:
+        axis.set_xlim([-1.5 * scale, +1.5 * scale])
 
     # go over the coordinate differences
     for i, crd in enumerate(['dN0', 'dE0', 'dU0']):
         # create the plot holding for each DOP bin the histogram and bixplot combined in a subfigure
-        print('-' * 25)
-        print(i)
-
-        # plot the statistics per DOP bin
         for j, bin in enumerate(dop_bins):
 
-            sns.boxplot(df_dopenu.loc[df_dopenu['bin'] == bin][crd], ax=ax_box[i][j])
-            sns.distplot(df_dopenu.loc[df_dopenu['bin'] == bin][crd], ax=ax_hist[i][j])
+            sns.boxplot(df_dopenu.loc[df_dopenu['bin'] == bin][crd], ax=ax_box[i][j], orient='h', color=glc.enu_colors[i], width=0.9, linewidth=1)
+            sns.distplot(df_dopenu.loc[df_dopenu['bin'] == bin][crd], ax=ax_hist[j], color=glc.enu_colors[i])
+            ax_hist[j].set_xlabel('PDOP[{bin:s}]'.format(bin=bin[3:]))
 
         # sns.boxplot(df_dopenu.loc[df_dopenu['bin'] == 'bin2-3'][crd], ax=ax_box[i][1])
         # sns.distplot(df_dopenu.loc[df_dopenu['bin'] == 'bin2-3'][crd], ax=ax_hist[i][1])
