@@ -178,14 +178,14 @@ def main(argv) -> bool:
     amc.dRTK['dgLABng']['stats'] = glab_statistics.statistics_glab_outfile(df_outp=df_output, logger=logger)
 
     # plot the gLABs OUTPUT messages
-    # # - position ENU and PDOP plots
-    # glab_plot_output_enu.plot_glab_position(dfCrd=df_output, scale=scale_enu, showplot=show_plot, logger=logger)
-    # # - scatter plot of EN per dop bind
-    # glab_plot_output_enu.plot_glab_scatter(dfCrd=df_output, scale=scale_enu, center=center_enu, showplot=show_plot, logger=logger)
-    # # - scatter plot of EN per dop bind (separate)
-    # glab_plot_output_enu.plot_glab_scatter_bin(dfCrd=df_output, scale=scale_enu, center=center_enu, showplot=show_plot, logger=logger)
-    # # - plot the DOP parameters
-    # glab_plot_output_enu.plot_glab_xdop(dfCrd=df_output, showplot=show_plot, logger=logger)
+    # - position ENU and PDOP plots
+    glab_plot_output_enu.plot_glab_position(dfCrd=df_output, scale=scale_enu, showplot=show_plot, logger=logger)
+    # - scatter plot of EN per dop bind
+    glab_plot_output_enu.plot_glab_scatter(dfCrd=df_output, scale=scale_enu, center=center_enu, showplot=show_plot, logger=logger)
+    # - scatter plot of EN per dop bind (separate)
+    glab_plot_output_enu.plot_glab_scatter_bin(dfCrd=df_output, scale=scale_enu, center=center_enu, showplot=show_plot, logger=logger)
+    # - plot the DOP parameters
+    glab_plot_output_enu.plot_glab_xdop(dfCrd=df_output, showplot=show_plot, logger=logger)
     # - plot the ENU box plots per DOP bin
     glab_plot_output_stats.plot_glab_statistics(df_dopenu=df_output[glc.dgLab['OUTPUT']['XDOP'] + glc.dgLab['OUTPUT']['dENU']], scale=scale_enu, showplot=show_plot, logger=logger)
 
