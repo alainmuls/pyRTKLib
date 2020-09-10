@@ -78,7 +78,6 @@ def plot_glab_statistics(df_dopenu: pd.DataFrame, scale: float, logger: logging.
     # copyright this
     ax_hist[-1].annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 0), xycoords='axes fraction', xytext=(0, -50), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='x-small')
 
-
     # save the plot in subdir png of GNSSSystem
     dir_png = os.path.join(amc.dRTK['dir_root'], amc.dRTK['dgLABng']['dir_glab'], 'png')
     png_filename = os.path.join(dir_png, '{out:s}-boxhist.png'.format(out=amc.dRTK['glab_out'].replace('.', '-')))

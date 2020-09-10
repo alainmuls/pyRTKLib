@@ -183,28 +183,61 @@ def parse_glab_info_filter(glab_lines: list, dFilter: dict) -> Tuple[dict, str, 
         # create subset of glab_lines for this key
         val_lines = [line for line in glab_lines if val in line]
 
+        print('val_lines = {!s}'.format(val_lines))
+
         if len(val_lines) == 1:
             line = val_lines[0]
+            print('line = {!s}'.format(line))
 
             if ':' in line:
                 # usefull file information is behind the colon ":"
                 dFilter_info[key] = re.sub("\\s\\s+", " ", line.partition(':')[-1].strip())
 
-        if key == 'meas':
-            # determine the marker name according to used systems
-            # split the found FILTER info on spaces
-            syst_meas = dFilter_info[key].split(' ')
+            if key == 'meas':
+                # split the found FILTER info on spaces
+                print('dFilter_info[key] = {!s}'.format(dFilter_info[key]))
 
-            # regex for checking the systems we have
-            re_meas = r'[A-Z]\d\d-\d\d'
+                syst_meas = dFilter_info[key].split(' ')
 
-            dFilter_info['gnss'] = ''
-            for info in syst_meas:
-                if re.match(re_meas, info):
-                    dFilter_info['gnss'] += info[0]
+                # regex for checking the systems we have
+                re_meas = r'[A-Z]\d\d-\d\d'
 
-            marker = glc.dgLab['GNSS'][dFilter_info['gnss']]['marker']
-            gnss = glc.dgLab['GNSS'][dFilter_info['gnss']]['gnss']
+                dFilter_info['gnss'] = ''
+                for info in syst_meas:
+                    if re.match(re_meas, info):
+                        dFilter_info['gnss'] += info[0]
+
+                print("dFilter_info['gnss'] = {!s}".format(dFilter_info['gnss']))
+
+        else:  # more than 1 element in 'val_lines'
+            if key == 'meas':
+                dFilter_info[key] = ''
+                dFilter_info['gnss'] = ''
+                # regex for checking the systems we have
+                re_meas = r'[A-Z]\d\d-\d\d'
+
+                for line in val_lines:
+                    print(line)
+                    if ':' in line:
+                        if len(dFilter_info[key]) > 0:
+                            dFilter_info[key] += ', '
+                        # usefull file information is behind the colon ":"
+                        dFilter_info[key] += re.sub("\\s\\s+", " ", line.partition(':')[-1].strip())
+
+                    syst_meas = line.split(' ')
+                    for info in syst_meas:
+                        if re.match(re_meas, info) and info[0] not in dFilter_info['gnss']:
+                            dFilter_info['gnss'] += info[0]
+
+                    print("dFilter_info['gnss'] = {!s}".format(dFilter_info['gnss']))
+
+        # lookup corresponding MARKER name and GNSS
+        marker = glc.dgLab['GNSS'][dFilter_info['gnss']]['marker']
+        gnss = glc.dgLab['GNSS'][dFilter_info['gnss']]['gnss']
+
+    print('dFilter_info = {!s}'.format(dFilter_info))
+    print('marker = {!s}'.format(marker))
+    print('gnss = {!s}'.format(gnss))
 
     return dFilter_info, marker, gnss
 
