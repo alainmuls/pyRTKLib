@@ -1,3 +1,5 @@
+import math
+
 # constants used for parsing the gLABs out file
 
 # plot colors
@@ -8,14 +10,9 @@
 # enu_colors.append([255 / 256., 51 / 256., 51 / 256.])
 enu_colors = ['tab:green', 'tab:blue', 'tab:brown']
 
-# dop_colors = []
-# dop_colors.append([255 / 256, 0 / 256, 0 / 256])
-# dop_colors.append([0 / 256, 0 / 256, 255 / 256])
-# dop_colors.append([0 / 256, 128 / 256, 0 / 256])
-# dop_colors.append([255 / 256, 255 / 256, 128 / 256])
-# dop_colors.append([128 / 256, 0 / 256, 0 / 256])
-# dop_colors.append([192 / 256, 192 / 256, 192 / 256])
-# dop_colors.append([0 / 256, 0 / 256, 0 / 256])
+# create the DOP bins for plotting
+dop_bins = [0, 2, 3, 4, 5, 6, math.inf]
+
 
 dop_colors = ['tab:green', 'tab:orange', 'tab:blue', 'tab:purple', 'tab:red', 'tab:brown']
 

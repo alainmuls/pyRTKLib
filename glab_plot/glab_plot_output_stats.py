@@ -30,7 +30,7 @@ def plot_glab_statistics(df_dopenu: pd.DataFrame, scale: float, logger: logging.
 
     # create additional column assigning the values of crd diffs to the correct PDOP bin
     dop_bins = []
-    for dop_min, dop_max in zip(amc.dRTK['dop_bins'][:-1], amc.dRTK['dop_bins'][1:]):
+    for dop_min, dop_max in zip(glc.dop_bins[:-1], glc.dop_bins[1:]):
         bin_interval = 'bin{:d}-{:.0f}'.format(dop_min, dop_max)
         dop_bins.append(bin_interval)
         logger.info('{func:s}: setting for PDOP bin = {bin!s}'.format(bin=bin_interval, func=cFuncName))
@@ -47,6 +47,7 @@ def plot_glab_statistics(df_dopenu: pd.DataFrame, scale: float, logger: logging.
     ax_hist = axes[-1]
     for axis in ax_hist:
         axis.set_xlim([-1.5 * scale, +1.5 * scale])
+    # dist_bins = int(12 * scale)  # 4 bins per meter ???
 
     # go over the coordinate differences
     for i, (crd, enu_color) in enumerate(zip(['dN0', 'dE0', 'dU0'], glc.enu_colors)):
@@ -76,7 +77,7 @@ def plot_glab_statistics(df_dopenu: pd.DataFrame, scale: float, logger: logging.
     ax_box[0][-1].annotate(proc_options, xy=(1, 1), xycoords='axes fraction', xytext=(0, 0), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='small')
 
     # copyright this
-    ax_hist[-1].annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 0), xycoords='axes fraction', xytext=(0, -50), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='x-small')
+    ax_hist[-1].annotate(r'$\copyright$ Alain Muls (alain.muls@mil.be)', xy=(1, 0), xycoords='axes fraction', xytext=(0, -70), textcoords='offset pixels', horizontalalignment='right', verticalalignment='bottom', weight='ultrabold', fontsize='x-small')
 
     # save the plot in subdir png of GNSSSystem
     dir_png = os.path.join(amc.dRTK['dir_root'], amc.dRTK['dgLABng']['dir_glab'], 'png')
@@ -87,3 +88,6 @@ def plot_glab_statistics(df_dopenu: pd.DataFrame, scale: float, logger: logging.
     logger.info('{func:s}: created scatter plot {plot:s}'.format(func=cFuncName, plot=colored(png_filename, 'green')))
 
     plt.show()
+
+
+

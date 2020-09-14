@@ -44,15 +44,15 @@ def statistics_dopbin(df_dop_enu: pd.DataFrame, logger: logging.Logger) -> dict:
     amutils.printHeadTailDataFrame(df=df_dop_enu, name='df_dop_enu')
 
     # go over all PDOP bins and plot according to the markersBin defined
-    for i in range(len(amc.dRTK['dop_bins']) - 1):
-        bin_PDOP = 'bin{:d}-{:.0f}'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1])
+    for i in range(len(glc.dop_bins) - 1):
+        bin_PDOP = 'bin{:d}-{:.0f}'.format(glc.dop_bins[i], glc.dop_bins[i + 1])
         logger.debug('{func:s}: bin_PDOP = {bin!s}'.format(bin=bin_PDOP, func=cFuncName))
 
         # create the dict for this PDOP interval
         dStats_dop[bin_PDOP] = {}
 
         # find the indices within this bin
-        index4Bin = (df_dop_enu['PDOP'] > amc.dRTK['dop_bins'][i]) & (df_dop_enu['PDOP'] <= amc.dRTK['dop_bins'][i + 1])
+        index4Bin = (df_dop_enu['PDOP'] > glc.dop_bins[i]) & (df_dop_enu['PDOP'] <= glc.dop_bins[i + 1])
 
         dStats_dop[bin_PDOP]['perc'] = index4Bin.mean()
         dStats_dop[bin_PDOP]['count'] = int(index4Bin.count() * index4Bin.mean())

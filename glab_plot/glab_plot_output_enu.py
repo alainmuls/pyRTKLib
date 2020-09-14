@@ -196,15 +196,15 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, center: str, logger: lo
     markerBins = glc.predefined_marker_styles()
 
     # go over all PDOP bins and plot according to the markersBin defined
-    for i in range(len(amc.dRTK['dop_bins']) - 1, 0, -1):
-        binInterval = 'bin{:d}-{:.0f}'.format(amc.dRTK['dop_bins'][i - 1], amc.dRTK['dop_bins'][i])
+    for i in range(len(glc.dop_bins) - 1, 0, -1):
+        binInterval = 'bin{:d}-{:.0f}'.format(glc.dop_bins[i - 1], glc.dop_bins[i])
         logger.debug('{func:s}: binInterval = {bin!s}'.format(bin=binInterval, func=cFuncName))
 
-        index4Bin = (dfCrd['PDOP'] > amc.dRTK['dop_bins'][i - 1]) & (dfCrd['PDOP'] <= amc.dRTK['dop_bins'][i])
+        index4Bin = (dfCrd['PDOP'] > glc.dop_bins[i - 1]) & (dfCrd['PDOP'] <= glc.dop_bins[i])
 
         # get th epercentage of observations within this dop_bin
         bin_percentage = '{perc:.1f}'.format(perc=amc.dRTK['dgLABng']['stats']['dop_bin'][binInterval]['perc'] * 100)
-        ax.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(amc.dRTK['dop_bins'][i - 1], amc.dRTK['dop_bins'][i], bin_percentage), **markerBins[i - 1])
+        ax.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(glc.dop_bins[i - 1], glc.dop_bins[i], bin_percentage), **markerBins[i - 1])
 
         print('i = {:d} color = {!s}'.format(i, markerBins[i]['color']))
 
@@ -274,18 +274,18 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale: float, center: str, logger
     markerBins = glc.predefined_marker_styles()
 
     # go over all PDOP bins and plot according to the markersBin defined
-    for i in range(0, len(amc.dRTK['dop_bins']) - 1):
-        binInterval = 'bin{:d}-{:.0f}'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1])
+    for i in range(0, len(glc.dop_bins) - 1):
+        binInterval = 'bin{:d}-{:.0f}'.format(glc.dop_bins[i], glc.dop_bins[i + 1])
         logger.info('{func:s}: binInterval = {bin!s}'.format(bin=binInterval, func=cFuncName))
 
-        index4Bin = (dfCrd['PDOP'] > amc.dRTK['dop_bins'][i]) & (dfCrd['PDOP'] <= amc.dRTK['dop_bins'][i + 1])
+        index4Bin = (dfCrd['PDOP'] > glc.dop_bins[i]) & (dfCrd['PDOP'] <= glc.dop_bins[i + 1])
 
         # get the axis
         axis = ax[i // 3][i % 3]
 
         # get th epercentage of observations within this dop_bin
         bin_percentage = '{perc:.1f}'.format(perc=amc.dRTK['dgLABng']['stats']['dop_bin'][binInterval]['perc'] * 100)
-        lblBin = r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%, #{:d})'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1], bin_percentage, amc.dRTK['dgLABng']['stats']['dop_bin'][binInterval]['count'])
+        lblBin = r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%, #{:d})'.format(glc.dop_bins[i], glc.dop_bins[i + 1], bin_percentage, amc.dRTK['dgLABng']['stats']['dop_bin'][binInterval]['count'])
         logger.info('{func:s}: {bin:s}'.format(func=cFuncName, bin=lblBin))
 
         # define center position
@@ -306,7 +306,7 @@ def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale: float, center: str, logger
             axis.annotate('{radius:.2f}m'.format(radius=radius), xy=(wavg_E + np.cos(np.pi / 4) * radius, wavg_N + np.sin(np.pi / 4) * radius), xytext=(wavg_E + np.cos(np.pi / 4) * radius, wavg_N + np.sin(np.pi / 4) * radius), clip_on=True, color='blue', alpha=0.4)
 
         # plot the coordinates for each bin
-        axis.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(amc.dRTK['dop_bins'][i], amc.dRTK['dop_bins'][i + 1], bin_percentage), **markerBins[(i)])
+        axis.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(glc.dop_bins[i], glc.dop_bins[i + 1], bin_percentage), **markerBins[(i)])
 
         # lcoation of legend
         axis.legend(loc='best', markerscale=6, fontsize='x-small')

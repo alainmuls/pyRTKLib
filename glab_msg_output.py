@@ -9,12 +9,11 @@ import logging
 import pathlib
 import pandas as pd
 from shutil import copyfile
-import math
 
 import am_config as amc
 from ampyutils import amutils
 from glab import glab_constants as glc
-from glab import glab_split_outfile, glab_parser_output, glab_parser_info, glab_statistics
+from glab import glab_split_outfile, glab_parser_output, glab_parser_info, glab_statistics, glab_updatedb
 from glab_plot import glab_plot_output_enu, glab_plot_output_stats
 
 __author__ = 'amuls'
@@ -154,9 +153,6 @@ def main(argv) -> bool:
 
     amc.dRTK['dgLABng'] = dgLABng
 
-    # create the DOP bins for plotting
-    amc.dRTK['dop_bins'] = [0, 2, 3, 4, 5, 6, math.inf]
-
     # check some arguments
     ret_val = check_arguments(logger=logger)
     if ret_val != amc.E_SUCCESS:
@@ -172,6 +168,13 @@ def main(argv) -> bool:
     df_output = glab_parser_output.parse_glab_output(glab_output=dglab_tmpfiles['OUTPUT'], logger=logger)
     # save df_output as CSV file
     store_to_cvs(df=df_output, ext='pos', logger=logger, index=False)
+
+    # open or create the database file for storing the statistics
+    glab_updatedb.open_database(db_name='/home/amuls/RxTURP/glab-db.csv', logger=logger)
+
+    # glab_updatedb.db_update_line(db_name='/home/amuls/RxTURP/glab-db.csv', line_id='Whoops', info_line='new thing whole line', logger=logger)
+    glab_updatedb.db_update_line(db_name='/home/amuls/RxTURP/glab-db.csv', line_id='2019,005', info_line='2019,005,new thing whole line for ', logger=logger)
+    sys.exit(2)
 
     # calculate statitics
     # gLAB OUTPUT messages
