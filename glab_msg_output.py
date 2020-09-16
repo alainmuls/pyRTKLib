@@ -62,12 +62,14 @@ def treatCmdOpts(argv):
 
     # create the parser for command line arguments
     parser = argparse.ArgumentParser(description=helpTxt)
-    parser.add_argument('-d', '--dir', help='Root directory (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
+    parser.add_argument('-r', '--rootdir', help='Root directory (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
     parser.add_argument('-f', '--file', help='gLAB processed out file', required=True, type=str)
     # parser.add_argument('-r', '--resFile', help='RTKLib residuals file', type=str, required=False, default=None)
     # parser.add_argument('-m', '--marker', help='Geodetic coordinates (lat,lon,ellH) of reference point in degrees: 50.8440152778 4.3929283333 151.39179 for RMA, 50.93277777 4.46258333 123 for Peutie, default 0 0 0 means use mean position', nargs=3, type=str, required=False, default=["0", "0", "0"])
     parser.add_argument('-s', '--scale', help='display ENU plots with +/- this scale range (default 5m)', required=False, default=5, type=float, action=scale_action)
     parser.add_argument('-c', '--center', help='center ENU plots (Select "origin" or "wavg")', required=False, default='origin', type=str, action=center_action)
+
+    parser.add_argument('-d', '--db', help='CVS database (default {:s})'.format(colored(os.path.join(os.path.expanduser("~"), 'RxTURP', 'glab_db.csv'), 'green')), required=False, default=os.path.join(os.path.expanduser("~"), 'RxTURP', 'glab_db.csv'), type=str)
 
     parser.add_argument('-p', '--plots', help='displays interactive plots (default True)', action='store_true', required=False, default=False)
     # parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default False)', action='store_true', required=False)
@@ -78,7 +80,7 @@ def treatCmdOpts(argv):
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.file, args.scale, args.center, args.plots, args.logging
+    return args.rootdir, args.file, args.scale, args.center, args.db, args.plots, args.logging
 
 
 def check_arguments(logger: logging.Logger) -> int:
@@ -101,6 +103,14 @@ def check_arguments(logger: logging.Logger) -> int:
     if not path.is_file():
         logger.info('{func:s}: file {file:s} does not exist'.format(file=colored(amc.dRTK['glab_out'], 'red'), func=cFuncName))
         return amc.E_FILE_NOT_EXIST
+
+    # check whether the CVS database exists, if not check whether its directory exists, if not create
+    path = pathlib.Path(amc.dRTK['dgLABng']['db'])
+    if not path.is_file():
+        logger.info('{func:s}: CVS database file {db:s} does not exist, will be created'.format(db=colored(amc.dRTK['dgLABng']['db'], 'green'), func=cFuncName))
+        # check whether its directory exists
+        if not path.parents[0].is_dir():
+            path.parents[0].mkdir(parents=True)
 
     return amc.E_SUCCESS
 
@@ -137,7 +147,7 @@ def main(argv) -> bool:
     # pd.options.display.float_format = "{:,.3f}".format
 
     # treat command line options
-    dir_root, glab_out, scale_enu, center_enu, show_plot, log_levels = treatCmdOpts(argv)
+    dir_root, glab_out, scale_enu, center_enu, db_cvs, show_plot, log_levels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=dir_root, logLevels=log_levels)
@@ -150,6 +160,7 @@ def main(argv) -> bool:
     # create sub dict for gLAB related info
     dgLABng = {}
     dgLABng['dir_glab'] = 'glabng'
+    dgLABng['db'] = db_cvs
 
     amc.dRTK['dgLABng'] = dgLABng
 
@@ -170,10 +181,10 @@ def main(argv) -> bool:
     store_to_cvs(df=df_output, ext='pos', logger=logger, index=False)
 
     # open or create the database file for storing the statistics
-    glab_updatedb.open_database(db_name='/home/amuls/RxTURP/glab-db.csv', logger=logger)
+    glab_updatedb.open_database(db_name=amc.dRTK['dgLABng']['db'], logger=logger)
 
-    # glab_updatedb.db_update_line(db_name='/home/amuls/RxTURP/glab-db.csv', line_id='Whoops', info_line='new thing whole line', logger=logger)
-    glab_updatedb.db_update_line(db_name='/home/amuls/RxTURP/glab-db.csv', line_id='2019,005', info_line='2019,005,new thing whole line for ', logger=logger)
+    glab_updatedb.db_update_line(db_name=amc.dRTK['dgLABng']['db'], line_id='2019,134', info_line='2019,134,new thing whole line for ', logger=logger)
+    glab_updatedb.db_sort(db_name=amc.dRTK['dgLABng']['db'], logger=logger)
     sys.exit(2)
 
     # calculate statitics

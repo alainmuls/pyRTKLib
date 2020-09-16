@@ -48,7 +48,8 @@ def parse_glab_info(glab_info: str, logger: logging.Logger) -> dict:
     # report
     logger.info('{func:s}: Information summary =\n{json!s}'.format(func=cFuncName, json=json.dumps(dInfo, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
-    logger.info('{func:s}: Information summary =\n{json!s}'.format(func=cFuncName, json=json.dumps(dInfo, sort_keys=False, indent=4, default=amutils.DT_convertor)))
+    # add line to database
+    sys.exit(3)
 
     return dInfo
 
