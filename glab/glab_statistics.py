@@ -34,17 +34,40 @@ def statistics_glab_outfile(df_outp: pd.DataFrame, logger: logging.Logger) -> Tu
     # create the dNEU information to store in the glabng output database
     dDB_crd = {}
     for crd in glc.dgLab['OUTPUT']['dENU']:
-        dDB_crd[crd] = '{crd:s},{mean:+.3f},{std:+.3f},{max:+.3f},{min:+.3f}'.format(crd=crd, mean=dStats['crd'][crd]['mean'], std=dStats['crd'][crd]['std'], max=dStats['crd'][crd]['max'], min=dStats['crd'][crd]['min'])
+        dDB_crd[crd] = '{crd:s},'.format(crd=crd)
+        dDB_crd[crd] += '{mean:+.3f},'.format(mean=dStats['crd'][crd]['mean'])
+        dDB_crd[crd] += '{std:+.3f},'.format(std=dStats['crd'][crd]['std'])
+        dDB_crd[crd] += '{max:+.3f},'.format(max=dStats['crd'][crd]['max'])
+        dDB_crd[crd] += '{min:+.3f},'.format(min=dStats['crd'][crd]['min'])
         # print('crd from glc = {crd:s} - {info:s}'.format(crd=crd, info=dDB_crd[crd]))
+
+        for i, (dop_min, dop_max) in enumerate(zip(glc.dop_bins[:-1], glc.dop_bins[1:])):
+            bin_interval = 'bin{:d}-{:.0f}'.format(dop_min, dop_max)
+            # print(bin_interval)
+
+            dDB_crd[crd] += '{mean:+.3f},'.format(mean=dStats['dop_bin'][bin_interval][crd]['mean'])
+            dDB_crd[crd] += '{std:+.3f},'.format(std=dStats['dop_bin'][bin_interval][crd]['std'])
+            dDB_crd[crd] += '{max:+.3f},'.format(max=dStats['dop_bin'][bin_interval][crd]['max'])
+            dDB_crd[crd] += '{min:+.3f}'.format(min=dStats['dop_bin'][bin_interval][crd]['min'])
+
+            if i < len(glc.dop_bins[:-1]) - 1:
+                dDB_crd[crd] += ','
 
     # create the llh information to store in the glabng output database
     for i, crd in enumerate(glc.dgLab['OUTPUT']['llh']):
-        if i < len(glc.dgLab['OUTPUT']['llh']) - 1:
-            dDB_crd[crd] = '{crd:s},{mean:+.9f},{std:+.9f},{max:+.9f},{min:+.9f}'.format(crd=crd, mean=dStats['crd'][crd]['mean'], std=dStats['crd'][crd]['std'], max=dStats['crd'][crd]['max'], min=dStats['crd'][crd]['min'])
+        dDB_crd[crd] = '{crd:s},'.format(crd=crd)
+        if crd == 'ellh':
+            dDB_crd[crd] += '{mean:+.3f},'.format(mean=dStats['crd'][crd]['mean'])
+            dDB_crd[crd] += '{std:+.3f},'.format(std=dStats['crd'][crd]['std'])
+            dDB_crd[crd] += '{max:+.3f},'.format(max=dStats['crd'][crd]['max'])
+            dDB_crd[crd] += '{min:+.3f}'.format(min=dStats['crd'][crd]['min'])
         else:
-            dDB_crd[crd] = '{crd:s},{mean:+.3f},{std:+.3f},{max:+.3f},{min:+.3f}'.format(crd=crd, mean=dStats['crd'][crd]['mean'], std=dStats['crd'][crd]['std'], max=dStats['crd'][crd]['max'], min=dStats['crd'][crd]['min'])
+            dDB_crd[crd] += '{mean:+.9f},'.format(mean=dStats['crd'][crd]['mean'])
+            dDB_crd[crd] += '{std:+.9f},'.format(std=dStats['crd'][crd]['std'])
+            dDB_crd[crd] += '{max:+.9f},'.format(max=dStats['crd'][crd]['max'])
+            dDB_crd[crd] += '{min:+.9f}'.format(min=dStats['crd'][crd]['min'])
 
-        # print('crd from glc = {crd:s} - {info:s}'.format(crd=crd, info=dDB_crd[crd]))
+    # print('crd from glc = {crd:s} - {info:s}'.format(crd=crd, info=dDB_crd[crd]))
 
     return dStats, dDB_crd
 
@@ -80,9 +103,9 @@ def statistics_dopbin(df_dop_enu: pd.DataFrame, logger: logging.Logger) -> dict:
 
             dENU_stats['wavg'] = amutils.wavg(df_dop_enu.loc[index4Bin], dENU, sdENU)
             dENU_stats['sdwavg'] = amutils.stddev(df_dop_enu.loc[index4Bin, dENU], dENU_stats['wavg'])
-            # dENU_stats['mean'] = df_dop_enu.loc[index4Bin, dENU].mean()
+            dENU_stats['mean'] = df_dop_enu.loc[index4Bin, dENU].mean()
             dENU_stats['median'] = df_dop_enu.loc[index4Bin, dENU].median()
-            # dENU_stats['stddev'] = df_dop_enu.loc[index4Bin, dENU].std()
+            dENU_stats['std'] = df_dop_enu.loc[index4Bin, dENU].std()
             dENU_stats['min'] = df_dop_enu.loc[index4Bin, dENU].min()
             dENU_stats['max'] = df_dop_enu.loc[index4Bin, dENU].max()
 
