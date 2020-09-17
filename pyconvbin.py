@@ -169,7 +169,7 @@ def ubx2rinex(logger: logging.Logger):
     # #     args4UBX2RIN.extend(['-v', '2.11'])
 
     # # create the output RINEX obs file name
-    # amc.dRTK['obs'] = '{marker:s}{doy:s}0.{yy:s}O'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'])
+    # amc.dRTK['obs'] = '{marker:s}{doy:s}0.{yy:s}O'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['DoY'], yy=amc.dRTK['yy'])
     # amc.dRTK['obs'] = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['obs'])
     # args4UBX2RIN.extend(['-o', amc.dRTK['obs']])
 
@@ -199,7 +199,7 @@ def ubx2rinex(logger: logging.Logger):
 
     # # create the output RINEX obs file name
     # print(typeNav)
-    # amc.dRTK['nav'] = '{marker:s}{doy:s}0.{yy:s}{typenav:s}'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['doy'], yy=amc.dRTK['yy'], typenav=typeNav)
+    # amc.dRTK['nav'] = '{marker:s}{doy:s}0.{yy:s}{typenav:s}'.format(marker=amc.dRTK['marker'], doy=amc.dRTK['DoY'], yy=amc.dRTK['yy'], typenav=typeNav)
     # amc.dRTK['nav'] = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['nav'])
     # args4UBX2RIN.extend(['-n', amc.dRTK['nav']])
 

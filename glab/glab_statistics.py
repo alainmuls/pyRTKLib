@@ -6,16 +6,16 @@ import logging
 import json
 import math
 import numpy as np
+from typing import Tuple
 
 from ampyutils import amutils
 from glab import glab_constants as glc
-import am_config as amc
 from GNSS import wgs84
 
 __author__ = 'amuls'
 
 
-def statistics_glab_outfile(df_outp: pd.DataFrame, logger: logging.Logger) -> dict:
+def statistics_glab_outfile(df_outp: pd.DataFrame, logger: logging.Logger) -> Tuple[dict, dict]:
     """
     splitStatusFile splits the statistics file into the POS, SAT, CLK & VELACC parts
     """
@@ -28,7 +28,16 @@ def statistics_glab_outfile(df_outp: pd.DataFrame, logger: logging.Logger) -> di
     dStats['dop_bin'] = statistics_dopbin(df_dop_enu=df_outp[glc.dgLab['OUTPUT']['XDOP'] + glc.dgLab['OUTPUT']['dENU'] + glc.dgLab['OUTPUT']['sdENU']], logger=logger)
     dStats['crd'] = statistics_coordinates(df_crd=df_outp[glc.dgLab['OUTPUT']['llh'] + glc.dgLab['OUTPUT']['dENU'] + glc.dgLab['OUTPUT']['sdENU'] + glc.dgLab['OUTPUT']['UTM']], logger=logger)
 
-    return dStats
+    print(dStats.keys())
+    print(dStats['crd'].keys())
+    print(dStats['crd']['dN0'].keys())
+    # create the information to store in the glabng output database
+    dDB_crd = {}
+    for crd in glc.dgLab['OUTPUT']['dENU']:
+        dDB_crd[crd] = '{crd:s},{mean:+.3f},{std:+.3f},{max:+.3f},{min:+.3f}'.format(crd=crd, mean=dStats['crd'][crd]['mean'], std=dStats['crd'][crd]['std'], max=dStats['crd'][crd]['max'], min=dStats['crd'][crd]['min'])
+        print('crd from glc = {crd:s} - {info:s}'.format(crd=crd, info=dDB_crd[crd]))
+
+    return dStats, dDB_crd
 
 
 def statistics_dopbin(df_dop_enu: pd.DataFrame, logger: logging.Logger) -> dict:

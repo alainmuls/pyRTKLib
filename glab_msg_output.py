@@ -69,7 +69,7 @@ def treatCmdOpts(argv):
     parser.add_argument('-s', '--scale', help='display ENU plots with +/- this scale range (default 5m)', required=False, default=5, type=float, action=scale_action)
     parser.add_argument('-c', '--center', help='center ENU plots (Select "origin" or "wavg")', required=False, default='origin', type=str, action=center_action)
 
-    parser.add_argument('-d', '--db', help='CVS database (default {:s})'.format(colored(os.path.join(os.path.expanduser("~"), 'RxTURP', 'glab_db.csv'), 'green')), required=False, default=os.path.join(os.path.expanduser("~"), 'RxTURP', 'glab_db.csv'), type=str)
+    parser.add_argument('-d', '--db', help='CVS database (default {:s})'.format(colored(os.path.join(os.path.expanduser("~"), 'RxTURP', 'glab_output_db.csv'), 'green')), required=False, default=os.path.join(os.path.expanduser("~"), 'RxTURP', 'glab_output_db.csv'), type=str)
 
     parser.add_argument('-p', '--plots', help='displays interactive plots (default True)', action='store_true', required=False, default=False)
     # parser.add_argument('-o', '--overwrite', help='overwrite intermediate files (default False)', action='store_true', required=False)
@@ -169,27 +169,37 @@ def main(argv) -> bool:
     if ret_val != amc.E_SUCCESS:
         sys.exit(ret_val)
 
+    # open or create the database file for storing the statistics
+    glab_updatedb.open_database(db_name=amc.dRTK['dgLABng']['db'], logger=logger)
+
+    # glab_updatedb.db_update_line(db_name=amc.dRTK['dgLABng']['db'], line_id='2019,134', info_line='2019,134,new thing whole line for ', logger=logger)
+
     # split gLABs out file in parts
     glab_msgs = glc.dgLab['messages'][0:2]  # INFO & OUTPUT messages needed
     dglab_tmpfiles = glab_split_outfile.split_glab_outfile(msgs=glab_msgs, glab_outfile=amc.dRTK['glab_out'], logger=logger)
 
     # read in the INFO messages from INFO temp file
     amc.dRTK['INFO'] = glab_parser_info.parse_glab_info(glab_info=dglab_tmpfiles['INFO'], logger=logger)
+    # write the identification to the database file for glabng output messages
+    # glab_updatedb.db_update_line(db_name=amc.dRTK['dgLABng']['db'], line_id=amc.dRTK['INFO']['db_lineID'], info_line=amc.dRTK['INFO']['db_lineID'], logger=logger)
+
     # read in the OUTPUT messages from OUTPUT temp file
     df_output = glab_parser_output.parse_glab_output(glab_output=dglab_tmpfiles['OUTPUT'], logger=logger)
     # save df_output as CSV file
     store_to_cvs(df=df_output, ext='pos', logger=logger, index=False)
 
-    # open or create the database file for storing the statistics
-    glab_updatedb.open_database(db_name=amc.dRTK['dgLABng']['db'], logger=logger)
+    # calculate statitics gLAB OUTPUT messages
+    amc.dRTK['dgLABng']['stats'], dDB_dENU = glab_statistics.statistics_glab_outfile(df_outp=df_output, logger=logger)
 
-    glab_updatedb.db_update_line(db_name=amc.dRTK['dgLABng']['db'], line_id='2019,134', info_line='2019,134,new thing whole line for ', logger=logger)
+    for crd, (key, val) in zip(glc.dgLab['OUTPUT']['dENU'], dDB_dENU.items()):
+        glab_updatedb.db_update_line(db_name=amc.dRTK['dgLABng']['db'],
+                                     line_id='{id:s},{crd:s}'.format(id=amc.dRTK['INFO']['db_lineID'], crd=crd),
+                                     info_line='{id:s},{val:s}'.format(id=amc.dRTK['INFO']['db_lineID'], val=val),
+                                     logger=logger)
+
+    # sort the glab_output_db
     glab_updatedb.db_sort(db_name=amc.dRTK['dgLABng']['db'], logger=logger)
     sys.exit(2)
-
-    # calculate statitics
-    # gLAB OUTPUT messages
-    amc.dRTK['dgLABng']['stats'] = glab_statistics.statistics_glab_outfile(df_outp=df_output, logger=logger)
 
     # plot the gLABs OUTPUT messages
     # - position ENU and PDOP plots
@@ -207,7 +217,9 @@ def main(argv) -> bool:
     # report to the user
     logger.info('{func:s}: Project information =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
-    # create pickle file from amc.dRTK
+    # sort the glab_output_db
+    glab_updatedb.db_sort(db_name=amc.dRTK['dgLABng']['db'], logger=logger)
+
     # store the json structure
     json_out = amc.dRTK['glab_out'].split('.')[0] + '.json'
     with open(json_out, 'w') as f:

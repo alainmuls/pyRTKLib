@@ -36,7 +36,7 @@ def plot_rise_set_times(gnss: str, df_rs: pd.DataFrame, logger: logging.Logger, 
 
     # subplots
     fig, ax = plt.subplots(figsize=(16.0, 10.0))
-    fig.suptitle('Rise/Set for {gnss:s} - {marker:s} - {date:s}'.format(gnss=amc.dRTK['rnx']['gnss'][gnss]['name'], marker=amc.dRTK['rnx']['gnss'][gnss]['marker'], date='{date:s} ({yy:02d}/{doy:03d})'.format(date=amc.dRTK['rnx']['times']['DT'][:10], yy=amc.dRTK['rnx']['times']['yy'], doy=amc.dRTK['rnx']['times']['doy'])), fontdict=title_font, fontsize=24)
+    fig.suptitle('Rise/Set for {gnss:s} - {marker:s} - {date:s}'.format(gnss=amc.dRTK['rnx']['gnss'][gnss]['name'], marker=amc.dRTK['rnx']['gnss'][gnss]['marker'], date='{date:s} ({yy:02d}/{doy:03d})'.format(date=amc.dRTK['rnx']['times']['DT'][:10], yy=amc.dRTK['rnx']['times']['yy'], doy=amc.dRTK['rnx']['times']['DoY'])), fontdict=title_font, fontsize=24)
 
     # draw the rise to set lines per PRN
     for prn in df_rs.index:
@@ -117,7 +117,7 @@ def plot_rise_set_stats(gnss: str, df_arcs: pd.DataFrame, nr_arcs: int, logger: 
 
     # subplots
     fig, (ax1, ax2) = plt.subplots(figsize=(14.0, 9.0), nrows=2)
-    fig.suptitle('Rise/Set for {gnss:s} - {marker:s} - {date:s}'.format(gnss=amc.dRTK['rnx']['gnss'][gnss]['name'], marker=amc.dRTK['rnx']['gnss'][gnss]['marker'], date='{date:s} ({yy:02d}/{doy:03d})'.format(date=amc.dRTK['rnx']['times']['DT'][:10], yy=amc.dRTK['rnx']['times']['yy'], doy=amc.dRTK['rnx']['times']['doy'])), fontdict=title_font, fontsize=24)
+    fig.suptitle('Rise/Set for {gnss:s} - {marker:s} - {date:s}'.format(gnss=amc.dRTK['rnx']['gnss'][gnss]['name'], marker=amc.dRTK['rnx']['gnss'][gnss]['marker'], date='{date:s} ({yy:02d}/{doy:03d})'.format(date=amc.dRTK['rnx']['times']['DT'][:10], yy=amc.dRTK['rnx']['times']['yy'], doy=amc.dRTK['rnx']['times']['DoY'])), fontdict=title_font, fontsize=24)
 
     # creating bar plots for absolute values
     for i_arc, (obs_dx, tle_dx) in enumerate(zip(dx_obs, dx_tle)):

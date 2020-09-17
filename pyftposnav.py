@@ -48,17 +48,17 @@ def createRemoteFTPInfo(logger: logging.Logger) -> dict:
     """
     dRemote = {}
     dGal = {}
-    dGal['rpath'] = 'pub/gps/data/daily/{year:4s}/{DOY:3s}/{YY:2s}l'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DOY'], YY=amc.dRTK['date']['YY'])
-    dGal['rfile'] = 'BRUX00BEL_R_{year:4s}{DOY:s}0000_01D_EN.rnx.gz'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DOY'])
+    dGal['rpath'] = 'pub/gps/data/daily/{year:4s}/{DOY:3s}/{YY:2s}l'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DoY'], YY=amc.dRTK['date']['YY'])
+    dGal['rfile'] = 'BRUX00BEL_R_{year:4s}{DOY:s}0000_01D_EN.rnx.gz'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DoY'])
 
     dGPS = {}
-    dGPS['rpath'] = 'pub/gps/data/daily/{year:4s}/{DOY:3s}/{YY:2s}n'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DOY'], YY=amc.dRTK['date']['YY'])
-    # dGPS['rfile'] = 'brdc{DOY:3s}0.{YY:2s}n.Z'.format(DOY=amc.dRTK['date']['DOY'], YY=amc.dRTK['date']['YY'])
-    dGPS['rfile'] = 'BRUX00BEL_R_{year:4s}{DOY:s}0000_01D_GN.rnx.gz'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DOY'])
+    dGPS['rpath'] = 'pub/gps/data/daily/{year:4s}/{DOY:3s}/{YY:2s}n'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DoY'], YY=amc.dRTK['date']['YY'])
+    # dGPS['rfile'] = 'brdc{DOY:3s}0.{YY:2s}n.Z'.format(DOY=amc.dRTK['date']['DoY'], YY=amc.dRTK['date']['YY'])
+    dGPS['rfile'] = 'BRUX00BEL_R_{year:4s}{DOY:s}0000_01D_GN.rnx.gz'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DoY'])
 
     dCom = {}
-    dCom['rpath'] = 'pub/gps/data/daily/{year:4s}/{DOY:3s}/{YY:2s}p'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DOY'], YY=amc.dRTK['date']['YY'])
-    dCom['rfile'] = 'BRDC00IGS_R_{year:4s}{DOY:s}0000_01D_MN.rnx.gz'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DOY'])
+    dCom['rpath'] = 'pub/gps/data/daily/{year:4s}/{DOY:3s}/{YY:2s}p'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DoY'], YY=amc.dRTK['date']['YY'])
+    dCom['rfile'] = 'BRDC00IGS_R_{year:4s}{DOY:s}0000_01D_MN.rnx.gz'.format(year=str(amc.dRTK['date']['year']), DOY=amc.dRTK['date']['DoY'])
 
     dRemote['gal'] = dGal
     dRemote['gps'] = dGPS
@@ -77,7 +77,7 @@ def doNcFTPDownload(logger: logging.Logger):
     exeNCFTPGET = location.locateProg('ncftpget', logger)
 
     # create and change to download directory
-    amc.dRTK['local']['YYDOY'] = '{YY:s}{DOY:s}'.format(YY=amc.dRTK['date']['YY'], DOY=amc.dRTK['date']['DOY'])
+    amc.dRTK['local']['YYDOY'] = '{YY:s}{DOY:s}'.format(YY=amc.dRTK['date']['YY'], DOY=amc.dRTK['date']['DoY'])
     amc.dRTK['local']['dir'] = os.path.join(amc.dRTK['local']['root'], amc.dRTK['local']['YYDOY'])
     amutils.mkdir_p(amc.dRTK['local']['dir'])
     amutils.changeDir(amc.dRTK['local']['dir'])
@@ -126,7 +126,7 @@ def main(argv):
 
     # get the YY and DOY values as string
     dDate['YY'] = dDate['year'][2:]
-    dDate['DOY'] = '{:03d}'.format(dDate['daynr'])
+    dDate['DoY'] = '{:03d}'.format(dDate['daynr'])
 
     # create the remote/local directories and filenames to download the individual/combined RINEX Navigation files from
     amc.dRTK['remote'] = createRemoteFTPInfo(logger=logger)

@@ -32,7 +32,7 @@ def rnxobs_header_info(dTmpRnx: dict, logger: logging.Logger):
     dTimes = {}
     dTimes['DT'] = datetime.strptime(dObsHdr['data']['epoch']['first'][:-1], '%Y %m %d %H %M %S.%f')
     dTimes['date'] = dTimes['DT'].date()
-    dTimes['doy'] = dTimes['DT'].timetuple().tm_yday
+    dTimes['DoY'] = dTimes['DT'].timetuple().tm_yday
     dTimes['year'] = dTimes['DT'].timetuple().tm_year
     dTimes['yy'] = dTimes['year'] % 100
 
@@ -87,7 +87,7 @@ def rnxobs_header_info(dTmpRnx: dict, logger: logging.Logger):
     logger.info('{func:s}:          first: {first!s}'.format(first=dObsHdr['data']['epoch']['first'], func=cFuncName))
     logger.info('{func:s}:           last: {last!s}'.format(last=dObsHdr['data']['epoch']['last'], func=cFuncName))
     logger.info('{func:s}:       interval: {interval:.2f}'.format(interval=float(dObsHdr['file']['interval']), func=cFuncName))
-    logger.info('{func:s}:         DOY/YY: {DOY:03d}/{YY:02d}'.format(DOY=dTimes['doy'], YY=dTimes['yy'], func=cFuncName))
+    logger.info('{func:s}:         DOY/YY: {DOY:03d}/{YY:02d}'.format(DOY=dTimes['DoY'], YY=dTimes['yy'], func=cFuncName))
 
     for _, satsys in enumerate(dObsHdr['file']['satsys']):
         logger.info('{func:s}:    satellite system: {satsys:s} ({gnss:s})'.format(satsys=satsys, gnss=amc.dGNSSs.get(satsys), func=cFuncName))
@@ -126,7 +126,7 @@ def rnxobs_statistics_file(dTmpRnx: dict, logger: logging.Logger):
         marker_dir = os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'])
         amutils.mkdir_p(marker_dir)
 
-        amc.dRTK['rnx']['gnss'][satsys]['obsstat'] = '{marker:s}{doy:03d}0-{yy:02d}O.obsstat'.format(marker=amc.dRTK['rnx']['gnss'][satsys]['marker'], doy=amc.dRTK['rnx']['times']['doy'], yy=amc.dRTK['rnx']['times']['yy'])
+        amc.dRTK['rnx']['gnss'][satsys]['obsstat'] = '{marker:s}{doy:03d}0-{yy:02d}O.obsstat'.format(marker=amc.dRTK['rnx']['gnss'][satsys]['marker'], doy=amc.dRTK['rnx']['times']['DoY'], yy=amc.dRTK['rnx']['times']['yy'])
 
         # create the file with the observation statistics for satsys
         logger.info('{func:s}: creating observation statistics {stat:s}'.format(stat=colored(amc.dRTK['rnx']['gnss'][satsys]['obsstat'], 'green'), func=cFuncName))
@@ -165,7 +165,7 @@ def gnss_rinex_creation(dTmpRnx: dict, logger: logging.Logger):
         # create the corresponding RINEX Obs/Nav file for each individual satellite system
         for _, satsys in enumerate(satsys2create):
             # determin ethe name of the RINEX file to be created
-            amc.dRTK['rnx']['gnss'][satsys][rnx_type] = '{marker:s}{doy:03d}0.{yy:02d}{ext:s}'.format(marker=amc.dRTK['rnx']['gnss'][satsys]['marker'], doy=amc.dRTK['rnx']['times']['doy'], yy=amc.dRTK['rnx']['times']['yy'], ext=amc.dRnx_ext[satsys][rnx_type])
+            amc.dRTK['rnx']['gnss'][satsys][rnx_type] = '{marker:s}{doy:03d}0.{yy:02d}{ext:s}'.format(marker=amc.dRTK['rnx']['gnss'][satsys]['marker'], doy=amc.dRTK['rnx']['times']['DoY'], yy=amc.dRTK['rnx']['times']['yy'], ext=amc.dRnx_ext[satsys][rnx_type])
 
             if rnx_type == 'obs':
                 out_dir = tempfile.gettempdir()

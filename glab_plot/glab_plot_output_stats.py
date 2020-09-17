@@ -50,7 +50,7 @@ def plot_glab_statistics(df_dopenu: pd.DataFrame, scale: float, logger: logging.
     # dist_bins = int(12 * scale)  # 4 bins per meter ???
 
     # go over the coordinate differences
-    for i, (crd, enu_color) in enumerate(zip(['dN0', 'dE0', 'dU0'], glc.enu_colors)):
+    for i, (crd, enu_color) in enumerate(zip(glc.dgLab['OUTPUT']['dENU'], glc.enu_colors)):
         # create the plot holding for each DOP bin the histogram and bixplot combined in a subfigure
         for j, bin in enumerate(dop_bins):
             # boxplot in above 3xj subplots
@@ -88,6 +88,3 @@ def plot_glab_statistics(df_dopenu: pd.DataFrame, scale: float, logger: logging.
     logger.info('{func:s}: created scatter plot {plot:s}'.format(func=cFuncName, plot=colored(png_filename, 'green')))
 
     plt.show()
-
-
-

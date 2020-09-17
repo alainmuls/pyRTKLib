@@ -2,18 +2,12 @@ import math
 
 # constants used for parsing the gLABs out file
 
-# plot colors
-# select colors for E, N, U coordinate difference
-# enu_colors = []
-# enu_colors.append([51 / 256., 204 / 256., 51 / 256.])
-# enu_colors.append([51 / 256., 51 / 256., 255 / 256.])
-# enu_colors.append([255 / 256., 51 / 256., 51 / 256.])
+# colors for ENU plots
 enu_colors = ['tab:green', 'tab:blue', 'tab:brown']
+# enu_offsets = ['dN0', 'dE0', 'dU0']
 
-# create the DOP bins for plotting
+# create the DOP bins and dop colors for plotting
 dop_bins = [0, 2, 3, 4, 5, 6, math.inf]
-
-
 dop_colors = ['tab:green', 'tab:orange', 'tab:blue', 'tab:purple', 'tab:red', 'tab:brown']
 
 # Set the font dictionaries (for plot title and axis titles)
@@ -49,14 +43,14 @@ glab_msgs = ('INFO', 'OUTPUT', 'SATSEL', 'MEAS', 'MODEL', 'FILTER')
 dgLab['messages'] = glab_msgs
 
 # connect abbreviation of GNSS to the names used
-dGNSS = {
-        'E': {'marker': 'GALI', 'gnss': 'Galileo', 'color': 'blue'},
-        'G': {'marker': 'GPSN', 'gnss': 'GPS NavSTAR', 'color': 'red'},
-        'GE': {'marker': 'COMB', 'gnss': 'Combined GE', 'color': 'grey'},
-        'EG': {'marker': 'COMB', 'gnss': 'Combined EG', 'color': 'grey'},
-        }  # noqa: E123
+dgLab['GNSS'] = {
+                'E': {'marker': 'GALI', 'gnss': 'Galileo', 'color': 'blue'},
+                'G': {'marker': 'GPSN', 'gnss': 'GPS NavSTAR', 'color': 'red'},
+                'GE': {'marker': 'COMB', 'gnss': 'Combined GE', 'color': 'grey'},
+                'EG': {'marker': 'COMB', 'gnss': 'Combined EG', 'color': 'grey'},
+                }  # noqa: E123
 
-dgLab['GNSS'] = dGNSS
+# dgLab['GNSS'] = dGNSS
 
 # Looking up the INFO messages
 dINFO = {}
