@@ -189,11 +189,11 @@ def main(argv) -> bool:
     store_to_cvs(df=df_output, ext='pos', logger=logger, index=False)
 
     # calculate statitics gLAB OUTPUT messages
-    amc.dRTK['dgLABng']['stats'], dDB_dENU = glab_statistics.statistics_glab_outfile(df_outp=df_output, logger=logger)
+    amc.dRTK['dgLABng']['stats'], dDB_crds = glab_statistics.statistics_glab_outfile(df_outp=df_output, logger=logger)
 
-    for crd, (key, val) in zip(glc.dgLab['OUTPUT']['dENU'], dDB_dENU.items()):
+    for key, val in dDB_crds.items():
         glab_updatedb.db_update_line(db_name=amc.dRTK['dgLABng']['db'],
-                                     line_id='{id:s},{crd:s}'.format(id=amc.dRTK['INFO']['db_lineID'], crd=crd),
+                                     line_id='{id:s},{crd:s}'.format(id=amc.dRTK['INFO']['db_lineID'], crd=key),
                                      info_line='{id:s},{val:s}'.format(id=amc.dRTK['INFO']['db_lineID'], val=val),
                                      logger=logger)
 

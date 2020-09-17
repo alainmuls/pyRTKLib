@@ -28,14 +28,23 @@ def statistics_glab_outfile(df_outp: pd.DataFrame, logger: logging.Logger) -> Tu
     dStats['dop_bin'] = statistics_dopbin(df_dop_enu=df_outp[glc.dgLab['OUTPUT']['XDOP'] + glc.dgLab['OUTPUT']['dENU'] + glc.dgLab['OUTPUT']['sdENU']], logger=logger)
     dStats['crd'] = statistics_coordinates(df_crd=df_outp[glc.dgLab['OUTPUT']['llh'] + glc.dgLab['OUTPUT']['dENU'] + glc.dgLab['OUTPUT']['sdENU'] + glc.dgLab['OUTPUT']['UTM']], logger=logger)
 
-    print(dStats.keys())
-    print(dStats['crd'].keys())
-    print(dStats['crd']['dN0'].keys())
-    # create the information to store in the glabng output database
+    # print(dStats.keys())
+    # print(dStats['crd'].keys())
+    # print(dStats['crd']['dN0'].keys())
+    # create the dNEU information to store in the glabng output database
     dDB_crd = {}
     for crd in glc.dgLab['OUTPUT']['dENU']:
         dDB_crd[crd] = '{crd:s},{mean:+.3f},{std:+.3f},{max:+.3f},{min:+.3f}'.format(crd=crd, mean=dStats['crd'][crd]['mean'], std=dStats['crd'][crd]['std'], max=dStats['crd'][crd]['max'], min=dStats['crd'][crd]['min'])
-        print('crd from glc = {crd:s} - {info:s}'.format(crd=crd, info=dDB_crd[crd]))
+        # print('crd from glc = {crd:s} - {info:s}'.format(crd=crd, info=dDB_crd[crd]))
+
+    # create the llh information to store in the glabng output database
+    for i, crd in enumerate(glc.dgLab['OUTPUT']['llh']):
+        if i < len(glc.dgLab['OUTPUT']['llh']) - 1:
+            dDB_crd[crd] = '{crd:s},{mean:+.9f},{std:+.9f},{max:+.9f},{min:+.9f}'.format(crd=crd, mean=dStats['crd'][crd]['mean'], std=dStats['crd'][crd]['std'], max=dStats['crd'][crd]['max'], min=dStats['crd'][crd]['min'])
+        else:
+            dDB_crd[crd] = '{crd:s},{mean:+.3f},{std:+.3f},{max:+.3f},{min:+.3f}'.format(crd=crd, mean=dStats['crd'][crd]['mean'], std=dStats['crd'][crd]['std'], max=dStats['crd'][crd]['max'], min=dStats['crd'][crd]['min'])
+
+        # print('crd from glc = {crd:s} - {info:s}'.format(crd=crd, info=dDB_crd[crd]))
 
     return dStats, dDB_crd
 

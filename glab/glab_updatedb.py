@@ -45,7 +45,7 @@ def db_update_line(db_name: str, line_id: str, info_line: str, logger: logging.L
 
         # if update has not happened, than add the line to the database
         if not db_updated:
-            print('adding info_line {:s}'.format(info_line))
+            # print('adding info_line {:s}'.format(info_line))
             outf.write(info_line + '\n')
 
     # Copy the file permissions from the old file to the new file
