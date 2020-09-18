@@ -67,6 +67,14 @@ def statistics_glab_outfile(df_outp: pd.DataFrame, logger: logging.Logger) -> Tu
             dDB_crd[crd] += '{max:+.9f},'.format(max=dStats['crd'][crd]['max'])
             dDB_crd[crd] += '{min:+.9f}'.format(min=dStats['crd'][crd]['min'])
 
+    # create the llh information to store in the glabng output database
+    for i, crd in enumerate(glc.dgLab['OUTPUT']['UTM']):
+        dDB_crd[crd] = '{crd:s},'.format(crd=crd)
+        dDB_crd[crd] += '{mean:+.3f},'.format(mean=dStats['crd'][crd]['mean'])
+        dDB_crd[crd] += '{std:+.3f},'.format(std=dStats['crd'][crd]['std'])
+        dDB_crd[crd] += '{max:+.3f},'.format(max=dStats['crd'][crd]['max'])
+        dDB_crd[crd] += '{min:+.3f}'.format(min=dStats['crd'][crd]['min'])
+
     # print('crd from glc = {crd:s} - {info:s}'.format(crd=crd, info=dDB_crd[crd]))
 
     return dStats, dDB_crd
