@@ -97,9 +97,9 @@ do
 			# change_line "TEXT_TO_BE_REPLACED" "This line is removed by the admin." yourFile
 			change_line ${info_txt} ${new_info_txt} ${GNSSRAWDATA}
 
-		elif [ ${RXTYPE} = 'BEGP' ]
+		elif [ ${RXTYPE} = 'TURP' ]
 		then
-			MARKER=BEGP
+			MARKER=TURP
 
 			${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
 				--rinexdir=${DIRRIN} --binary=SBF
@@ -121,8 +121,8 @@ do
 			change_line ${info_txt} ${new_info_txt} ${GNSSRAWDATA}
 
 			# # check existence of OBS file
-			# BEGPOBS=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'O'
-			# BEGPNAV=${DIRRIN}'/BEGP'${DOY}'0.'${YY}'E'
+			# BEGPOBS=${DIRRIN}'/TURP'${DOY}'0.'${YY}'O'
+			# BEGPNAV=${DIRRIN}'/TURP'${DOY}'0.'${YY}'E'
 			# echo ${BEGPOBS}
 
 			# # correct in observation file the PRNs for E33 (from E28) and E36 (from E29)

@@ -1,13 +1,14 @@
 # INPUT
--input:obs /home/amuls/GNSS/19134/rinex/COMB1340.19O
+-input:obs {$COMPRESSED_OBS_FILE}
 	# -input:nav /home/amuls/GNSS/19134/rinex/COMB1340.19P
--input:nav BRUX00BEL_R_20191340000_01D_EN.rnx
+}
+-input:nav {$COMPRESSED_NAV_FILES}
 
--input:antsatblock /home/amuls/GNSS/gLABng/ngs14.atx
+-input:antsatblock /home/amuls/RxTURP/ngs14.atx
 
 # PREPROCESS
--pre:elevation 5
--pre:sat 0,+E0
+-pre:elevation {$CUTOFF_ANGLE}
+-pre:sat 0,+${GNSS}0
 
 -pre:setrecpos 4023741.230 309110.534 4922723.243
 	# -pre:starttime 2019/05/14 10:00:00
@@ -16,13 +17,13 @@
 # FILTER
 -filter:prefitoutliers:median 30  # Set the prefit outlier detector threshold to 30 metres
 
--filter:select E0-C1C
+-filter:select ${GNSS}0-${PRCODES}
 -filter:nav kinematic
 
--filter:refclkonlyorder E
+-filter:refclkonlyorder ${GNSS}
 -filter:maxpdop 10
 
--filter:fixedweight E0-C1C 1
+-filter:fixedweight ${GNSS}0-${PRCODES} 1
 
 # MODEL
 --model:sathealth

@@ -44,7 +44,7 @@ function change_line {
 
     local NEW=$(echo "${NEW_LINE}" | escape_slashes)
 
-    # /bin/sed -i "s+BEGP,19,134,19134,/home/amuls/RxTURP/BEGPIOS/BEGP/19134,true*+BEGP,19,134,19134,\/home\/amuls\/RxTURP\/BEGPIOS\/BEGP\/19134,true,GPRS1340.19O,75M,GPRS1340.19E,96K+g" /home/amuls/RxTURP/BEGPIOS/BEGP_data.t
+    # /bin/sed -i "s+TURP,19,134,19134,/home/amuls/RxTURP/BEGPIOS/TURP/19134,true*+TURP,19,134,19134,\/home\/amuls\/RxTURP\/BEGPIOS\/TURP\/19134,true,GPRS1340.19O,75M,GPRS1340.19E,96K+g" /home/amuls/RxTURP/BEGPIOS/BEGP_data.t
 
     ${SED} -i.bak "s+${OLD_LINE_PATTERN}.*+${NEW}+g" ${FILE}
     # mv "${FILE}.bak" /tmp/

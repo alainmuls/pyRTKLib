@@ -69,16 +69,16 @@ for curDOY in $(seq $STDOY $ENDOY); do
 			# cp the log file to the directory where the processing placed its files
 			${CP} ${LOGPYRTKPLOT} ${DIRRIN}/'pyrtkplot-'${gnssMarker[i]}'-'${YY}'-'${DOY}'.log'
 		done
-	elif [[ ${RXTYPE} = 'BEGP' ]]; then
+	elif [[ ${RXTYPE} = 'TURP' ]]; then
 		# create name for POS file
-		ROVERPOS='BEGP'${DOY}'0-'${YY}'O.pos'
+		ROVERPOS='TURP'${DOY}'0-'${YY}'O.pos'
 		DIRPOS=${DIRRIN}/rtkp/gal
 
 		echo 'Plotting: '${RXTYPE}' '${YY}' '${DOY}': '${ROVERPOS}' '${DIRPOS} >> ${PLOTTINGFILE}
 		${NICE} ${PYRTKPLOT} --dir=${DIRPOS} --file=${ROVERPOS}
 
 		# cp the log file to the directory where the processing placed its files
-		${CP} ${LOGPYRTKPLOT} ${DIRRIN}/'pyrtkplot-BEGP-'${YY}'-'${DOY}'.log'
+		${CP} ${LOGPYRTKPLOT} ${DIRRIN}/'pyrtkplot-TURP-'${YY}'-'${DOY}'.log'
 	fi
 done
 

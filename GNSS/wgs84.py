@@ -360,7 +360,7 @@ if __name__ == "__main__":
     begpt = (4023741.2986829998, 309110.46863399999, 4922723.1883859998)
 
     enu = wgs84.ecef2ned(begpt, begpRefPos)
-    print('BEGP @t: ', begpt)
+    print('TURP @t: ', begpt)
     print('RefPos : ', begpRefPos)
     print('ENU    : ', enu)
 

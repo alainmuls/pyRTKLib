@@ -216,7 +216,6 @@ def main(argv) -> bool:
     glab_plot_output_stats.plot_glab_statistics(df_dopenu=df_output[glc.dgLab['OUTPUT']['XDOP'] + glc.dgLab['OUTPUT']['dENU']], scale=scale_enu, showplot=show_plot, logger=logger)
 
     # report to the user
-    # report to the user
     logger.info('{func:s}: Project information =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
     # sort the glab_output_db

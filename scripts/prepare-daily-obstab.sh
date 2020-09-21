@@ -76,7 +76,7 @@ do
 				printf '\nProcessing observation statistics for '${RXTYPE}'/'${satsyst}' @ '${YYDOY}'\n'
 				${PYOBSTAB} -d ${DIRYYDOY} -g ${satsyst} -m 30
 			done
-		elif [ ${RXTYPE} = 'BEGP' ]
+		elif [ ${RXTYPE} = 'TURP' ]
 		then
 			# process the GALI and GPSN obstab
 			for satsyst in E

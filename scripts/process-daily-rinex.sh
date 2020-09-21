@@ -90,13 +90,13 @@ for curDOY in $(seq $STDOY $ENDOY); do
 			# # cp the log file to the directory where the processing placed its files
 			# # ${CP} ${LOGPYRTKPROC} ${DIRRIN}/'pyrtkproc-'${gnssMarker[i]}'-'${YY}'-'${DOY}'.log'
 		done
-	elif [[ ${RXTYPE} = 'BEGP' ]]; then
+	elif [[ ${RXTYPE} = 'TURP' ]]; then
 		# find out which combinations of RINEX Obs/Nav files are available
 		ls -1 ${DIRRIN}/*.Z
 
 		# # create names for obs / nav file of rover station
-		# ROVEROBS='BEGP'${DOY}'0.'${YY}'O'
-		# ROVERNAV='BEGP'${DOY}'0.'${YY}'E'
+		# ROVEROBS='TURP'${DOY}'0.'${YY}'O'
+		# ROVERNAV='TURP'${DOY}'0.'${YY}'E'
 
 		# # create names for igs downloaded nav file
 		# IGSNAV=${igsNavName[0]}00${igsNavCountry[0]}_R_${YYYY}${DOY}0000_01D_${igsNavNameExt[0]}N.rnx.gz
@@ -105,7 +105,7 @@ for curDOY in $(seq $STDOY $ENDOY); do
 		# ${NICE} ${PYRTKPROC} --dir=${DIRRIN} --rover=${ROVEROBS} --freq=4 --cutoff=5 -e ${ROVERNAV} ${DIRIGS}/${IGSNAV} --gnss=gal
 
 		# # cp the log file to the directory where the processing placed its files
-		# # ${CP} ${LOGPYRTKPROC} ${DIRRIN}/'pyrtkproc-BEGP-'${YY}'-'${DOY}'.log'
+		# # ${CP} ${LOGPYRTKPROC} ${DIRRIN}/'pyrtkproc-TURP-'${YY}'-'${DOY}'.log'
 	fi
 done
 
