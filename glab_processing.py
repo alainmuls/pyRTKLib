@@ -10,7 +10,7 @@ import pathlib
 from shutil import move
 
 import am_config as amc
-from ampyutils import amutils, location
+from ampyutils import amutils, location, exeprogram
 
 __author__ = 'amuls'
 
@@ -168,6 +168,43 @@ def check_arguments(logger: logging.Logger) -> int:
     return amc.E_SUCCESS
 
 
+def uncompress_rnx_files(logger: logging.Logger):
+    """
+    uncompress_rnx_files uncompresses RINEX OBS & NAV files
+    """
+    amc.cBaseName = colored(os.path.basename(__file__), 'yellow')
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    # uncompress the RINEX OBS file
+    runCRZ2RNX = '{prog:s} -f {crz:s}'.format(prog=amc.dRTK['progs']['crz2rnx'], crz=amc.dRTK['proc']['crz_obs'])
+    logger.info('{func:s}: Running:\n{cmd:s}'.format(func=cFuncName, cmd=colored(runCRZ2RNX, 'green')))
+
+    # run the program
+    exeprogram.subProcessDisplayStdErr(cmd=runCRZ2RNX, verbose=True)
+
+    # get name of uncompressed file
+    amc.dRTK['proc']['obs'] = amc.dRTK['proc']['crz_obs'][:-3] + 'O'
+
+
+def create_glab_config(logger: logging.Logger):
+    """
+    create_glab_config creates the configuration file for glabng
+    """
+    # from string import Template
+    # # open the file
+    # filein = open('foo.txt')
+    # # read it
+    # src = Template(filein.read())
+    # # document data
+    # title = "This is the title"
+    # subtitle = "And this is the subtitle"
+    # list = ['first', 'second', 'third']
+    # d = {'title': title, 'subtitle': subtitle, 'list': '\n'.join(list)}
+    # # do the substitution
+    # result = src.substitute(d)
+    # print(result)
+
+
 def main(argv) -> bool:
     """
     glabplotposn plots data from gLAB (v6) OUTPUT messages
@@ -196,6 +233,13 @@ def main(argv) -> bool:
     amc.dRTK['progs']['glabng'] = location.locateProg('glabng', logger)
     amc.dRTK['progs']['crz2rnx'] = location.locateProg('crz2rnx', logger)
     amc.dRTK['progs']['gunzip'] = location.locateProg('gunzip', logger)
+
+    # uncompress RINEX files
+    uncompress_rnx_files(logger=logger)
+
+    # remove the decompressed RINEX files
+    logger.info('{func:s}: removing uncompressed RINEX files')
+    os.remove(amc.dRTK['proc']['obs'])
 
     # report to the user
     logger.info('{func:s}: Project information =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
