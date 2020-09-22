@@ -146,19 +146,20 @@ def check_arguments(logger: logging.Logger) -> int:
         logger.info('{func:s}: Created glab directory {glab:s} does not exist'.format(glab=colored(amc.dRTK['proc']['dir_glab'], 'green'), func=cFuncName))
 
     # create the RINEX obs name and check whether it exists
-    amc.dRTK['proc']['crz_obs'] = '{marker:s}{doy:03d}0.{yy:s}D.Z'.format(marker=amc.dRTK['options']['marker'], yy=str(amc.dRTK['options']['year'])[-2:], doy=amc.dRTK['options']['doy'])
+    amc.dRTK['proc']['cmp_obs'] = '{marker:s}{doy:03d}0.{yy:s}D.Z'.format(marker=amc.dRTK['options']['marker'], yy=str(amc.dRTK['options']['year'])[-2:], doy=amc.dRTK['options']['doy'])
 
     # determine the options for GNSS and codes / freqs
     amc.dRTK['proc']['marker'] = amc.dRTK['options']['marker']
     amc.dRTK['proc']['gnss'] = amc.dRTK['options']['gnss']
 
     # determine the navigation files used (currently using the IGS NAV files - should be changed)
-    amc.dRTK['proc']['crz_nav'] = []
+    amc.dRTK['proc']['cmp_nav'] = []
     for gnss in amc.dRTK['proc']['gnss']:
-        amc.dRTK['proc']['crz_nav'].append('BRUX00BEL_R_{year:04d}{doy:03d}0000_01D_{gnss:s}N.rnx.gz'.format(year=amc.dRTK['options']['year'], doy=amc.dRTK['options']['doy'], gnss=gnss))
+        amc.dRTK['proc']['cmp_nav'].append('BRUX00BEL_R_{year:04d}{doy:03d}0000_01D_{gnss:s}N.rnx.gz'.format(year=amc.dRTK['options']['year'], doy=amc.dRTK['options']['doy'], gnss=gnss))
 
     # get the codes used and corresponding frequency numbers
-    amc.dRTK['proc']['codes'] = amc.dRTK['options']['prcodes']
+    print("amc.dRTK['options']['prcodes'] = {!s}".format(amc.dRTK['options']['prcodes']))
+    amc.dRTK['proc']['codes'] = [code for code in amc.dRTK['options']['prcodes']]
     amc.dRTK['proc']['gnss'] = amc.dRTK['options']['gnss']
     amc.dRTK['proc']['freqs'] = [prcode[1:2] for prcode in amc.dRTK['proc']['codes']]
 
@@ -176,14 +177,38 @@ def uncompress_rnx_files(logger: logging.Logger):
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     # uncompress the RINEX OBS file
-    runCRZ2RNX = '{prog:s} -f {crz:s}'.format(prog=amc.dRTK['progs']['crz2rnx'], crz=amc.dRTK['proc']['crz_obs'])
+    runCRZ2RNX = '{prog:s} -f {crz:s}'.format(prog=amc.dRTK['progs']['crz2rnx'], crz=os.path.join(amc.dRTK['proc']['dir_root'], amc.dRTK['proc']['cmp_obs']))
     logger.info('{func:s}: Running:\n{cmd:s}'.format(func=cFuncName, cmd=colored(runCRZ2RNX, 'green')))
 
     # run the program
     exeprogram.subProcessDisplayStdErr(cmd=runCRZ2RNX, verbose=True)
 
     # get name of uncompressed file
-    amc.dRTK['proc']['obs'] = amc.dRTK['proc']['crz_obs'][:-3] + 'O'
+    amc.dRTK['proc']['obs'] = amc.dRTK['proc']['cmp_obs'][:-3] + 'O'
+
+    # check if this decompressed file exists
+    path = pathlib.Path(os.path.join(amc.dRTK['proc']['dir_root'], amc.dRTK['proc']['obs']))
+    if not path.is_file():
+        logger.info('{func:s}: Failed creating decompressed RINEX observation file {obs:s}'.format(obs=colored(amc.dRTK['proc']['obs'], 'green'), func=cFuncName))
+
+    # decompress allnavigation files
+    amc.dRTK['proc']['nav'] = []
+    for cmp_nav in amc.dRTK['proc']['cmp_nav']:
+        runGUNZIP = '{prog:s} -f {zip:s}'.format(prog=amc.dRTK['progs']['gunzip'], zip=os.path.join(amc.dRTK['proc']['dir_igs'], cmp_nav))
+        logger.info('{func:s}: Running:\n{cmd:s}'.format(func=cFuncName, cmd=colored(runGUNZIP, 'green')))
+
+        # run the program
+        exeprogram.subProcessDisplayStdErr(cmd=runGUNZIP, verbose=True)
+
+        # get name of uncompressed file
+        amc.dRTK['proc']['nav'].append(cmp_nav[:-3])
+
+        # check if this decompressed file exists
+        path = pathlib.Path(os.path.join(amc.dRTK['proc']['dir_igs'], amc.dRTK['proc']['nav'][-1]))
+        if not path.is_file():
+            logger.info('{func:s}: Failed creating decompressed RINEX navigation file {nav:s}'.format(nav=colored(amc.dRTK['proc']['nav'], 'green'), func=cFuncName))
+
+    input()
 
 
 def create_glab_config(logger: logging.Logger):
@@ -233,19 +258,28 @@ def main(argv) -> bool:
     amc.dRTK['progs']['glabng'] = location.locateProg('glabng', logger)
     amc.dRTK['progs']['crz2rnx'] = location.locateProg('crz2rnx', logger)
     amc.dRTK['progs']['gunzip'] = location.locateProg('gunzip', logger)
+    amc.dRTK['progs']['gzip'] = location.locateProg('gzip', logger)
 
     # uncompress RINEX files
     uncompress_rnx_files(logger=logger)
 
     # remove the decompressed RINEX files
     logger.info('{func:s}: removing uncompressed RINEX files')
-    os.remove(amc.dRTK['proc']['obs'])
+    os.remove(os.path.join(amc.dRTK['proc']['dir_root'], amc.dRTK['proc']['obs']))
+    for nav_file in amc.dRTK['proc']['nav']:
+        runGZIP = '{prog:s} -f {zip:s}'.format(prog=amc.dRTK['progs']['gzip'], zip=os.path.join(amc.dRTK['proc']['dir_igs'], nav_file))
+        logger.info('{func:s}: Running:\n{cmd:s}'.format(func=cFuncName, cmd=colored(runGZIP, 'green')))
+        # run the program
+        exeprogram.subProcessDisplayStdErr(cmd=runGZIP, verbose=True)
 
     # report to the user
     logger.info('{func:s}: Project information =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
     # move the log file to the glab directory
-    move(log_name, os.path.join(amc.dRTK['proc']['dir_glab'], 'glab_proc_{gnss:s}_{prcodes:s}.log'.format(gnss=amc.dRTK['proc']['gnss'], prcodes='_'.join(amc.dRTK['proc']['codes']))))
+    if len(amc.dRTK['proc']['codes']) == 1:
+        move(log_name, os.path.join(amc.dRTK['proc']['dir_glab'], 'glab_proc_{gnss:s}_{prcodes:s}.log'.format(gnss=amc.dRTK['proc']['gnss'], prcodes=amc.dRTK['proc']['codes'])))
+    else:
+        move(log_name, os.path.join(amc.dRTK['proc']['dir_glab'], 'glab_proc_{gnss:s}_{prcodes:s}.log'.format(gnss=amc.dRTK['proc']['gnss'], prcodes='_'.join(amc.dRTK['proc']['codes']))))
 
     return amc.E_SUCCESS
 
