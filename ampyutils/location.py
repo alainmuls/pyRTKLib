@@ -53,7 +53,7 @@ def locateProg(progName, logger: logging.Logger = None):
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    logger.info('{func:s}: locate programs {prog:s}'.format(func=cFuncName, prog=progName))
+    # logger.info('{func:s}: locate programs {prog:s}'.format(func=cFuncName, prog=progName))
 
     exePROG = whereis(progName, logger)
     if exePROG is None:

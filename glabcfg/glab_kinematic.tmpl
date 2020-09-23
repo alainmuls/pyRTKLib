@@ -1,10 +1,8 @@
 # INPUT
--input:obs ${COMPRESSED_OBS_FILE}
-	# -input:nav ${HOME}/GNSS/19134/rinex/COMB1340.19P
-}
--input:nav ${COMPRESSED_NAV_FILES}
+-input:obs ${CMP_OBS_FILE}
+-input:nav ${CMP_NAV_FILES}
 
--input:antsatblock ${HOME}/RxTURP/ngs14.atx
+-input:antsatblock /home/amuls/RxTURP/ngs14.atx
 
 # PREPROCESS
 -pre:elevation ${CUTOFF_ANGLE}
@@ -43,4 +41,4 @@
 -print:progress
 -print:model
 -print:sat
--output:file ${HOME}/GNSS/19134/ASTXCOMB/GALI/GALI-C1C-kinematic.out
+-output:file ${GLAB_OUT}
