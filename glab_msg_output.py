@@ -23,11 +23,12 @@ lst_centers = ['origin', 'wavg']
 db_default_name = os.path.join(os.path.expanduser("~"), 'RxTURP', 'glab_output_db.csv')
 lst_logging_choices = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']
 
+
 class logging_action(argparse.Action):
     def __call__(self, parser, namespace, log_actions, option_string=None):
         for log_action in log_actions:
             if log_action not in lst_logging_choices:
-                raise argparse.ArgumentError(self, "log_actions must be in {!s}".format(lst_logging_choices))
+                raise argparse.ArgumentError(self, "log_actions must be in {choices!s}".format(choices=lst_logging_choices))
         setattr(namespace, self.dest, log_actions)
 
 
@@ -39,14 +40,14 @@ class scale_action(argparse.Action):
         for s in scale_choices:
             all_choices += [b * s for b in base_choices]
         if scale_action not in all_choices:
-            raise argparse.ArgumentError(self, "scale_action must be in {!s}".format(all_choices))
+            raise argparse.ArgumentError(self, "scale_action must be in {choices!s}".format(choices=all_choices))
         setattr(namespace, self.dest, scale_action)
 
 
 class center_action(argparse.Action):
     def __call__(self, parser, namespace, center_action, option_string=None):
         if center_action not in lst_centers:
-            raise argparse.ArgumentError(self, "center_action must be in {!s}".format(lst_centers))
+            raise argparse.ArgumentError(self, "center_action must be in {choices!s}".format(choices=lst_centers))
         setattr(namespace, self.dest, center_action)
 
 
@@ -201,7 +202,7 @@ def main(argv) -> bool:
 
     # sort the glab_output_db
     glab_updatedb.db_sort(db_name=amc.dRTK['dgLABng']['db'], logger=logger)
-    sys.exit(2)
+    # sys.exit(2)
 
     # plot the gLABs OUTPUT messages
     # - position ENU and PDOP plots

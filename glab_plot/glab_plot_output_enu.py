@@ -228,10 +228,10 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, center: str, logger: lo
 
     logger.info('{func:s}: created scatter plot {plot:s}'.format(func=cFuncName, plot=colored(png_filename, 'green')))
 
-    # if showplot:
-    plt.show(block=False)
-    # else:
-    # plt.close(fig)
+    if showplot:
+        plt.show(block=False)
+    else:
+        plt.close(fig)
 
 
 def plot_glab_scatter_bin(dfCrd: pd.DataFrame, scale: float, center: str, logger: logging.Logger, showplot: bool = False):

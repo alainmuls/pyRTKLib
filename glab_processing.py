@@ -52,7 +52,7 @@ class rxtype_action(argparse.Action):
 class marker_action(argparse.Action):
     def __call__(self, parser, namespace, marker, option_string=None):
         if marker not in lst_markers:
-            raise argparse.ArgumentError(self, 'marker is one of {markers:s}'.format('|'.join(markers=lst_markers)))
+            raise argparse.ArgumentError(self, 'marker is one of {markers:s}'.format(markers='|'.join(lst_markers)))
         setattr(namespace, self.dest, marker)
 
 
@@ -60,7 +60,7 @@ class gnss_action(argparse.Action):
     def __call__(self, parser, namespace, gnsss, option_string=None):
         for gnss in gnsss:
             if gnss not in lst_gnsss:
-                raise argparse.ArgumentError(self, 'gnss is one of {gnsss:s}'.format('|'.join(gnsss=lst_gnsss)))
+                raise argparse.ArgumentError(self, 'select GNSS(s) out of {gnsss:s}'.format(gnsss='|'.join(lst_gnsss)))
         setattr(namespace, self.dest, gnsss)
 
 
@@ -101,7 +101,7 @@ def treatCmdOpts(argv):
     parser.add_argument('-y', '--year', help='Year (4 digits)', required=True, type=int)
     parser.add_argument('-d', '--doy', help='day-of-year [1..366]', required=True, type=int, action=doy_action)
 
-    parser.add_argument('-g', '--gnss', help='select GNSS to use (one of {gnsss:s}, default {gnss:s})'.format(gnsss='|'.join(lst_gnsss), gnss=colored(lst_gnsss[0], 'green')), default=lst_gnsss[0], type=str, required=False, action=gnss_action, nargs='+')
+    parser.add_argument('-g', '--gnss', help='select GNSS(s) to use (out of {gnsss:s}, default {gnss:s})'.format(gnsss='|'.join(lst_gnsss), gnss=colored(lst_gnsss[0], 'green')), default=lst_gnsss[0], type=str, required=False, action=gnss_action, nargs='+')
 
     parser.add_argument('-p', '--prcodes', help='select from {prcodes:s} (default to {prcode:s})'.format(prcodes='|'.join(lst_prcodes), prcode=colored(lst_prcodes[0], 'green')), required=False, type=str, default=lst_prcodes[0], action=prcode_action, nargs='+')
 
@@ -241,24 +241,12 @@ def create_session_template(logger: logging.Logger):
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    # from string import Template
-    # # open the file
-    # filein = open('foo.txt')
-    # # read it
-    # src = Template(filein.read())
-    # # document data
-    # title = "This is the title"
-    # subtitle = "And this is the subtitle"
-    # list = ['first', 'second', 'third']
-    # d = {'title': title, 'subtitle': subtitle, 'list': '\n'.join(list)}
-    # # do the substitution
-    # result = src.substitute(d)
-    # print(result)
-
     # create dict used for replacing the template keywords
     dTemplate = {}
     dTemplate['CMP_OBS_FILE'] = os.path.join(amc.dRTK['proc']['dir_rnx'], amc.dRTK['proc']['obs'])
-    dTemplate['CMP_NAV_FILES'] = ' '.join(amc.dRTK['proc']['nav'])
+    dTemplate['CMP_NAV_FILES'] = ''
+    for nav_file in amc.dRTK['proc']['nav']:
+        dTemplate['CMP_NAV_FILES'] += ' ' + os.path.join(amc.dRTK['proc']['dir_igs'], nav_file)
     dTemplate['CUTOFF_ANGLE'] = amc.dRTK['options']['cutoff']
     dTemplate['GNSS'] = ''.join(amc.dRTK['proc']['gnss'])
     if len(amc.dRTK['proc']['codes']) == 1:
@@ -268,7 +256,7 @@ def create_session_template(logger: logging.Logger):
     dTemplate['GLAB_OUT'] = os.path.join(amc.dRTK['proc']['dir_glab'], amc.dRTK['proc']['glab_out'])
 
     # report to the user
-    logger.info('{func:s}: creating config file {cfg:s} using:\n{json!s}'.format(cfg=colored(amc.dRTK['proc']['glab_cfg'], 'green'), func=cFuncName, json=json.dumps(dTemplate, sort_keys=False, indent=4, default=amutils.DT_convertor)))
+    # logger.info('{func:s}: creating config file {cfg:s} using:\n{json!s}'.format(cfg=colored(amc.dRTK['proc']['glab_cfg'], 'green'), func=cFuncName, json=json.dumps(dTemplate, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
     # create the configuration file
     try:
@@ -279,12 +267,29 @@ def create_session_template(logger: logging.Logger):
         glab_cfg = glab_templ.substitute(dTemplate)
 
         # save to configuration file
+        fd_cfg = open(os.path.join(amc.dRTK['proc']['dir_glab'], amc.dRTK['proc']['glab_cfg']), 'w')
+        fd_cfg.write(glab_cfg)
+        fd_cfg.close()
 
         logger.info('{func:s}: created glab configuration file {cfg:s}\n{content!s}'.format(cfg=amc.dRTK['proc']['glab_cfg'], content=glab_cfg, func=cFuncName))
 
     except IOError:
         logger.info('{func:s}: problems using template file {tmpl:s}'.format(tmpl=amc.dRTK['options']['template'], func=cFuncName))
         sys.exit(amc.E_FILE_NOT_EXIST)
+
+
+def run_glabng_session(logger: logging.Logger):
+    """
+    run_glabng_session runs gLAB (v6.x) using provided configuration file
+    """
+    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+    # uncompress the RINEX OBS file
+    runGLABNG = '{prog:s} -input:cfg {cfg:s}'.format(prog=amc.dRTK['progs']['glabng'], cfg=os.path.join(amc.dRTK['proc']['dir_glab'], amc.dRTK['proc']['glab_cfg']))
+    logger.info('{func:s}: Running:\n{cmd:s}'.format(func=cFuncName, cmd=colored(runGLABNG, 'green')))
+
+    # run the program
+    exeprogram.subProcessDisplayStdOut(cmd=runGLABNG, verbose=True)
 
 
 def main(argv) -> bool:
@@ -321,6 +326,9 @@ def main(argv) -> bool:
 
     # use the template file for creation of glab config file
     create_session_template(logger=logger)
+
+    # run glabng using created cfg file
+    run_glabng_session(logger=logger)
 
     # remove the decompressed RINEX files
     cleanup_rnx_files(logger=logger)
