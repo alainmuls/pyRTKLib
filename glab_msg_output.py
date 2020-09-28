@@ -208,7 +208,7 @@ def main(argv) -> bool:
     amc.dRTK['dgLABng']['pos'] = store_to_cvs(df=df_output, ext='pos', logger=logger, index=False)
 
     # compress the stored CVS file
-    runGZIP = '{prog:s} -f -v {zip:s}'.format(prog=amc.dRTK['progs']['gzip'], zip=os.path.join(amc.dRTK['dir_root'], amc.dRTK['dgLABng']['pos']))
+    runGZIP = '{prog:s} -f -v {zip:s}'.format(prog=amc.dRTK['progs']['gzip'], zip=os.path.join(amc.dRTK['dir_root'], amc.dRTK['dgLABng']['dir_glab'], amc.dRTK['dgLABng']['pos']))
     logger.info('{func:s}: Compressing file {cmp:s}:\n{cmd:s}'.format(func=cFuncName, cmd=colored(runGZIP, 'green'), cmp=colored(amc.dRTK['dgLABng']['pos'], 'green')))
     # run the program
     exeprogram.subProcessDisplayStdErr(cmd=runGZIP, verbose=True)

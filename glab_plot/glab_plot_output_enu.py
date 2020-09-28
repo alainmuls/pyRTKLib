@@ -206,7 +206,7 @@ def plot_glab_scatter(dfCrd: pd.DataFrame, scale: float, center: str, logger: lo
         bin_percentage = '{perc:.1f}'.format(perc=amc.dRTK['dgLABng']['stats']['dop_bin'][binInterval]['perc'] * 100)
         ax.plot(dfCrd.loc[index4Bin, 'dE0'], dfCrd.loc[index4Bin, 'dN0'], label=r'{!s} $\leq$ PDOP $<$ {!s} ({:s}%)'.format(glc.dop_bins[i - 1], glc.dop_bins[i], bin_percentage), **markerBins[i - 1])
 
-        print('i = {:d} color = {!s}'.format(i, markerBins[i]['color']))
+        # print('i = {:d} color = {!s}'.format(i, markerBins[i]['color']))
 
     # lcoation of legend
     ax.legend(loc='best', markerscale=6, fontsize='x-small')

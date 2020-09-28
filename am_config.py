@@ -119,7 +119,7 @@ def get_title_info(logger: logging.Logger) -> Tuple[str, str]:
     # extract from collected information
     dInfo = dRTK['INFO']
 
-    print('Info = {!s}'.format(dInfo))
+    # print('Info = {!s}'.format(dInfo))
     logger.info('{func:s}: dInfo =\n{json!s}'.format(func=cFuncName, json=json.dumps(dInfo, sort_keys=False, indent=4, default=amutils.DT_convertor)))
 
     marker = dInfo['rx']['marker']
