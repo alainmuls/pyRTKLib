@@ -53,7 +53,7 @@ do
     # echo 'DIRRIN = '${DIRRIN}
     # echo 'DIRIGS = '${DIRIGS}
 
-    echo ${RXTYPE}
+    echo 'Processing receiver '${RXTYPE}
     if [ ${RXTYPE} = 'ASTX' ]
     then
         MARKER=COMB
@@ -101,7 +101,8 @@ do
             for PRSCODE in ${PRSCODES[*]}
             do
                 echo 'PRSCODE = '${PRSCODE}
-                echo ${NICE} ${GLABPROC} -y ${YYYY} -d ${curDOY} -r ${RXTYPE} -g ${GNSS} -m ${MARKER} -p ${PRSCODE}
+                ${NICE} ${GLABPROC} -y ${YYYY} -d ${curDOY} -r ${RXTYPE} -g ${GNSS} -m ${MARKER} -p ${PRSCODE}
+                ${NICE} ${GLABMSGOUTPUT} -r ${DIRGLAB} -s 5 -f ${MARKER}-${GNSS}-${PRSCODE}.out.gz
             done
         fi
 

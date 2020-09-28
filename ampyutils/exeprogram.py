@@ -2,7 +2,6 @@ import sys
 from termcolor import colored
 import subprocess
 import time
-import logging
 
 __author__ = 'amuls'
 
