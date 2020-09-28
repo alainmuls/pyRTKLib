@@ -72,6 +72,7 @@ PYOBSTAB=${PYHOMEDIR}/pyobstab.py
 
 # galb related scripts
 GLABPROC=${PYHOMEDIR}/glab_processing.py
+GLABMSGOUTPUT=${PYHOMEDIR}/glab_msg_output.py
 
 # log files
 # LOGPYRTKPROC=${PYHOMEDIR}/pyrtkproc.log
