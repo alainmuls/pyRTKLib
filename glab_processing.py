@@ -18,7 +18,7 @@ __author__ = 'amuls'
 
 lst_markers = ['COMB', 'GPRS']
 lst_gnsss = ['E', 'G']
-lst_prcodes = ['C1C', 'C1W', 'C2L', 'C2W', 'C2W', 'C5Q']
+lst_prcodes = ['C1C', 'C1W', 'C2L', 'C2W', 'C2W', 'C5Q', 'C1A', 'C6A']
 
 lst_rxtypes = ['ASTX', 'TURP']
 dir_igs = os.path.join(os.path.expanduser("~"), 'RxTURP/BEGPIOS/igs')
@@ -26,6 +26,7 @@ dir_igs = os.path.join(os.path.expanduser("~"), 'RxTURP/BEGPIOS/igs')
 lst_logging_choices = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']
 
 glab_template = os.path.join(os.path.expanduser("~"), 'RxTURP/BEGPIOS', 'glab_kinematic.tmpl')
+
 
 class logging_action(argparse.Action):
     def __call__(self, parser, namespace, log_actions, option_string=None):
@@ -290,6 +291,14 @@ def run_glabng_session(logger: logging.Logger):
 
     # run the program
     exeprogram.subProcessDisplayStdOut(cmd=runGLABNG, verbose=True)
+
+    # compress the resulting "out" file
+    runGZIP = '{prog:s} -f {zip:s}'.format(prog=amc.dRTK['progs']['gzip'], zip=os.path.join(amc.dRTK['proc']['dir_glab'], amc.dRTK['proc']['glab_out']))
+    logger.info('{func:s}: compressing {out:s} file by:\n{cmd:s}'.format(out=amc.dRTK['proc']['glab_out'], func=cFuncName, cmd=colored(runGZIP, 'green')))
+    # run the program
+    exeprogram.subProcessDisplayStdErr(cmd=runGZIP, verbose=True)
+
+    runGZIP
 
 
 def main(argv) -> bool:

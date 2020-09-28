@@ -11,7 +11,7 @@ import pandas as pd
 from shutil import copyfile
 
 import am_config as amc
-from ampyutils import amutils
+from ampyutils import amutils, location, exeprogram
 from glab import glab_constants as glc
 from glab import glab_split_outfile, glab_parser_output, glab_parser_info, glab_statistics, glab_updatedb
 from glab_plot import glab_plot_output_enu, glab_plot_output_stats
@@ -66,7 +66,7 @@ def treatCmdOpts(argv):
     # create the parser for command line arguments
     parser = argparse.ArgumentParser(description=helpTxt)
     parser.add_argument('-r', '--rootdir', help='Root directory (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
-    parser.add_argument('-f', '--file', help='gLAB processed out file', required=True, type=str)
+    parser.add_argument('-f', '--file', help='gLAB compressed out file', required=True, type=str)
     # parser.add_argument('-r', '--resFile', help='RTKLib residuals file', type=str, required=False, default=None)
     # parser.add_argument('-m', '--marker', help='Geodetic coordinates (lat,lon,ellH) of reference point in degrees: 50.8440152778 4.3929283333 151.39179 for RMA, 50.93277777 4.46258333 123 for Peutie, default 0 0 0 means use mean position', nargs=3, type=str, required=False, default=["0", "0", "0"])
     parser.add_argument('-s', '--scale', help='display ENU plots with +/- this scale range (default 5m)', required=False, default=5, type=float, action=scale_action)
@@ -101,10 +101,10 @@ def check_arguments(logger: logging.Logger) -> int:
     else:  # change to directory
         os.chdir(path)
 
-    # check whether the glab_out exists and is readable
-    path = pathlib.Path(amc.dRTK['glab_out'])
+    # check whether the glab_compressed out file exists and is readable
+    path = pathlib.Path(amc.dRTK['glab_cmp_out'])
     if not path.is_file():
-        logger.info('{func:s}: file {file:s} does not exist'.format(file=colored(amc.dRTK['glab_out'], 'red'), func=cFuncName))
+        logger.info('{func:s}: file {file:s} does not exist'.format(file=colored(amc.dRTK['glab_cmp_out'], 'red'), func=cFuncName))
         return amc.E_FILE_NOT_EXIST
 
     # check whether the CVS database exists, if not check whether its directory exists, if not create
@@ -118,14 +118,13 @@ def check_arguments(logger: logging.Logger) -> int:
     return amc.E_SUCCESS
 
 
-def store_to_cvs(df: pd.DataFrame, ext: str, logger: logging.Logger, index: bool = True):
+def store_to_cvs(df: pd.DataFrame, ext: str, logger: logging.Logger, index: bool = True) -> str:
     """
     store the dataframe to a CSV file
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     csv_name = amc.dRTK['glab_out'].split('.')[0] + '.' + ext
-    amc.dRTK['dgLABng'][ext] = csv_name
 
     # make dir if not exist
     dir_glabng = os.path.join(amc.dRTK['dir_root'], amc.dRTK['dgLABng']['dir_glab'])
@@ -135,6 +134,8 @@ def store_to_cvs(df: pd.DataFrame, ext: str, logger: logging.Logger, index: bool
 
     # amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df, dfName=csv_name)
     logger.info('{func:s}: stored dataframe as csv file {csv:s}'.format(csv=colored(csv_name, 'yellow'), func=cFuncName))
+
+    return csv_name
 
 
 def main(argv) -> bool:
@@ -150,7 +151,7 @@ def main(argv) -> bool:
     # pd.options.display.float_format = "{:,.3f}".format
 
     # treat command line options
-    dir_root, glab_out, scale_enu, center_enu, db_cvs, show_plot, log_levels = treatCmdOpts(argv)
+    dir_root, glab_cmp_out, scale_enu, center_enu, db_cvs, show_plot, log_levels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=dir_root, logLevels=log_levels)
@@ -158,7 +159,7 @@ def main(argv) -> bool:
     # store cli parameters
     amc.dRTK = {}
     amc.dRTK['dir_root'] = dir_root
-    amc.dRTK['glab_out'] = glab_out
+    amc.dRTK['glab_cmp_out'] = glab_cmp_out
 
     # create sub dict for gLAB related info
     dgLABng = {}
@@ -177,6 +178,21 @@ def main(argv) -> bool:
 
     # glab_updatedb.db_update_line(db_name=amc.dRTK['dgLABng']['db'], line_id='2019,134', info_line='2019,134,new thing whole line for ', logger=logger)
 
+    # get location of progs used
+    amc.dRTK['progs'] = {}
+    amc.dRTK['progs']['gunzip'] = location.locateProg('gunzip', logger)
+    amc.dRTK['progs']['gzip'] = location.locateProg('gzip', logger)
+
+    # uncompress the "out" file
+    runGUNZIP = '{prog:s} -f -v {zip:s}'.format(prog=amc.dRTK['progs']['gunzip'], zip=os.path.join(amc.dRTK['dir_root'], amc.dRTK['glab_cmp_out']))
+    logger.info('{func:s}: Uncompressing file {cmp:s}:\n{cmd:s}'.format(func=cFuncName, cmd=colored(runGUNZIP, 'green'), cmp=colored(amc.dRTK['glab_cmp_out'], 'green')))
+
+    # run the program
+    exeprogram.subProcessDisplayStdErr(cmd=runGUNZIP, verbose=True)
+
+    # get name of uncompressed file
+    amc.dRTK['glab_out'] = amc.dRTK['glab_cmp_out'][:-3]
+
     # split gLABs out file in parts
     glab_msgs = glc.dgLab['messages'][0:2]  # INFO & OUTPUT messages needed
     dglab_tmpfiles = glab_split_outfile.split_glab_outfile(msgs=glab_msgs, glab_outfile=amc.dRTK['glab_out'], logger=logger)
@@ -189,7 +205,13 @@ def main(argv) -> bool:
     # read in the OUTPUT messages from OUTPUT temp file
     df_output = glab_parser_output.parse_glab_output(glab_output=dglab_tmpfiles['OUTPUT'], logger=logger)
     # save df_output as CSV file
-    store_to_cvs(df=df_output, ext='pos', logger=logger, index=False)
+    amc.dRTK['dgLABng']['pos'] = store_to_cvs(df=df_output, ext='pos', logger=logger, index=False)
+
+    # compress the stored CVS file
+    runGZIP = '{prog:s} -f -v {zip:s}'.format(prog=amc.dRTK['progs']['gzip'], zip=os.path.join(amc.dRTK['dir_root'], amc.dRTK['dgLABng']['pos']))
+    logger.info('{func:s}: Compressing file {cmp:s}:\n{cmd:s}'.format(func=cFuncName, cmd=colored(runGZIP, 'green'), cmp=colored(amc.dRTK['dgLABng']['pos'], 'green')))
+    # run the program
+    exeprogram.subProcessDisplayStdErr(cmd=runGZIP, verbose=True)
 
     # calculate statitics gLAB OUTPUT messages
     amc.dRTK['dgLABng']['stats'], dDB_crds = glab_statistics.statistics_glab_outfile(df_outp=df_output, logger=logger)
@@ -221,6 +243,12 @@ def main(argv) -> bool:
 
     # sort the glab_output_db
     glab_updatedb.db_sort(db_name=amc.dRTK['dgLABng']['db'], logger=logger)
+
+    # recompress the "out" file
+    runGZIP = '{prog:s} -f -v {zip:s}'.format(prog=amc.dRTK['progs']['gzip'], zip=os.path.join(amc.dRTK['dir_root'], amc.dRTK['glab_out']))
+    logger.info('{func:s}: Compressing file {cmp:s}:\n{cmd:s}'.format(func=cFuncName, cmd=colored(runGZIP, 'green'), cmp=colored(amc.dRTK['glab_out'], 'green')))
+    # run the program
+    exeprogram.subProcessDisplayStdErr(cmd=runGZIP, verbose=True)
 
     # store the json structure
     json_out = amc.dRTK['glab_out'].split('.')[0] + '.json'

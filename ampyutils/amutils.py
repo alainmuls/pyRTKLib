@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 from tabulate import tabulate
 
+from ampyutils import exeprogram
 from GNSS import gpstime
 import am_config as amc
 

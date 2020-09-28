@@ -70,6 +70,9 @@ PYRTKPLOT=${PYHOMEDIR}/pyrtkplot.py
 PYPOS2MAVG=${PYHOMEDIR}/pos2movavg.py
 PYOBSTAB=${PYHOMEDIR}/pyobstab.py
 
+# galb related scripts
+GLABPROC=${PYHOMEDIR}/glab_processing.py
+
 # log files
 # LOGPYRTKPROC=${PYHOMEDIR}/pyrtkproc.log
 # LOGPYRTKPLOT=${PYHOMEDIR}/pyrtkplot.log

@@ -85,9 +85,9 @@ def plot_glab_statistics(df_dopenu: pd.DataFrame, scale: float, logger: logging.
     amutils.mkdir_p(dir_png)
     fig.savefig(png_filename, dpi=fig.dpi)
 
-    logger.info('{func:s}: created scatter plot {plot:s}'.format(func=cFuncName, plot=colored(png_filename, 'green')))
+    logger.info('{func:s}: created statistics plot {plot:s}'.format(func=cFuncName, plot=colored(png_filename, 'green')))
 
     if showplot:
-        plt.show(block=False)
+        plt.show(block=True)
     else:
         plt.close(fig)
