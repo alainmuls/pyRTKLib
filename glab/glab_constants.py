@@ -125,5 +125,6 @@ dOUTPUT['CLK'] = dOUTPUT['columns'][32:35]
 dOUTPUT['XDOP'] = dOUTPUT['columns'][35:40]
 dOUTPUT['ZTD'] = dOUTPUT['columns'][40:43]
 dOUTPUT['UTM'] = ['UTM.N', 'UTM.E']
+dOUTPUT['ENU'] = ['UTM.N', 'UTM.E', 'ellH']
 
 dgLab['OUTPUT'] = dOUTPUT
