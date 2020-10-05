@@ -9,7 +9,7 @@ import am_config as amc
 __author__ = 'amuls'
 
 
-def db_parse_gnss_codes(db_name: str, crd_types: list, logger: logging.Logger):
+def db_parse_gnss_codes(db_name: str, crd_types: list, logger: logging.Logger) -> str:
     """
     db_parse_gnss_codes parses the database file and keeps the lines according to a specific GNSSs and prcodes, keeping only the lines specified in the crd list
     """
@@ -19,7 +19,7 @@ def db_parse_gnss_codes(db_name: str, crd_types: list, logger: logging.Logger):
 
     # open the CSV glabdb file and check each line
     tmp_csvdb_name = os.path.join(tempfile.gettempdir(), tempfile.NamedTemporaryFile(suffix=".csv").name)
-    print(tmp_csvdb_name)
+    # print(tmp_csvdb_name)
 
     # determine the keys for the temp dict to create
     keys = ['year', 'doy', 'gnss', 'marker', 'prcode', 'crd_type']
@@ -32,8 +32,9 @@ def db_parse_gnss_codes(db_name: str, crd_types: list, logger: logging.Logger):
 
             # check whether this line is to be selected
             if check_vailidity_line(line_dict=dLine, crd_types=crd_types):
-                print(dLine)
-            # sys.exit(5)
+                outf.write(line)
+
+    return tmp_csvdb_name
 
 
 def check_vailidity_line(line_dict: dict, crd_types: list) -> bool:

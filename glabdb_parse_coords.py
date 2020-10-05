@@ -7,6 +7,7 @@ from termcolor import colored
 import json
 import logging
 import pathlib
+import pandas as pd
 
 import am_config as amc
 from glab import glab_constants as glc
@@ -197,8 +198,28 @@ def main(argv) -> bool:
     if ret_val != amc.E_SUCCESS:
         sys.exit(ret_val)
 
-    # parse the database file to get the GNSSs and prcodes we need
-    glab_parsedb.db_parse_gnss_codes(db_name=amc.dRTK['options']['glab_db'], crd_types=glc.dgLab['OUTPUT']['ENU'], logger=logger)
+    # for crds in ['ENU', 'dENU']:
+    for crds in ['ENU']:
+        # parse the database file to get the GNSSs and prcodes we need
+        tmp_name = glab_parsedb.db_parse_gnss_codes(db_name=amc.dRTK['options']['glab_db'], crd_types=glc.dgLab['OUTPUT'][crds], logger=logger)
+
+        # read into dataframe
+        logger.info('{func:s}: reading selected information into dataframe'.format(func=cFuncName))
+
+        colnames = ['yyyy', 'doy', 'gnss', 'marker', 'prcodes', 'crds']
+        if crds == 'ENU':
+            colnames += ['mean', 'std', 'max', 'min']
+
+        print('colnames = {!s}'.format(colnames))
+        try:
+            df_crds = pd.read_csv(tmp_name, names=colnames, header=None)
+        except FileNotFoundError as e:
+            logger.critical('{func:s}: Error = {err!s}'.format(err=e, func=cFuncName))
+            sys.exit(amc.E_FILE_NOT_EXIST)
+
+        amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_crds, dfName='df[{crds:s}]'.format(crds=crds))
+
+
 
     # report to the user
     logger.info('{func:s}: Project information =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
