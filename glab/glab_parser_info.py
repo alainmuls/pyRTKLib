@@ -189,7 +189,6 @@ def parse_glab_info_filter(glab_lines: list, dFilter: dict) -> Tuple[dict, str, 
         # create subset of glab_lines for this key
         val_lines = [line for line in glab_lines if val in line]
 
-
         if len(val_lines) == 1:
             line = val_lines[0]
 
@@ -210,7 +209,6 @@ def parse_glab_info_filter(glab_lines: list, dFilter: dict) -> Tuple[dict, str, 
                     if re.match(re_meas, info):
                         dFilter_info['gnss'] += info[0]
 
-
         else:  # more than 1 element in 'val_lines'
             if key == 'meas':
                 dFilter_info[key] = ''
@@ -230,11 +228,9 @@ def parse_glab_info_filter(glab_lines: list, dFilter: dict) -> Tuple[dict, str, 
                         if re.match(re_meas, info) and info[0] not in dFilter_info['gnss']:
                             dFilter_info['gnss'] += info[0]
 
-
     # lookup corresponding MARKER name and GNSS
     marker = glc.dgLab['GNSS'][dFilter_info['gnss']]['marker']
     gnss = glc.dgLab['GNSS'][dFilter_info['gnss']]['gnss']
-
 
     return dFilter_info, marker, gnss
 

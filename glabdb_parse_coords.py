@@ -13,14 +13,38 @@ from glab import glab_constants as glc
 from glab import glab_parsedb
 from ampyutils import amutils
 
+
+def common(lst1, lst2):
+    return list(set(lst1) & set(lst2))
+
+
 lst_logging_choices = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']
 
 lst_gnsss = ['E', 'G', 'GE']
-lst_prcodes = ['C1C', 'C1W', 'C2L', 'C2W', 'C2W', 'C5Q', 'C1A', 'C6A']
 
-lst_markers = ['None', 'GALI', 'GPSN', 'COMB', 'GPRS']
+lst_e_markers = ['GALI', 'GPRS']
+lst_g_markers = ['GPSN']
+lst_eg_markers = ['COMB']
 
-glab_db = os.path.join(os.path.expanduser("~"), 'RxTURP/', 'glab_output_db.csv')
+dMarkers = dict(zip(lst_gnsss, [lst_e_markers, lst_g_markers, lst_eg_markers]))
+
+lst_markers = list(set(lst_e_markers) | set(lst_g_markers) | set(lst_eg_markers))
+lst_markers.sort()
+# lst_markers = ['None', 'GALI', 'GPSN', 'COMB', 'GPRS']
+
+lst_gali_prcodes = ['C1C', 'C5Q']
+lst_gprs_prcodes = ['C1A', 'C6A']
+lst_gpsn_prcodes = ['C1C', 'C1W', 'C2L', 'C2W', 'C5Q']
+
+# lst_prcodes = ['C1C', 'C1W', 'C2L', 'C2W', 'C5Q', 'C1A', 'C6A']
+lst_prcodes = list(set(lst_gali_prcodes) | set(lst_gpsn_prcodes) | set(lst_gprs_prcodes))
+lst_prcodes.sort()
+
+# dPRcodes = {'GALI': lst_gali_prcodes, 'GPSN': lst_gpsn_prcodes, 'COMB': common(lst1=lst_gali_prcodes, lst2=lst_gpsn_prcodes), 'GPRS': lst_gprs_prcodes}
+
+dPRcodes = dict(zip(lst_markers, [common(lst1=lst_gali_prcodes, lst2=lst_gpsn_prcodes), lst_gali_prcodes, lst_gprs_prcodes, lst_gpsn_prcodes]))
+
+glab_db = os.path.join(os.path.expanduser("~"), 'amPython/pyRTKLib/', 'glab_output_db.csv')
 
 
 class logging_action(argparse.Action):
@@ -86,9 +110,11 @@ def treatCmdOpts(argv):
 
     parser.add_argument('-d', '--dbglab', help='glab CSV dbase file (default {glabdb:s})'.format(glabdb=colored(glab_db, 'green')), required=False, type=str, default=glab_db)
 
-    parser.add_argument('-g', '--gnsss', help='select GNSS(s) to use (out of {gnsss:s}, default {gnss:s})'.format(gnsss='|'.join(lst_gnsss), gnss=colored(lst_gnsss[0], 'green')), default=lst_gnsss[0], type=str, required=False, action=gnss_action, nargs='+')
-    parser.add_argument('-p', '--prcodes', help='select from {prcodes:s} (default to {prcode:s})'.format(prcodes='|'.join(lst_prcodes), prcode=colored(lst_prcodes[0], 'green')), required=False, type=str, default=lst_prcodes[0], action=prcode_action, nargs='+')
-    parser.add_argument('-m', '--marker', help='marker name (4 chars, one of {markers:s}, default {marker:s})'.format(markers='|'.join(lst_markers), marker=colored(lst_markers[0], 'green')), type=str, required=False, default=[lst_markers[0]], action=marker_action, nargs='+')
+    parser.add_argument('-g', '--gnsss', help='select GNSS(s) to use (out of {gnsss:s}, default {gnss:s})'.format(gnsss='|'.join(lst_gnsss), gnss=colored(lst_gnsss[lst_gnsss.index('E')], 'green')), default=lst_gnsss[lst_gnsss.index('E')], type=str, required=False, action=gnss_action, nargs='+')
+
+    parser.add_argument('-p', '--prcodes', help='select from {prcodes:s} (default to {prcode:s})'.format(prcodes='|'.join(lst_prcodes), prcode=colored(lst_prcodes[lst_prcodes.index('C1C')], 'green')), required=False, type=str, default=lst_prcodes[lst_prcodes.index('C1C')], action=prcode_action, nargs='+')
+
+    parser.add_argument('-m', '--marker', help='marker name (4 chars, one of {markers:s}, default {marker:s})'.format(markers='|'.join(lst_markers), marker=colored(lst_markers[lst_markers.index('GALI')], 'green')), type=str, required=False, default=[lst_markers[lst_markers.index('GALI')]], action=marker_action, nargs='+')
 
     parser.add_argument('-y', '--year', help='Year (4 digits)', required=True, type=int)
     parser.add_argument('-s', '--doy_start', help='start day-of-year [1..366]', required=True, type=int, action=doy_start_action)
@@ -119,6 +145,33 @@ def check_arguments(logger: logging.Logger) -> int:
     if not path.is_file():
         logger.info('{func:s}: gLAB CSV database file {csv:s} does not exist'.format(csv=colored(amc.dRTK['options']['glab_db'], 'red'), func=cFuncName))
         return amc.E_FILE_NOT_EXIST
+
+    # check whether a correct combination of GNSS, PRCODES and MARKER has been selected
+    # print('dMarkers = {!s}'.format(dMarkers))
+    # print('dPRcodes = {!s}'.format(dPRcodes))
+    # logger.info('{func:s}: Project information =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
+
+    # make a combination of all possible markers
+    tmp_lst = [v for k, v in dMarkers.items() if k in amc.dRTK['options']['gnsss']]
+    allowed_markers = [item for sublist in tmp_lst for item in sublist]
+    # print('allowed_markers = {!s}'.format(allowed_markers))
+
+    # make a combination of all possible prcodes
+    tmp_lst = [v for k, v in dPRcodes.items() if k in allowed_markers]
+    allowed_prcodes = [item for sublist in tmp_lst for item in sublist]
+    # print('allowed_prcodes = {!s}'.format(allowed_prcodes))
+
+    # check combination markers - gnsss
+    for marker in amc.dRTK['options']['markers']:
+        if marker not in allowed_markers:
+            logger.error('{func:s}: combination of marker {marker:s} and systems {gnsss!s} not allowed'.format(marker=colored(marker, 'red'), gnsss=colored(amc.dRTK['options']['gnsss'], 'red'), func=cFuncName))
+            return amc.E_WRONG_OPTION
+
+    # check combination of prcodes
+    for prcode in amc.dRTK['options']['prcodes']:
+        if prcode not in allowed_prcodes:
+            logger.error('{func:s}: prcode {prcode:s} not available for markers {markers:s} and systems {gnsss!s} not allowed'.format(prcode=colored(prcode, 'red'), markers=colored(amc.dRTK['options']['markers'], 'red'), gnsss=colored(amc.dRTK['options']['gnsss'], 'red'), func=cFuncName))
+            return amc.E_WRONG_OPTION
 
     return amc.E_SUCCESS
 
