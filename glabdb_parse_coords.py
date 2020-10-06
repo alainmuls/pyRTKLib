@@ -8,10 +8,12 @@ import json
 import logging
 import pathlib
 import pandas as pd
+import datetime
 
 import am_config as amc
 from glab import glab_constants as glc
-from glab import glab_parsedb
+from glab import glabdb_parse, glabdb_statistics
+from glab_plot import glabdb_plot_crds
 from ampyutils import amutils
 
 
@@ -121,13 +123,15 @@ def treatCmdOpts(argv):
     parser.add_argument('-s', '--doy_start', help='start day-of-year [1..366]', required=True, type=int, action=doy_start_action)
     parser.add_argument('-e', '--doy_end', help='end day-of-year [doy_start + 1..366]', required=True, type=int, action=doy_end_action)
 
+    parser.add_argument('-v', '--view_plots', help='view interactive plots (default True)', action='store_true', required=False, default=False)
+
     parser.add_argument('-l', '--logging', help='specify logging level console/file (two of {choices:s}, default {choice:s})'.format(choices='|'.join(lst_logging_choices), choice=colored(' '.join(lst_logging_choices[3:5]), 'green')), nargs=2, required=False, default=lst_logging_choices[3:5], action=logging_action)
 
     # drop argv[0]
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dbglab, args.gnsss, args.prcodes, args.marker, args.year, args.doy_start, args.doy_end, args.logging
+    return args.dbglab, args.gnsss, args.prcodes, args.marker, args.year, args.doy_start, args.doy_end, args.view_plots, args.logging
 
 
 def check_arguments(logger: logging.Logger) -> int:
@@ -155,12 +159,20 @@ def check_arguments(logger: logging.Logger) -> int:
     # make a combination of all possible markers
     tmp_lst = [v for k, v in dMarkers.items() if k in amc.dRTK['options']['gnsss']]
     allowed_markers = [item for sublist in tmp_lst for item in sublist]
-    # print('allowed_markers = {!s}'.format(allowed_markers))
+    print('allowed_markers = {!s}'.format(allowed_markers))
 
     # make a combination of all possible prcodes
     tmp_lst = [v for k, v in dPRcodes.items() if k in allowed_markers]
     allowed_prcodes = [item for sublist in tmp_lst for item in sublist]
+
     # print('allowed_prcodes = {!s}'.format(allowed_prcodes))
+    # print('dPRcodes["GALI"] = {!s}'.format(dPRcodes["GALI"]))
+    # print('dPRcodes["GPSN"] = {!s}'.format(dPRcodes["GPSN"]))
+    # print('dPRcodes["COMB"] = {!s}'.format(dPRcodes["COMB"]))
+    # print('dPRcodes["GPRS"] = {!s}'.format(dPRcodes["GPRS"]))
+
+    # print('dMarkers = {!s}'.format(dMarkers))
+    # print('dPRcodes = {!s}'.format(dPRcodes))
 
     # check combination markers - gnsss
     for marker in amc.dRTK['options']['markers']:
@@ -187,7 +199,7 @@ def main(argv) -> bool:
     # store cli parameters
     amc.dRTK = {}
     cli_opt = {}
-    cli_opt['glab_db'], cli_opt['gnsss'], cli_opt['prcodes'], cli_opt['markers'], cli_opt['yyyy'], cli_opt['doy_begin'], cli_opt['doy_last'], log_levels = treatCmdOpts(argv)
+    cli_opt['glab_db'], cli_opt['gnsss'], cli_opt['prcodes'], cli_opt['markers'], cli_opt['yyyy'], cli_opt['doy_begin'], cli_opt['doy_last'], show_plot, log_levels = treatCmdOpts(argv)
     amc.dRTK['options'] = cli_opt
 
     # create logging for better debugging
@@ -201,7 +213,7 @@ def main(argv) -> bool:
     # for crds in ['ENU', 'dENU']:
     for crds in ['ENU']:
         # parse the database file to get the GNSSs and prcodes we need
-        tmp_name = glab_parsedb.db_parse_gnss_codes(db_name=amc.dRTK['options']['glab_db'], crd_types=glc.dgLab['OUTPUT'][crds], logger=logger)
+        tmp_name = glabdb_parse.db_parse_gnss_codes(db_name=amc.dRTK['options']['glab_db'], crd_types=glc.dgLab['OUTPUT'][crds], logger=logger)
 
         # read into dataframe
         logger.info('{func:s}: reading selected information into dataframe'.format(func=cFuncName))
@@ -213,13 +225,25 @@ def main(argv) -> bool:
         print('colnames = {!s}'.format(colnames))
         try:
             df_crds = pd.read_csv(tmp_name, names=colnames, header=None)
+            # test time
+            d = datetime.date(2020, 1, 1) + datetime.timedelta(39 - 1)
+            print(d)
+
+            # convert YYYY/DOY to a datetime.date field
+            df_crds['DT'] = df_crds.apply(lambda x: datetime.date(x['yyyy'], 1, 1) + datetime.timedelta(x['doy'] - 1), axis=1)
+
         except FileNotFoundError as e:
             logger.critical('{func:s}: Error = {err!s}'.format(err=e, func=cFuncName))
             sys.exit(amc.E_FILE_NOT_EXIST)
 
         amutils.logHeadTailDataFrame(logger=logger, callerName=cFuncName, df=df_crds, dfName='df[{crds:s}]'.format(crds=crds))
 
-
+        # determine statistics
+        if crds == 'ENU':
+            # statistics over the coordinates ENU per prcode selected
+            amc.dRTK['stats_{crd:s}'.format(crd=crds)] = glabdb_statistics.crd_statistics(crds=crds, prcodes=amc.dRTK['options']['prcodes'], df_crds=df_crds, logger=logger)
+            # plot the mean / std values for all prcodes per ENU coordinates
+            glabdb_plot_crds.plot_glabdb_position(crds=crds, prcodes=amc.dRTK['options']['prcodes'], df_crds=df_crds, logger=logger, showplot=show_plot)
 
     # report to the user
     logger.info('{func:s}: Project information =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))

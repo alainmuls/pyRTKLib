@@ -290,7 +290,7 @@ def UTCFromWT(weeknr, tow):
     datum = datetime.datetime(1980, 1, 6, 0, 0, 0)
     week = datetime.timedelta(weeks=weeknr)
     sec = datetime.timedelta(seconds=tow)
-    time = datum+week+sec
+    time = datum + week + sec
     return time
 
 # def PyUTCFromGpsSeconds(gpsseconds):

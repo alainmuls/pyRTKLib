@@ -1,0 +1,2439 @@
+<html>
+<head>
+<title>Leica SpiderQC v7.2 Quality Report</title>
+<meta content="text/html" charset="UTF-8" http-equiv="Content-Type" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+<meta HTTP-EQUIV="Pragma" CONTENT="no-cache" />
+<meta HTTP-EQUIV="Expires" CONTENT="-1" />
+<STYLE type="text/css">
+/*********** STYLE SHEET FOR LEICA GNSS QC **************/
+/********************************************************/
+
+/* General Start */
+
+body{
+	background: #FFFFFF;
+	MARGIN-TOP: 0px; 
+	FONT-SIZE: 11px; 
+	MARGIN-BOTTOM: 0px; 
+	MARGIN-RIGHT: 0px; 
+	FONT-FAMILY: Arial, Helvetica, sans-serif
+	}
+
+/* General End */
+
+/* Text Start */
+
+H1 {
+	FONT-WEIGHT: bold; FONT-SIZE: 18px; COLOR: #065086; TEXT-ALIGN: left; MARGIN: 0px; LINE-HEIGHT: 20px; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+H2 {
+	FONT-WEIGHT: bold; FONT-SIZE: 14px; COLOR: #2f2f2f; TEXT-ALIGN: left; MARGIN: 0px; LINE-HEIGHT: 17px; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+H3 {
+	FONT-WEIGHT: bold; FONT-SIZE: 12px; COLOR: #000000; TEXT-ALIGN: left; MARGIN: 0px; FONT-FAMILY: Arial, Helvetica, sans-serif
+}
+
+A:link {FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Arial, Helvetica, sans-serif}
+A:visited {FONT-SIZE: 11px; COLOR: #000000; FONT-FAMILY: Arial, Helvetica, sans-serif}
+
+A.noticemsg {COLOR: #000000; font-weight:normal;}
+A.errormsg {COLOR: #E81840; font-weight:normal;}
+
+/* Text End */
+
+/* Table Start */
+
+/* Quality Check first item */
+.QCF {
+	background: #FFFFFF;
+	text-align: left;
+	width:      155px;
+}
+
+/* Quality Check header 1 */
+.QCH1 {
+	background: #FFFFFF;
+	text-align: left;
+	font-weight: bold;
+	color:      #43773F;
+}
+
+/* Quality Check header 2 text*/
+.QCH2F {
+	background: #FFFFFF;
+	text-align: left;
+	font-weight: bold;
+	color:      #345772;
+	width:      90px;
+}
+
+/* Quality Check header 2 number */
+.QCH2 {
+	background: #FFFFFF;
+	text-align: right;
+	font-weight: bold;
+	color:      #345772;
+	width:      90px;
+}
+
+/* Quality Check text */
+.QCT {
+	background: #FFFFFF;
+	text-align: left;
+}
+
+/* Quality Check number */
+.QCN {
+	background: #FFFFFF;
+	text-align: right;
+}
+
+/* Quality Check warning number */
+.QCWN {
+	background: #FFFFFF;
+	text-align: right;
+	font-weight: bold;
+	color:      #E81840;
+}
+
+/* Quality Check positive text */
+.QCP {
+	background: #FFFFFF;
+	text-align: left;
+	font-weight: bold;
+	color:      #037F0C;
+}
+
+/* Quality Check warning text */
+.QCW {
+	background: #FFFFFF;
+	text-align: left;
+	font-weight: bold;
+	color:      #E81840;
+}
+
+/* Horzontal bar graphs */
+.bar,
+.bar_red,
+.bar_green,
+.bar_gps,
+.bar_glonass,
+.bar_galileo,
+.bar_beidou,
+.bar_qzss {
+        background-color: white;
+        text-align: right;
+        padding-right: 0.1em;
+        width: 70px;
+      }
+
+.bar div,
+.bar_red div,
+.bar_green div,
+.bar_gps div,
+.bar_glonass div,
+.bar_galileo div,
+.bar_beidou div,
+.bar_qzss div {
+        border-top: solid 2px #D8D8D8;
+        background-color: #B8B8B8;
+        border-bottom: solid 2px #807880;
+        text-align: right;
+        color: white;
+        float: left;
+        padding-top: 0;
+      }
+
+.bar div {
+        border-top: solid 2px #D8D8D8;
+        background-color: #B8B8B8;
+        border-bottom: solid 2px #807880;
+      }
+
+ .bar_red div {
+        border-top: solid 2px #F9637F;
+        background-color: #E81840;
+        border-bottom: solid 2px #A71531;
+      }
+
+ .bar_green div {
+        border-top: solid 2px #24C62F;
+        background-color: #0EA218;
+        border-bottom: solid 2px #07710E;
+      }
+
+ .bar_gps div {
+        border-top: solid 2px #85A8C3;
+        background-color: #5880A0;
+        border-bottom: solid 2px #456985;
+      }
+
+ .bar_glonass div {
+        border-top: solid 2px #E2DA9A;
+        background-color: #CCC868;
+        border-bottom: solid 2px #ADA633;
+      }
+
+ .bar_galileo div {
+        border-top: solid 2px #87B1A3;
+        background-color: #609080;
+        border-bottom: solid 2px #4B7164;
+      }
+
+ .bar_beidou div {
+        border-top: solid 2px #870000;
+        background-color: #770000;
+        border-bottom: solid 2px #670000;
+      }
+ .bar_qzss div {
+        border-top: solid 2px #f1e4e4;
+        background-color: #770000;
+        border-bottom: solid 2px #cd9e9e;
+      }
+            
+TABLE {	FONT-SIZE: 11px; FONT-FAMILY: Arial, Helvetica, sans-serif }
+table.table {border:0; }
+
+th {FONT-SIZE: 11px; font-weight:bold; text-align:left}
+
+td {FONT-SIZE: 11px; FONT-FAMILY: Arial, Helvetica, sans-serif }
+
+/* Table End */
+</STYLE>
+</head><body>
+<table border="0">
+<tr>
+<td>
+<h1>Leica SpiderQC v7.2 Quality Report</h1><br />
+<table>
+<tr>
+<td class="QCF">Program Run:</td>
+<td class="QCT">2020/05/12 02:56:06.04</td>
+</tr>
+</table>
+<br />
+<h3>File Details:</h3>
+<br />
+<table>
+<tr>
+<td class="QCF">Observation File:</td>
+<td class="QCT">olln133c.20o</td>
+</tr>
+<tr>
+<td class="QCF">GPS Navigation File:</td>
+<td class="QCT">olln133c.20n</td>
+</tr>
+<tr>
+<td class="QCF">GLONASS Navigation File:</td>
+<td class="QCT">olln133c.20g</td>
+</tr>
+</table>
+<table>
+<tr>
+<td class="QCF">Quality Testing:&nbsp;</td>
+<td class="QCP">Pass&nbsp;</td>
+</tr>
+</table>
+<br />
+<h3>Station Details:</h3>
+<br />
+<table>
+<tr>
+<td class="QCF">Marker Name/Number:&nbsp;</td>
+<td class="QCT">OLLN&nbsp;</td>
+<td class="QCT">1017&nbsp;</td>
+<td class="QCT"> &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Observer/Agency:&nbsp;</td>
+<td class="QCT">Severine Dyon&nbsp;</td>
+<td class="QCT">SPW - WALCORS&nbsp;</td>
+<td class="QCT"> &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Receiver #/Type/Vers:&nbsp;</td>
+<td class="QCT">1700118&nbsp;</td>
+<td class="QCT">LEICA GR10&nbsp;</td>
+<td class="QCT">4.31/6.525&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Antenna #/Type:&nbsp;</td>
+<td class="QCT">10411002&nbsp;</td>
+<td class="QCT">LEIAR25.R4      LEIT&nbsp;</td>
+<td class="QCT"> &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Antenna Offsets (HEN):&nbsp;</td>
+<td class="QCT"> 0.000&nbsp;</td>
+<td class="QCT"> 0.000&nbsp;</td>
+<td class="QCT"> 0.000&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Approx Position (XYZ):&nbsp;</td>
+<td class="QCT">4036774.375&nbsp;</td>
+<td class="QCT">326765.269&nbsp;</td>
+<td class="QCT">4911026.672&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Approx Position (plh):&nbsp;</td>
+<td class="QCT">50&deg; 40' 38.58508" N&nbsp;</td>
+<td class="QCT">4&deg; 37' 40.21753" E&nbsp;</td>
+<td class="QCT">189.225m&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Diff. Est-Header:&nbsp;</td>
+<td class="QCT">-3.8 m dX&nbsp;</td>
+<td class="QCT">-5.7 m dY&nbsp;</td>
+<td class="QCT">2.5 m dZ&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Diff. Est-Header:&nbsp;</td>
+<td class="QCT" colspan="3">7.3 m (3600 estimates)&nbsp;</td>
+</tr>
+</table>
+<br />
+<h3>Session Summary:</h3>
+<br />
+<table>
+<tr>
+<td class="QCF">Time of first obs:&nbsp;</td>
+<td class="QCT">2020/05/12 02:00:00.00 GPS&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Time of last obs:&nbsp;</td>
+<td class="QCT">2020/05/12 02:59:59.00 GPS&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Session length:&nbsp;</td>
+<td class="QCT">59.98 minutes&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">GPS week:&nbsp;</td>
+<td class="QCT">2105, day 2&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Observation interval:&nbsp;</td>
+<td class="QCT">1.00 seconds&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">UTC leap seconds:&nbsp;</td>
+<td class="QCT">18 seconds&nbsp;</td>
+</tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCF">Num SVs with obs:&nbsp;</td>
+<td class="QCT">25&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num SVs with nav:&nbsp;</td>
+<td class="QCT">54&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Total GPS orbits:&nbsp;</td>
+<td class="QCT">56&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Total GLONASS orbits:&nbsp;</td>
+<td class="QCT">43&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Total Galileo orbits:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Total BeiDou orbits:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Total QZSS orbits:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">SVs with obs:&nbsp;</td>
+<td class="QCT">G2 G5 G6 G7 G8 G9 G13 G15 G16 G18 G21 G28 G29 G30 R3 R4 R5 R6 R13 R14 R15 R16 R20 R21 R22 &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">SVs without obs:&nbsp;</td>
+<td class="QCT">G1 G3 G4 G10 G11 G12 G14 G17 G19 G20 G22 G23 G24 G25 G26 G27 G31 G32 R1 R2 R7 R8 R9 R10 R11 R12 R17 R18 R19 R23 R24 E1 E2 E3 E4 E5 E6 E7 E8 E9 E10 E11 E12 E13 E14 E15 E16 E17 E18 E19 E20 E21 E22 E23 E24 E25 E26 E27 E28 E29 E30 E31 E32 E33 E34 E35 E36 C1 C2 C3 C4 C5 C6 C7 C8 C9 C10 C11 C12 C13 C14 C15 C16 C17 C18 C19 C20 C21 C22 C23 C24 C25 C26 C27 C28 C29 C30 C31 C32 C33 C34 C35 C36 C37 J1 J2 J3 J4 J5 J6 J7 J8 J9 J10 &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">SVs with nav:&nbsp;</td>
+<td class="QCT">G1 G2 G3 G4 G5 G6 G7 G8 G9 G10 G11 G12 G13 G14 G15 G16 G17 G18 G19 G20 G21 G22 G24 G25 G26 G27 G28 G29 G30 G31 G32 R1 R2 R3 R4 R5 R6 R8 R9 R10 R11 R12 R13 R14 R15 R16 R17 R18 R19 R20 R21 R22 R23 R24 &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">SVs without nav:&nbsp;</td>
+<td class="QCT">G23 R7 &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">User Disabled SVs:&nbsp;</td>
+<td class="QCT">None&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Meteo epochs:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Auxiliary epochs:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+</table>
+<br />
+<h3>Quality Testing:</h3>
+<br />
+<table>
+<tr>
+<td class="QCH2F"> &nbsp;</td>
+<td class="QCH2F">Pass/Fail &nbsp;</td>
+<td class="QCH2F">Details&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH1" colspan="3">General Tests&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Epochs With Data:&nbsp;</td>
+<td class="QCT">Pass&nbsp;</td>
+<td class="QCT">Value 100.0 %, Threshold 99.0 %&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">File Format:&nbsp;</td>
+<td class="QCT">Pass&nbsp;</td>
+<td class="QCT"> &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">RX Clock:&nbsp;</td>
+<td class="QCT">Pass&nbsp;</td>
+<td class="QCT"> &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Other:&nbsp;</td>
+<td class="QCT">Pass&nbsp;</td>
+<td class="QCT"> &nbsp;</td>
+</tr>
+</table>
+<table>
+<tr>
+<td class="QCH2F"> &nbsp;</td>
+<td class="QCH2F"> &nbsp;</td>
+<td class="QCH2F"> &nbsp;</td>
+</tr>
+<tr>
+<td class="QCH1" colspan="3">GPS Specific Tests&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Cycle Slips:&nbsp;</td>
+<td class="QCT">Pass&nbsp;</td>
+<td class="QCT">Value 0 slips, Threshold 42 slips&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Multipath:&nbsp;</td>
+<td class="QCT">Pass&nbsp;</td>
+<td class="QCT">Value 0.05m MP1 / 0.04m MP2, Threshold 0.5 m&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Data Completeness:&nbsp;</td>
+<td class="QCT">Pass&nbsp;</td>
+<td class="QCT">Value 100.0 %, Threshold 95.0 %&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Navigation Data:&nbsp;</td>
+<td class="QCT">Pass&nbsp;</td>
+<td class="QCT"> &nbsp;</td>
+</tr>
+</table>
+<table>
+<tr>
+<td class="QCH2F"> &nbsp;</td>
+<td class="QCH2F"> &nbsp;</td>
+<td class="QCH2F"> &nbsp;</td>
+</tr>
+<tr>
+<td class="QCH1" colspan="3">GLONASS Specific Tests&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Cycle Slips:&nbsp;</td>
+<td class="QCT">Pass&nbsp;</td>
+<td class="QCT">Value 7 slips, Threshold 125 slips&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Multipath:&nbsp;</td>
+<td class="QCT">Pass&nbsp;</td>
+<td class="QCT">Value 0.06m MP1 / 0.04m MP2, Threshold 0.5 m&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Data Completeness:&nbsp;</td>
+<td class="QCT">Pass&nbsp;</td>
+<td class="QCT">Value 94.0 %, Threshold 90.0 %&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Navigation Data:&nbsp;</td>
+<td class="QCT">Pass&nbsp;</td>
+<td class="QCT"> &nbsp;</td>
+</tr>
+</table>
+<br />
+<h3>General Quality Indicators:</h3>
+<br />
+<table>
+<tr>
+<td class="QCH1">Tracking&nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num obs > 0&deg;:&nbsp;</td>
+<td class="QCT">69299&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num possible obs > 0&deg;:&nbsp;</td>
+<td class="QCT">76736&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num obs with invalid nav:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num obs without nav:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num obs to unhealthy SV:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num obs with WLF change:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num complete loss of lock:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCF">Epochs with < 5 SV > 15&deg;:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+<td class="QCT">(0.0 %)&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Epochs with all SV > 15&deg;:&nbsp;</td>
+<td class="QCT">3552&nbsp;</td>
+<td class="QCT">(98.7 %)&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Epochs with full data > 15&deg;:&nbsp;</td>
+<td class="QCT">2362&nbsp;</td>
+<td class="QCT">(65.6 %)&nbsp;</td>
+</tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="4">Satellite Geometry&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH2F">DOP&nbsp;</td>
+<td class="QCH2">Minimum&nbsp;</td>
+<td class="QCH2">Maximum&nbsp;</td>
+<td class="QCH2">Average&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">PDOP&nbsp;</td>
+<td class="QCN">3.1&nbsp;</td>
+<td class="QCN">3.9&nbsp;</td>
+<td class="QCN">3.5&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">GDOP&nbsp;</td>
+<td class="QCN">3.8&nbsp;</td>
+<td class="QCN">4.9&nbsp;</td>
+<td class="QCN">4.3&nbsp;</td>
+</tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="2">Data Gaps&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num epochs with data:&nbsp;</td>
+<td class="QCT">3600&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num epochs without data:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Data Gaps:&nbsp;</td>
+<td class="QCT">0.00 seconds&nbsp;</td>
+</tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="3">List of Data Gaps (-)&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH2F">Duration&nbsp;</td>
+<td class="QCH2F">Start Time&nbsp;</td>
+<td class="QCH2F">End Time&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">None&nbsp;</td>
+<td class="QCT"> &nbsp;</td>
+<td class="QCT"> &nbsp;</td>
+</tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="5">Non-tracked satellites > 15&deg; (^):&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH2F">SV&nbsp;</td>
+<td class="QCH2F">Time (minutes)&nbsp;</td>
+<td class="QCH2F">Epoch Range&nbsp;</td>
+<td class="QCH2F">Elevation Range&nbsp;</td>
+<td class="QCH2F">Azimuth Range&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">None&nbsp;</td>
+<td class="QCT" colspan="4"> &nbsp;</td>
+</tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="2">Receiver Clock&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Clock Slips > 15&deg;:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Max RX clock offset:&nbsp;</td>
+<td class="QCT">0.000026 ms (at 2020/05/12 02:02:22.00)&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num of RX clock resets:&nbsp;</td>
+<td class="QCT">0&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Total clock drift:&nbsp;</td>
+<td class="QCT">+0.000000 ms&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Rate of clock drift:&nbsp;</td>
+<td class="QCT">+0.000 ms/hr&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Av time between resets:&nbsp;</td>
+<td class="QCT">0.000 minute(s)&nbsp;</td>
+</tr>
+</table>
+<br />
+<h3>Quality Indicators by Satellite System:</h3>
+<br />
+<table>
+<tr>
+<td class="QCF"> &nbsp;</td>
+<td class="QCH2">Total&nbsp;</td>
+<td class="QCH2">GPS&nbsp;</td>
+<td class="QCH2">GLONASS&nbsp;</td>
+<td class="QCH2">Galileo&nbsp;</td>
+<td class="QCH2">BeiDou&nbsp;</td>
+<td class="QCH2">QZSS&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH1" colspan="4">Tracking information over 0&deg;&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num obs > 0&deg;:&nbsp;</td>
+<td class="QCN">69299&nbsp;</td>
+<td class="QCN">36594&nbsp;</td>
+<td class="QCN">32705&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num possible obs > 0&deg;:&nbsp;</td>
+<td class="QCN">76736&nbsp;</td>
+<td class="QCN">41526&nbsp;</td>
+<td class="QCN">35210&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num obs with invalid nav:&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num obs without nav:&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num obs to unhealthy SV:&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+</tr>
+<tr>
+<td class="QCH1" colspan="4">Tracking over Elevation Mask (15&deg;)&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num obs > 15&deg;:&nbsp;</td>
+<td class="QCN">41757&nbsp;</td>
+<td class="QCN">20989&nbsp;</td>
+<td class="QCN">20768&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">% obs > 15&deg;: &nbsp;</td>
+<td class="QCN">99.9  %&nbsp;</td>
+<td class="QCN">100.0  %&nbsp;</td>
+<td class="QCN">99.8  %&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num possible obs > 15&deg;:&nbsp;</td>
+<td class="QCN">41806&nbsp;</td>
+<td class="QCN">20989&nbsp;</td>
+<td class="QCN">20817&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num complete obs > 15&deg;:&nbsp;</td>
+<td class="QCN">40565&nbsp;</td>
+<td class="QCN">20989&nbsp;</td>
+<td class="QCN">19576&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">% complete obs > 15&deg;: &nbsp;</td>
+<td class="QCN">97.0  %&nbsp;</td>
+<td class="QCN">100.0  %&nbsp;</td>
+<td class="QCN">94.0  %&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num obs with WLF change: &nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Average # SV per Epoch:&nbsp;</td>
+<td class="QCN">11.6 &nbsp;</td>
+<td class="QCN">5.8 &nbsp;</td>
+<td class="QCN">5.8 &nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+</table>
+<table>
+<tr>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Obs L2 : Obs L1&nbsp;</td>
+<td class="QCN">0.972 &nbsp;</td>
+<td class="QCN">1.000 &nbsp;</td>
+<td class="QCN">0.943 &nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Obs B2/E5b : Obs B1/E1&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Obs L5/E5a : Obs L1/E1&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1">Cycle Slips&nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num cycle slips > 15&deg;:&nbsp;</td>
+<td class="QCN">7&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">7&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">% slips per complete obs:&nbsp;</td>
+<td class="QCN">0.017  %&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">0.036  %&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Num complete obs per slip:&nbsp;</td>
+<td class="QCN">5795 &nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">2796 &nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">IOD Slips > 15&deg;:&nbsp;</td>
+<td class="QCN">1186&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">1186&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">Outliers > 15&deg;:&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">LLI L1/B1/E1 : Obs L1/B1/E1:&nbsp;</td>
+<td class="QCN">0.0001 &nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">0.0003 &nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">LLI L2 : Obs L2:&nbsp;</td>
+<td class="QCN">0.0001 &nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">0.0003 &nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">LLI B2/E5b : Obs B2/E5b:&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">LLI L5 : Obs L5:&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1">Multipath&nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+<td class="QCH2"> &nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">MP (L1/E1/B1) RMS:&nbsp;</td>
+<td class="QCN">0.055  m&nbsp;</td>
+<td class="QCN">0.052  m&nbsp;</td>
+<td class="QCN">0.059  m&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">MP (L2) RMS:&nbsp;</td>
+<td class="QCN">0.039  m&nbsp;</td>
+<td class="QCN">0.037  m&nbsp;</td>
+<td class="QCN">0.042  m&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">MP (L5/E5a) RMS:&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">MP (E5b/B2) RMS:&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+<tr>
+<td class="QCF">MP (E5a+b) RMS:&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+<td class="QCN">-&nbsp;</td>
+</tr>
+</table>
+<br />
+<h3>Extended Quality Information:</h3>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="3">Tracking by observation type > 15&deg;:&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH2F">Type</td>
+<td class="QCH2">Code</td>
+<td class="QCH2"> </td>
+<td class="QCH2">Phase</td>
+<td class="QCH2"> </td>
+<td class="QCH2">SNR</td>
+<td class="QCH2"> </td>
+<td class="QCH2">Doppler</td>
+<td class="QCH2"> </td>
+</tr>
+<tr>
+<td class="QCF">L1</td>
+<td class="QCN">100.0 %</td>
+<td class="bar"><div style="width: 100%"></div></td><td class="QCN">100.0 %</td>
+<td class="bar"><div style="width: 100%"></div></td><td class="QCN">100.0 %</td>
+<td class="bar"><div style="width: 100%"></div></td><td class="QCN">100.0 %</td>
+<td class="bar"><div style="width: 100%"></div></td></tr>
+<tr>
+<td class="QCF">L2</td>
+<td class="QCN">80.4 %</td>
+<td class="bar"><div style="width: 81%"></div></td><td class="QCN">97.2 %</td>
+<td class="bar"><div style="width: 98%"></div></td><td class="QCN">97.2 %</td>
+<td class="bar"><div style="width: 98%"></div></td><td class="QCN">97.2 %</td>
+<td class="bar"><div style="width: 98%"></div></td></tr>
+<tr>
+<td class="QCF">L2P</td>
+<td class="QCN">97.2 %</td>
+<td class="bar"><div style="width: 98%"></div></td><td class="QCN">N/A</td>
+<td class="QCN"> </td>
+<td class="QCN">N/A</td>
+<td class="QCN"> </td>
+<td class="QCN">N/A</td>
+<td class="QCN"> </td>
+</tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="3">Tracking by satellite > 15&deg;:&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH2F">SV</td>
+<td class="QCH2">Min Elev</td>
+<td class="QCH2">Max Elev</td>
+<td class="QCH2">Possible Observations</td>
+<td class="QCH2">Actual Observations</td>
+<td class="bar"> </td>
+<td class="QCH2">Observations with Invalid Ephemeris</td>
+<td class="QCH2">Cycle Slips</td>
+<td class="bar"> </td>
+</tr>
+<tr>
+<td class="QCF">G2</td>
+<td class="QCN">15.00&deg;</td>
+<td class="QCN">27.72&deg;</td>
+<td class="QCN">2031</td>
+<td class="QCN">2031 (100.0 %)</td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G5</td>
+<td class="QCN">57.84&deg;</td>
+<td class="QCN">68.68&deg;</td>
+<td class="QCN">3600</td>
+<td class="QCN">3600 (100.0 %)</td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G7</td>
+<td class="QCN">46.30&deg;</td>
+<td class="QCN">67.88&deg;</td>
+<td class="QCN">3600</td>
+<td class="QCN">3600 (100.0 %)</td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G9</td>
+<td class="QCN">15.00&deg;</td>
+<td class="QCN">33.90&deg;</td>
+<td class="QCN">2981</td>
+<td class="QCN">2981 (100.0 %)</td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G13</td>
+<td class="QCN">22.70&deg;</td>
+<td class="QCN">46.60&deg;</td>
+<td class="QCN">3600</td>
+<td class="QCN">3600 (100.0 %)</td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G15</td>
+<td class="QCN">15.00&deg;</td>
+<td class="QCN">16.44&deg;</td>
+<td class="QCN">225</td>
+<td class="QCN">225 (100.0 %)</td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G28</td>
+<td class="QCN">15.00&deg;</td>
+<td class="QCN">24.56&deg;</td>
+<td class="QCN">1352</td>
+<td class="QCN">1352 (100.0 %)</td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G30</td>
+<td class="QCN">61.65&deg;</td>
+<td class="QCN">78.48&deg;</td>
+<td class="QCN">3600</td>
+<td class="QCN">3600 (100.0 %)</td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R4</td>
+<td class="QCN">37.04&deg;</td>
+<td class="QCN">63.14&deg;</td>
+<td class="QCN">3600</td>
+<td class="QCN">3600 (100.0 %)</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R5</td>
+<td class="QCN">52.92&deg;</td>
+<td class="QCN">81.34&deg;</td>
+<td class="QCN">3600</td>
+<td class="QCN">3600 (100.0 %)</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R6</td>
+<td class="QCN">15.00&deg;</td>
+<td class="QCN">23.74&deg;</td>
+<td class="QCN">1183</td>
+<td class="QCN">1183 (100.0 %)</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R13</td>
+<td class="QCN">15.00&deg;</td>
+<td class="QCN">26.98&deg;</td>
+<td class="QCN">1606</td>
+<td class="QCN">1606 (100.0 %)</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R14</td>
+<td class="QCN">48.10&deg;</td>
+<td class="QCN">62.33&deg;</td>
+<td class="QCN">3600</td>
+<td class="QCN">3600 (100.0 %)</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R15</td>
+<td class="QCN">30.49&deg;</td>
+<td class="QCN">64.98&deg;</td>
+<td class="QCN">3600</td>
+<td class="QCN">3599 (100.0 %)</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">4</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td></tr>
+<tr>
+<td class="QCF">R20</td>
+<td class="QCN">15.00&deg;</td>
+<td class="QCN">18.59&deg;</td>
+<td class="QCN">550</td>
+<td class="QCN">502 (91.3 %)</td>
+<td class="bar_glonass"><div style="width: 92%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">3</td>
+<td class="bar_glonass"><div style="width: 75%"></div></td></tr>
+<tr>
+<td class="QCF">R21</td>
+<td class="QCN">15.00&deg;</td>
+<td class="QCN">21.80&deg;</td>
+<td class="QCN">3078</td>
+<td class="QCN">3078 (100.0 %)</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0 (0.0 %)</td>
+<td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="3">Missing phase observations by satellite > 15&deg;:&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH2F">SV</td>
+<td class="QCH2">Observations</td>
+<td class="bar"> </td>
+<td class="QCH2">Missing L1</td>
+<td class="bar"> </td>
+<td class="QCH2">Missing L2</td>
+<td class="bar"> </td>
+</tr>
+<tr>
+<td class="QCF">G2</td>
+<td class="QCN">4.9 %</td>
+<td class="bar_gps"><div style="width: 57%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G5</td>
+<td class="QCN">8.6 %</td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G7</td>
+<td class="QCN">8.6 %</td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G9</td>
+<td class="QCN">7.1 %</td>
+<td class="bar_gps"><div style="width: 83%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G13</td>
+<td class="QCN">8.6 %</td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G15</td>
+<td class="QCN">0.5 %</td>
+<td class="bar_gps"><div style="width: 7%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G28</td>
+<td class="QCN">3.2 %</td>
+<td class="bar_gps"><div style="width: 38%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G30</td>
+<td class="QCN">8.6 %</td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R4</td>
+<td class="QCN">8.6 %</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R5</td>
+<td class="QCN">8.6 %</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R6</td>
+<td class="QCN">2.8 %</td>
+<td class="bar_glonass"><div style="width: 33%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCWN">100.0 %</td>
+<td class="bar_red"><div style="width: 100%"></div></td></tr>
+<tr>
+<td class="QCF">R13</td>
+<td class="QCN">3.8 %</td>
+<td class="bar_glonass"><div style="width: 45%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R14</td>
+<td class="QCN">8.6 %</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R15</td>
+<td class="QCN">8.6 %</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0.3 %</td>
+<td class="bar_glonass"><div style="width: 1%"></div></td><td class="QCN">0.2 %</td>
+<td class="bar_glonass"><div style="width: 1%"></div></td></tr>
+<tr>
+<td class="QCF">R20</td>
+<td class="QCN">1.2 %</td>
+<td class="bar_glonass"><div style="width: 14%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R21</td>
+<td class="QCN">7.4 %</td>
+<td class="bar_glonass"><div style="width: 86%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="3">Missing code observations by satellite > 15&deg;:&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH2F">SV</td>
+<td class="QCH2">Missing C1</td>
+<td class="bar"> </td>
+<td class="QCH2">Missing C2</td>
+<td class="bar"> </td>
+<td class="QCH2">Missing C2P</td>
+<td class="bar"> </td>
+</tr>
+<tr>
+<td class="QCF">G2</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCWN">100.0 %</td>
+<td class="bar_red"><div style="width: 100%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G5</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G7</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G9</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G13</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCWN">100.0 %</td>
+<td class="bar_red"><div style="width: 100%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G15</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G28</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCWN">100.0 %</td>
+<td class="bar_red"><div style="width: 100%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">G30</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_gps"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R4</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R5</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R6</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCWN">100.0 %</td>
+<td class="bar_red"><div style="width: 100%"></div></td><td class="QCWN">100.0 %</td>
+<td class="bar_red"><div style="width: 100%"></div></td></tr>
+<tr>
+<td class="QCF">R13</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R14</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R15</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R20</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">R21</td>
+<td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td></tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="3">Tracking by satellite elevation > 15&deg;:&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH2F">Elevation</td>
+<td class="QCH2">Cycle Slips GPS</td>
+<td class="bar"> </td>
+<td class="QCH2">Cycle Slips GLONASS</td>
+<td class="bar"> </td>
+<td class="QCH2">Cycle Slips Galileo</td>
+<td class="bar"> </td>
+<td class="QCH2">Cycle Slips BeiDou</td>
+<td class="bar"> </td>
+<td class="QCH2">Cycle Slips QZSS</td>
+<td class="bar"> </td>
+<td class="QCH2">Observations</td>
+<td class="bar"> </td>
+</tr>
+<tr>
+<td class="QCF">85 - 90</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF">80 - 85</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">0.5 %</td>
+<td class="bar"><div style="width: 4%"></div></td></tr>
+<tr>
+<td class="QCF">75 - 80</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">5.7 %</td>
+<td class="bar"><div style="width: 41%"></div></td></tr>
+<tr>
+<td class="QCF">70 - 75</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">3.3 %</td>
+<td class="bar"><div style="width: 24%"></div></td></tr>
+<tr>
+<td class="QCF">65 - 70</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">10.3 %</td>
+<td class="bar"><div style="width: 75%"></div></td></tr>
+<tr>
+<td class="QCF">60 - 65</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">13.3 %</td>
+<td class="bar"><div style="width: 96%"></div></td></tr>
+<tr>
+<td class="QCF">55 - 60</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">9.3 %</td>
+<td class="bar"><div style="width: 68%"></div></td></tr>
+<tr>
+<td class="QCF">50 - 55</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">7.0 %</td>
+<td class="bar"><div style="width: 51%"></div></td></tr>
+<tr>
+<td class="QCF">45 - 50</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">5.3 %</td>
+<td class="bar"><div style="width: 38%"></div></td></tr>
+<tr>
+<td class="QCF">40 - 45</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">4.6 %</td>
+<td class="bar"><div style="width: 33%"></div></td></tr>
+<tr>
+<td class="QCF">35 - 40</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">3</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">4.0 %</td>
+<td class="bar"><div style="width: 29%"></div></td></tr>
+<tr>
+<td class="QCF">30 - 35</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">1</td>
+<td class="bar_glonass"><div style="width: 34%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">4.4 %</td>
+<td class="bar"><div style="width: 32%"></div></td></tr>
+<tr>
+<td class="QCF">25 - 30</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">5.4 %</td>
+<td class="bar"><div style="width: 40%"></div></td></tr>
+<tr>
+<td class="QCF">20 - 25</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">13.0 %</td>
+<td class="bar"><div style="width: 94%"></div></td></tr>
+<tr>
+<td class="QCF">15 - 20</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">3</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">13.9 %</td>
+<td class="bar"><div style="width: 100%"></div></td></tr>
+<tr>
+<td class="QCF">10 - 15</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF"> 5 - 10</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar"><div style="width: 0%"></div></td></tr>
+<tr>
+<td class="QCF"> 0 -  5</td>
+<td class="QCN">0</td>
+<td class="bar_gps"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_glonass"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_galileo"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_beidou"><div style="width: 0%"></div></td><td class="QCN">0</td>
+<td class="bar_qzss"><div style="width: 0%"></div></td><td class="QCN">0.0 %</td>
+<td class="bar"><div style="width: 0%"></div></td></tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="3">Signal to Noise Ratio by satellite > 15&deg;:&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH2F">SV</td>
+<td class="QCH2">L1/E1/B1</td>
+<td class="bar"> </td>
+<td class="QCH2">L2</td>
+<td class="bar"> </td>
+<td class="QCH2">L5/E5a</td>
+<td class="bar"> </td>
+<td class="QCH2">E5b/B2</td>
+<td class="bar"> </td>
+<td class="QCH2">E5a+b</td>
+<td class="bar"> </td>
+</tr>
+<tr>
+<td class="QCF">G2</td>
+<td class="QCN">46.9 </td>
+<td class="bar_gps"><div style="width: 94%"></div></td><td class="QCN">40.2 </td>
+<td class="bar_gps"><div style="width: 81%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G5</td>
+<td class="QCN">49.1 </td>
+<td class="bar_gps"><div style="width: 98%"></div></td><td class="QCN">49.1 </td>
+<td class="bar_gps"><div style="width: 98%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G7</td>
+<td class="QCN">49.0 </td>
+<td class="bar_gps"><div style="width: 98%"></div></td><td class="QCN">49.0 </td>
+<td class="bar_gps"><div style="width: 98%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G9</td>
+<td class="QCN">47.0 </td>
+<td class="bar_gps"><div style="width: 94%"></div></td><td class="QCN">47.0 </td>
+<td class="bar_gps"><div style="width: 94%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G13</td>
+<td class="QCN">47.9 </td>
+<td class="bar_gps"><div style="width: 96%"></div></td><td class="QCN">40.5 </td>
+<td class="bar_gps"><div style="width: 81%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G15</td>
+<td class="QCN">45.4 </td>
+<td class="bar_gps"><div style="width: 91%"></div></td><td class="QCN">39.1 </td>
+<td class="bar_gps"><div style="width: 79%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G28</td>
+<td class="QCN">45.2 </td>
+<td class="bar_gps"><div style="width: 91%"></div></td><td class="QCN">37.1 </td>
+<td class="bar_gps"><div style="width: 75%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G30</td>
+<td class="QCN">50.1 </td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">50.1 </td>
+<td class="bar_gps"><div style="width: 100%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R4</td>
+<td class="QCN">48.9 </td>
+<td class="bar_glonass"><div style="width: 98%"></div></td><td class="QCN">45.9 </td>
+<td class="bar_glonass"><div style="width: 92%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R5</td>
+<td class="QCN">49.0 </td>
+<td class="bar_glonass"><div style="width: 98%"></div></td><td class="QCN">46.6 </td>
+<td class="bar_glonass"><div style="width: 94%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R6</td>
+<td class="QCN">40.5 </td>
+<td class="bar_glonass"><div style="width: 81%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R13</td>
+<td class="QCN">36.6 </td>
+<td class="bar_glonass"><div style="width: 74%"></div></td><td class="QCN">37.1 </td>
+<td class="bar_glonass"><div style="width: 75%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R14</td>
+<td class="QCN">49.2 </td>
+<td class="bar_glonass"><div style="width: 99%"></div></td><td class="QCN">46.4 </td>
+<td class="bar_glonass"><div style="width: 93%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R15</td>
+<td class="QCN">48.5 </td>
+<td class="bar_glonass"><div style="width: 97%"></div></td><td class="QCN">45.6 </td>
+<td class="bar_glonass"><div style="width: 91%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R20</td>
+<td class="QCN">35.9 </td>
+<td class="bar_glonass"><div style="width: 72%"></div></td><td class="QCN">40.9 </td>
+<td class="bar_glonass"><div style="width: 82%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R21</td>
+<td class="QCN">45.6 </td>
+<td class="bar_glonass"><div style="width: 92%"></div></td><td class="QCN">41.1 </td>
+<td class="bar_glonass"><div style="width: 83%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">Average GPS:</td>
+<td class="QCN">47.6 </td>
+<td class="bar_gps"><div style="width: 95%"></div></td><td class="QCN">44.0 </td>
+<td class="bar_gps"><div style="width: 88%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">Average GLONASS:</td>
+<td class="QCN">44.3 </td>
+<td class="bar_glonass"><div style="width: 89%"></div></td><td class="QCN">43.4 </td>
+<td class="bar_glonass"><div style="width: 87%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">Average Galileo:</td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">Average BeiDou:</td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">Average QZSS:</td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">Average All:</td>
+<td class="QCN">45.9 </td>
+<td class="bar"><div style="width: 92%"></div></td><td class="QCN">43.7 </td>
+<td class="bar"><div style="width: 88%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="3">Code multipath by satellite > 15&deg;:&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH2F">SV</td>
+<td class="QCH2">Av Elev</td>
+<td class="QCH2">MP (L1/E1/B1)</td>
+<td class="bar"> </td>
+<td class="QCH2">MP (L2)</td>
+<td class="bar"> </td>
+<td class="QCH2">MP (L5/E5a)</td>
+<td class="bar"> </td>
+<td class="QCH2">MP (E5b/B2)</td>
+<td class="bar"> </td>
+<td class="QCH2">MP (E5a+b)</td>
+<td class="bar"> </td>
+</tr>
+<tr>
+<td class="QCF">G2</td>
+<td class="QCN">21.4 &deg;</td>
+<td class="QCN">0.08 m</td>
+<td class="bar_gps"><div style="width: 77%"></div></td><td class="QCN">0.09 m</td>
+<td class="bar_gps"><div style="width: 79%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G5</td>
+<td class="QCN">63.3 &deg;</td>
+<td class="QCN">0.05 m</td>
+<td class="bar_gps"><div style="width: 43%"></div></td><td class="QCN">0.01 m</td>
+<td class="bar_gps"><div style="width: 14%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G7</td>
+<td class="QCN">57.1 &deg;</td>
+<td class="QCN">0.03 m</td>
+<td class="bar_gps"><div style="width: 27%"></div></td><td class="QCN">0.01 m</td>
+<td class="bar_gps"><div style="width: 11%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G9</td>
+<td class="QCN">24.5 &deg;</td>
+<td class="QCN">0.07 m</td>
+<td class="bar_gps"><div style="width: 65%"></div></td><td class="QCN">0.02 m</td>
+<td class="bar_gps"><div style="width: 23%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G13</td>
+<td class="QCN">34.6 &deg;</td>
+<td class="QCN">0.06 m</td>
+<td class="bar_gps"><div style="width: 56%"></div></td><td class="QCN">0.04 m</td>
+<td class="bar_gps"><div style="width: 36%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G15</td>
+<td class="QCN">15.7 &deg;</td>
+<td class="QCN">0.01 m</td>
+<td class="bar_gps"><div style="width: 8%"></div></td><td class="QCN">0.05 m</td>
+<td class="bar_gps"><div style="width: 46%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G28</td>
+<td class="QCN">19.8 &deg;</td>
+<td class="QCN">0.09 m</td>
+<td class="bar_gps"><div style="width: 81%"></div></td><td class="QCN">0.04 m</td>
+<td class="bar_gps"><div style="width: 36%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">G30</td>
+<td class="QCN">70.1 &deg;</td>
+<td class="QCN">0.03 m</td>
+<td class="bar_gps"><div style="width: 30%"></div></td><td class="QCN">0.03 m</td>
+<td class="bar_gps"><div style="width: 32%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R4</td>
+<td class="QCN">50.1 &deg;</td>
+<td class="QCN">0.04 m</td>
+<td class="bar_glonass"><div style="width: 35%"></div></td><td class="QCN">0.02 m</td>
+<td class="bar_glonass"><div style="width: 16%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R5</td>
+<td class="QCN">67.1 &deg;</td>
+<td class="QCN">0.04 m</td>
+<td class="bar_glonass"><div style="width: 37%"></div></td><td class="QCN">0.01 m</td>
+<td class="bar_glonass"><div style="width: 14%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R6</td>
+<td class="QCN">-</td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R13</td>
+<td class="QCN">21.0 &deg;</td>
+<td class="QCN">0.04 m</td>
+<td class="bar_glonass"><div style="width: 36%"></div></td><td class="QCN">0.07 m</td>
+<td class="bar_glonass"><div style="width: 61%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R14</td>
+<td class="QCN">55.2 &deg;</td>
+<td class="QCN">0.03 m</td>
+<td class="bar_glonass"><div style="width: 32%"></div></td><td class="QCN">0.02 m</td>
+<td class="bar_glonass"><div style="width: 17%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R15</td>
+<td class="QCN">47.7 &deg;</td>
+<td class="QCN">0.06 m</td>
+<td class="bar_glonass"><div style="width: 58%"></div></td><td class="QCN">0.06 m</td>
+<td class="bar_glonass"><div style="width: 52%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R20</td>
+<td class="QCN">16.8 &deg;</td>
+<td class="QCN">0.09 m</td>
+<td class="bar_glonass"><div style="width: 87%"></div></td><td class="QCN">0.06 m</td>
+<td class="bar_glonass"><div style="width: 55%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">R21</td>
+<td class="QCN">18.4 &deg;</td>
+<td class="QCN">0.11 m</td>
+<td class="bar_glonass"><div style="width: 100%"></div></td><td class="QCN">0.07 m</td>
+<td class="bar_glonass"><div style="width: 62%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">Average GPS:</td>
+<td class="QCN">-</td>
+<td class="QCN">0.05  m</td>
+<td class="bar_gps"><div style="width: 48%"></div></td><td class="QCN">0.04  m</td>
+<td class="bar_gps"><div style="width: 35%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">Average GLONASS:</td>
+<td class="QCN">-</td>
+<td class="QCN">0.06  m</td>
+<td class="bar_glonass"><div style="width: 55%"></div></td><td class="QCN">0.04  m</td>
+<td class="bar_glonass"><div style="width: 39%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">Average Galileo:</td>
+<td class="QCN">-</td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">Average BeiDou:</td>
+<td class="QCN">-</td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">Average QZSS:</td>
+<td class="QCN">-</td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">Average All:</td>
+<td class="QCN">-</td>
+<td class="QCN">0.06  m</td>
+<td class="bar"><div style="width: 52%"></div></td><td class="QCN">0.04  m</td>
+<td class="bar"><div style="width: 37%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+</table>
+<br />
+<table>
+<tr>
+<td class="QCH1" colspan="3">Code multipath by satellite elevation > 15&deg;:&nbsp;</td>
+</tr>
+<tr>
+<td class="QCH2F">Elevation</td>
+<td class="QCH2">MP (L1/E1/B1)</td>
+<td class="bar"> </td>
+<td class="QCH2">MP (L2)</td>
+<td class="bar"> </td>
+<td class="QCH2">MP (L5/E5a)</td>
+<td class="bar"> </td>
+<td class="QCH2">MP (E5b/B2)</td>
+<td class="bar"> </td>
+<td class="QCH2">MP (E5a+b)</td>
+<td class="bar"> </td>
+</tr>
+<tr>
+<td class="QCF">85 - 90</td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">80 - 85</td>
+<td class="QCN">0.03 m</td>
+<td class="bar"><div style="width: 34%"></div></td><td class="QCN">0.01 m</td>
+<td class="bar"><div style="width: 8%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">75 - 80</td>
+<td class="QCN">0.04 m</td>
+<td class="bar"><div style="width: 36%"></div></td><td class="QCN">0.03 m</td>
+<td class="bar"><div style="width: 32%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">70 - 75</td>
+<td class="QCN">0.03 m</td>
+<td class="bar"><div style="width: 28%"></div></td><td class="QCN">0.02 m</td>
+<td class="bar"><div style="width: 23%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">65 - 70</td>
+<td class="QCN">0.05 m</td>
+<td class="bar"><div style="width: 47%"></div></td><td class="QCN">0.01 m</td>
+<td class="bar"><div style="width: 13%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">60 - 65</td>
+<td class="QCN">0.04 m</td>
+<td class="bar"><div style="width: 37%"></div></td><td class="QCN">0.02 m</td>
+<td class="bar"><div style="width: 21%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">55 - 60</td>
+<td class="QCN">0.03 m</td>
+<td class="bar"><div style="width: 31%"></div></td><td class="QCN">0.02 m</td>
+<td class="bar"><div style="width: 19%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">50 - 55</td>
+<td class="QCN">0.03 m</td>
+<td class="bar"><div style="width: 31%"></div></td><td class="QCN">0.02 m</td>
+<td class="bar"><div style="width: 21%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">45 - 50</td>
+<td class="QCN">0.04 m</td>
+<td class="bar"><div style="width: 43%"></div></td><td class="QCN">0.02 m</td>
+<td class="bar"><div style="width: 22%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">40 - 45</td>
+<td class="QCN">0.05 m</td>
+<td class="bar"><div style="width: 48%"></div></td><td class="QCN">0.03 m</td>
+<td class="bar"><div style="width: 26%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">35 - 40</td>
+<td class="QCN">0.07 m</td>
+<td class="bar"><div style="width: 67%"></div></td><td class="QCN">0.07 m</td>
+<td class="bar"><div style="width: 70%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">30 - 35</td>
+<td class="QCN">0.06 m</td>
+<td class="bar"><div style="width: 56%"></div></td><td class="QCN">0.04 m</td>
+<td class="bar"><div style="width: 38%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">25 - 30</td>
+<td class="QCN">0.07 m</td>
+<td class="bar"><div style="width: 66%"></div></td><td class="QCN">0.05 m</td>
+<td class="bar"><div style="width: 53%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">20 - 25</td>
+<td class="QCN">0.07 m</td>
+<td class="bar"><div style="width: 72%"></div></td><td class="QCN">0.06 m</td>
+<td class="bar"><div style="width: 56%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">15 - 20</td>
+<td class="QCN">0.10 m</td>
+<td class="bar"><div style="width: 100%"></div></td><td class="QCN">0.06 m</td>
+<td class="bar"><div style="width: 57%"></div></td><td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF">10 - 15</td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF"> 5 - 10</td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+<tr>
+<td class="QCF"> 0 -  5</td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+<td class="QCN">-</td>
+<td class="QCN"> </td>
+</tr>
+</table>
+<br />
+<br />
+<h3>Observation File Messages:</h3>
+<br />
+<br />
+<br />
+<br />
+<h3>GPS Navigation File Messages:</h3>
+<br />
+<br />
+<br />
+<h3>GLONASS Navigation File Messages:</h3>
+<br />
+<br />
+<br />
+<h3>General Messages:</h3>
+<br />
+<br />
+<h3>Notes:</h3>
+<br />
+<table>
+<tr>
+<td>(*)&nbsp;</td>
+<td>Signal strength is mapped between 1 (worst) and 9 (best), 5 is the threshold for good SNR, 0 indicates value is unknown&nbsp;</td>
+</tr>
+<tr>
+<td>(#)&nbsp;</td>
+<td>A complete GPS observation contains non-zero L1, L2 code and phase measurements with a SNR of at least 0&nbsp;</td>
+</tr>
+<tr>
+<td>(#)&nbsp;</td>
+<td>A complete GLONASS observation contains non-zero L1, L2 code and phase measurements with a SNR of at least 0&nbsp;</td>
+</tr>
+<tr>
+<td>(#)&nbsp;</td>
+<td>A complete Galileo observation contains non-zero E1, E5a code and phase measurements with a SNR of at least 0&nbsp;</td>
+</tr>
+<tr>
+<td>(#)&nbsp;</td>
+<td>A complete BeiDou observation contains non-zero B1 code and phase measurements with a SNR of at least 0&nbsp;</td>
+</tr>
+<tr>
+<td>(#)&nbsp;</td>
+<td>A complete QZSS observation contains non-zero L1, L2 code and phase measurements with a SNR of at least 0&nbsp;</td>
+</tr>
+<tr>
+<td>(-)&nbsp;</td>
+<td>The minimum duration of a data gap to be reported is 5 seconds&nbsp;</td>
+</tr>
+<tr>
+<td>(^)&nbsp;</td>
+<td>A satellite has to be above the elevation mask with no observations recorded for at least 120 seconds to be reported&nbsp;</td>
+</tr>
+<tr>
+<td>-&nbsp;</td>
+<td>The elevation mask is set at 15&deg;&nbsp;</td>
+</tr>
+<tr>
+<td>-&nbsp;</td>
+<td>Abbreviations: Av=Average, IOD=Ionospheric delay, Num=Number, Obs=Observations, MP=Multipath, SV=Satellite vehicle, Elev=Elevation, Nav=Navigation data (ephemeris), WLF=Wavelength factor &nbsp;</td>
+</tr>
+<tr>
+<td>-&nbsp;</td>
+<td>It took 0.0 seconds to process this file&nbsp;</td>
+</tr>
+<tr>
+<td>-&nbsp;</td>
+<td>This file was processed using version 7.2.2.7822&nbsp;</td>
+</tr>
+</table>
+<hr />
+</td>
+<td valign="bottom">
+<td>
+<img name="hImage" id="hImage" height="100%" style="VISIBILITY:hidden" width="1" src="../Images/blank.gif" border="1" />
+</td>
+</tr>
+<tr>
+<td colspan="2"><img name="wImage" id="wImage" height="1" style="VISIBILITY:hidden" width="100%" src="../Images/blank.gif" border="1" />
+</td>
+</tr>
+</table>
+<div id="bottomDiv" name="bottomDiv"><p>&nbsp;</p></div>
+</body>
+</html>
