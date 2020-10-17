@@ -16,6 +16,8 @@ from glab import glabdb_parse, glabdb_statistics
 from glab_plot import glabdb_plot_crds
 from ampyutils import amutils
 
+__author__ = 'amuls'
+
 
 def common(lst1, lst2):
     return list(set(lst1) & set(lst2))
@@ -42,9 +44,6 @@ lst_gpsn_prcodes = ['C1C', 'C1W', 'C2L', 'C2W', 'C5Q']
 # lst_prcodes = ['C1C', 'C1W', 'C2L', 'C2W', 'C5Q', 'C1A', 'C6A']
 lst_prcodes = list(set(lst_gali_prcodes) | set(lst_gpsn_prcodes) | set(lst_gprs_prcodes))
 lst_prcodes.sort()
-
-# dPRcodes = {'GALI': lst_gali_prcodes, 'GPSN': lst_gpsn_prcodes, 'COMB': common(lst1=lst_gali_prcodes, lst2=lst_gpsn_prcodes), 'GPRS': lst_gprs_prcodes}
-
 dPRcodes = dict(zip(lst_markers, [common(lst1=lst_gali_prcodes, lst2=lst_gpsn_prcodes), lst_gali_prcodes, lst_gprs_prcodes, lst_gpsn_prcodes]))
 
 glab_db = os.path.join(os.path.expanduser("~"), 'amPython/pyRTKLib/', 'glab_output_db.csv')

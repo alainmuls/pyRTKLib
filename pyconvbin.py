@@ -286,16 +286,17 @@ def main(argv):
     amc.dRTK['bin']['GFZRNX'] = location.locateProg('gfzrnx', logger)
     amc.dRTK['bin']['RNX2CRZ'] = location.locateProg('rnx2crz', logger)
     amc.dRTK['bin']['COMPRESS'] = location.locateProg('compress', logger)
+    amc.dRTK['bin']['GZIP'] = location.locateProg('gzip', logger)
 
     # convert binary file to rinex
     logger.info('{func:s}: convert binary file to rinex'.format(func=cFuncName))
     if amc.dRTK['binType'] == 'SBF':
         dRnxTmp = sbf2rinex(logger=logger)
         gfzrnx_ops.rnxobs_header_info(dTmpRnx=dRnxTmp, logger=logger)
-        gfzrnx_ops.rnxobs_statistics_file(dTmpRnx=dRnxTmp, logger=logger)
+        # gfzrnx_ops.rnxobs_statistics_file(dTmpRnx=dRnxTmp, logger=logger)
         gfzrnx_ops.gnss_rinex_creation(dTmpRnx=dRnxTmp, logger=logger)
-        # gfzrnx_ops.create_rnxobs_subfreq(logger=logger)
-        # gfzrnx_ops.compress_rinex_obsnav(logger=logger)
+        logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
+        gfzrnx_ops.compress_rinex_obsnav(logger=logger)
     else:
         ubx2rinex(logger=logger)
 
@@ -307,8 +308,9 @@ def main(argv):
         json.dump(amc.dRTK, f, ensure_ascii=False, indent=4, default=amutils.DT_convertor)
 
     # remove the temporar files
-    for file in dRnxTmp.values():
-        os.remove(file)
+    for fname in dRnxTmp.values():
+        if os.path.isfile(fname):
+            os.remove(fname)
 
     # copy temp log file to the YYDOY directory
     copyfile(log_name, os.path.join(amc.dRTK['rinexDir'], 'pyconvbin.log'))

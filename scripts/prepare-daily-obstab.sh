@@ -8,7 +8,7 @@ usage()
 if [ $# -ne 12 ]; then
     usage
     exit 1
-fi
+firm
 
 while [ $# -gt 0 ];
 do
@@ -74,7 +74,7 @@ do
 			for satsyst in E G
 			do
 				printf '\nProcessing observation statistics for '${RXTYPE}'/'${satsyst}' @ '${YYDOY}'\n'
-				${PYOBSTAB} -d ${DIRYYDOY} -g ${satsyst} -m 30
+				rm${PYOBSTAB} -d ${DIRYYDOY} -g ${satsyst} -m 30
 			done
 		elif [ ${RXTYPE} = 'TURP' ]
 		then

@@ -93,7 +93,7 @@ do
                 done
             fi
         done
-    elif [ ${RXTYPE} = 'TURP' ]
+    elif [ ${RXTYPE} = 'BEGP' ]
         then
             MARKER='GPRS'
             GNSS='E'

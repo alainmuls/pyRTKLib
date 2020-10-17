@@ -21,7 +21,9 @@ def read_obs_tabular(gnss: str, logger: logging.Logger) -> pd.DataFrame:
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     # check that th erequested OBSTAB file is present
-    gnss_obstab = os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][gnss]['marker'], amc.dRTK['rnx']['gnss'][gnss]['obstab'])
+    gnss_obstab = os.path.join(amc.dRTK['options']['rnx_dir'], 'gfzrnx', amc.dRTK['json']['rnx']['gnss'][gnss]['marker'], amc.dRTK['json']['rnx']['gnss'][gnss]['obstab'])
+
+    print('gnss_obstab = {!s}'.format(gnss_obstab))
 
     # df = pd.read_csv('gnss_obstab')
     logger.info('{func:s}: reading observation tabular file {obstab:s} (be patient)'.format(obstab=colored(gnss_obstab, 'green'), func=cFuncName))

@@ -16,11 +16,11 @@ from ampyutils import amutils, location, exeprogram
 __author__ = 'amuls'
 
 
-lst_markers = ['COMB', 'GPRS']
+lst_rnx_id = ['COMB', 'GPRS']
 lst_gnsss = ['E', 'G']
 lst_prcodes = ['C1C', 'C1W', 'C2L', 'C2W', 'C2W', 'C5Q', 'C1A', 'C6A']
 
-lst_rxtypes = ['ASTX', 'TURP']
+lst_rxtypes = ['ASTX', 'BEGP']
 dir_igs = os.path.join(os.path.expanduser("~"), 'RxTURP/BEGPIOS/igs')
 
 lst_logging_choices = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET']
@@ -52,8 +52,8 @@ class rxtype_action(argparse.Action):
 
 class marker_action(argparse.Action):
     def __call__(self, parser, namespace, marker, option_string=None):
-        if marker not in lst_markers:
-            raise argparse.ArgumentError(self, 'marker is one of {markers:s}'.format(markers='|'.join(lst_markers)))
+        if marker not in lst_rnx_id:
+            raise argparse.ArgumentError(self, 'marker is one of {markers:s}'.format(markers='|'.join(lst_rnx_id)))
         setattr(namespace, self.dest, marker)
 
 
@@ -97,7 +97,7 @@ def treatCmdOpts(argv):
     parser.add_argument('-i', '--igsdir', help='Root IGS directory (default {igs:s}))'.format(igs=colored(dir_igs, 'green')), required=False, type=str, default=dir_igs)
 
     parser.add_argument('-r', '--rxtype', help='Receiver type (one of {choices:s} (default {choice:s}))'.format(choices='|'.join(lst_rxtypes), choice=colored(lst_rxtypes[0], 'green')), default=lst_rxtypes[0], required=False, type=str, action=rxtype_action)
-    parser.add_argument('-m', '--marker', help='marker name (4 chars, one of {markers:s}, default {marker:s})'.format(markers='|'.join(lst_markers), marker=colored(lst_markers[0], 'green')), type=str, required=False, default=lst_markers[0], action=marker_action)
+    parser.add_argument('-m', '--marker', help='marker name (4 chars, one of {markers:s}, default {marker:s})'.format(markers='|'.join(lst_rnx_id), marker=colored(lst_rnx_id[0], 'green')), type=str, required=False, default=lst_rnx_id[0], action=marker_action)
 
     parser.add_argument('-y', '--year', help='Year (4 digits)', required=True, type=int)
     parser.add_argument('-d', '--doy', help='day-of-year [1..366]', required=True, type=int, action=doy_action)

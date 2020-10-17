@@ -170,36 +170,75 @@ def gnss_rinex_creation(dTmpRnx: dict, logger: logging.Logger):
             if rnx_type == 'obs':
                 out_dir = tempfile.gettempdir()
                 dTmpRnx[amc.dRTK['rnx']['gnss'][satsys]['marker']] = os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type])
-            else:
-                out_dir = amc.dRTK['rinexDir']
 
-            # create the RINEX OBS or NAV file for this satsys in final dir for NAV and temporay dir for OBS
-            args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', dTmpRnx[rnx_type], '-fout', os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-satsys', amc.dRTK['rnx']['gnss'][satsys]['satsys'], '-f', '-chk', '-kv']
-            logger.info('{func:s}: creating RINEX file {name:s}'.format(name=colored(amc.dRTK['rnx']['gnss'][satsys][rnx_type], 'green'), func=cFuncName))
-
-            # perform the RINEX creation
-            amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
-
-            # when RINEX OBS adjust the headers by editing via CRUX file
-            if rnx_type == 'obs':
                 # create a CRUX file to correct the header info for this satsys
                 crux_file = create_crux(satsys=satsys, logger=logger)
 
                 rnxobs_file = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type])
+
                 args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-f', '-fout', rnxobs_file, '-crux', crux_file]
 
-                # perform the RINEX header correction
+                # create the RINEX OBSfile for this satsys in final dir for NAV and temporay dir for OBS
+                args4GFZRNX = [amc.dRTK['bin']['GFZRNX'],
+                               '-finp', dTmpRnx[rnx_type],
+                               '-fout', rnxobs_file,
+                               '-crux', crux_file,
+                               '-satsys', amc.dRTK['rnx']['gnss'][satsys]['satsys'],
+                               '-f', '-chk', '-kv']
+                logger.info('{func:s}: creating RINEX file {name:s}'.format(name=colored(amc.dRTK['rnx']['gnss'][satsys][rnx_type], 'green'), func=cFuncName))
+
+                # perform the RINEX creation
                 amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
-                # remove temporary file created
+
                 os.remove(crux_file)
 
-                # only create these infos when we have no mixed observations file
-                if satsys != 'M':
-                    # create e ASCII display of visibility of the SVs in the observation file
-                    amc.dRTK['rnx']['gnss'][satsys]['prns'] = create_svs_ascii_plot(satsys=satsys, rnx_type=rnx_type, logger=logger)
+                # create ASCII SV plot file
+                # amc.dRTK['rnx']['gnss'][satsys]['prns'] = create_svs_ascii_plot(satsys=satsys, rnx_type=rnx_type, logger=logger)
 
-                    # create the tabular observation file
-                    amc.dRTK['rnx']['gnss'][satsys]['obstab'] = create_tabular_observation(satsys=satsys, rnx_type=rnx_type, logger=logger)
+                # create the tabular observation file
+                amc.dRTK['rnx']['gnss'][satsys]['obstab'] = create_tabular_observation(satsys=satsys, rnx_type=rnx_type, logger=logger)
+            else:
+                out_dir = amc.dRTK['rinexDir']
+
+                # create the RINEX NAV file for this satsys in final dir for NAV and temporay dir for OBS
+                args4GFZRNX = [amc.dRTK['bin']['GFZRNX'],
+                               '-finp', dTmpRnx[rnx_type],
+                               '-fout', os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type]),
+                               '-satsys', amc.dRTK['rnx']['gnss'][satsys]['satsys'],
+                               '-f', '-chk', '-kv']
+
+                logger.info('{func:s}: creating RINEX file {name:s}'.format(name=colored(amc.dRTK['rnx']['gnss'][satsys][rnx_type], 'green'), func=cFuncName))
+
+                # perform the RINEX creation
+                amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+
+            # # when RINEX OBS adjust the headers by editing via CRUX file
+            # if rnx_type == 'obs':
+            #     # create a CRUX file to correct the header info for this satsys
+            #     crux_file = create_crux(satsys=satsys, logger=logger)
+
+            #     rnxobs_file = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type])
+            #     args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-f', '-fout', rnxobs_file, '-crux', crux_file]
+
+            #     # perform the RINEX header correction
+            #     amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+            #     # remove temporary file created
+            #     os.remove(crux_file)
+
+            #     # only create these infos when we have no mixed observations file
+            #     # if satsys != 'M':
+            #     # create e ASCII display of visibility of the SVs in the observation file
+            #     amc.dRTK['rnx']['gnss'][satsys]['prns'] = create_svs_ascii_plot(satsys=satsys, rnx_type=rnx_type, logger=logger)
+
+            #     # create the tabular observation file
+            #     amc.dRTK['rnx']['gnss'][satsys]['obstab'] = create_tabular_observation(satsys=satsys, rnx_type=rnx_type, logger=logger)
+            #     # else:
+            #     #     # perform conversion for GALILEO and GPSN apart
+            #     #     # create e ASCII display of visibility of the SVs in the observation file
+            #     #     amc.dRTK['rnx']['gnss']['E']['prns'] = create_svs_ascii_plot(satsys='E', rnx_type=rnx_type, logger=logger)
+
+            #     #     # create the tabular observation file
+            #     #     amc.dRTK['rnx']['gnss']['E']['obstab'] = create_tabular_observation(satsys='E', rnx_type=rnx_type, logger=logger)
 
     pass
 
@@ -236,94 +275,130 @@ def create_crux(satsys: str, logger: logging.Logger) -> str:
     return crux_name
 
 
-def create_tabular_observation(satsys: str, rnx_type:str, logger: logging.Logger) -> str:
+def create_tabular_observation(satsys: str, rnx_type: str, logger: logging.Logger) -> dict:
     """
     create_tabular_observation creates a tabular view of all observables for all SVs in RINEX obs file
     """
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
     # create a tabular output file containing the observables for this satsys
-    obs_tabular = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.obstab'
+    amutils.mkdir_p(os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker']))
 
-    args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], obs_tabular), '-tab_obs', '-satsys', satsys]
+    dobs_tab = {}
+    if satsys != 'M':
+        dobs_tab[satsys] = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.obstab'
 
-    logger.info('{func:s}: Creating observation tabular output {obstab:s}'.format(obstab=colored(obs_tabular, 'green'), func=cFuncName))
+        args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], dobs_tab[satsys]), '-tab_obs', '-satsys', satsys]
 
-    # run the program
-    # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
-    amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+        logger.info('{func:s}: Creating observation tabular output {obstab:s}'.format(obstab=colored(dobs_tab[satsys], 'green'), func=cFuncName))
 
-    # return the created file name
-    return obs_tabular
+        # run the program
+        # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
+        amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+    else:
+        # create a file for GALI and one for GPSN from COMB RNX OBS file
+        for sat_syst, sat_syst_name in zip(['E', 'G'], ['GALI', 'GPSN']):
+            dobs_tab[sat_syst] = sat_syst_name + amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-')[4:] + '.obstab'
 
+            print('dobs_tab[sat_syst] = {!s}'.format(dobs_tab[sat_syst]))
 
-def create_svs_ascii_plot(satsys: str, rnx_type:str, logger: logging.Logger) -> str:
-    """
-    create_svs_ascii_plot creates a ASCII plot of SVs visibility according to RINEX observation file
-    """
-    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+            args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], dobs_tab[sat_syst]), '-tab_obs', '-satsys', sat_syst]
 
-    prns_visibility = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.prns'
-
-    args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-stk_epo', amc.dRTK['interval'], '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], prns_visibility)]
-
-    logger.info('{func:s}: Creating ASCII SVs display {prns:s}'.format(prns=colored(prns_visibility, 'green'), func=cFuncName))
-
-    # run the program
-    # gfzrnx -stk_epo 300-finp data/P1710171.20O
-    amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
-
-    # display the ASCII SVs overview
-    with open(os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], prns_visibility)) as f:
-        for line in f:
-            if line.startswith(' ST'):
-                logger.info(line[:-1])
-
-    return prns_visibility
-
-
-def create_rnxobs_subfreq(logger: logging.Logger):
-    """
-    create_rnxobs_subfreq separates per frequency band the RINEX observation file
-    """
-    cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
-
-    for _, satsys in enumerate(amc.dRTK['rnx']['gnss']['select']):
-
-        obs_sysfrq = amc.dRTK['rnx']['gnss'][satsys]['sysfrq']
-
-        if satsys == 'M':
-            sub_satsys = [char for char in amc.dRTK['rnx']['gnss'][satsys]['satsys']]
-            # we will only create RINEX files for the common frequencies between E and G
-            satfrq_common = list(set(amc.dRTK['rnx']['gnss'][sub_satsys[0]]['sysfrq']) & set(amc.dRTK['rnx']['gnss'][sub_satsys[1]]['sysfrq']))
-        else:
-            satfrq_common = amc.dRTK['rnx']['gnss'][satsys]['sysfrq']
-
-        for _, freq in enumerate(satfrq_common):
-            satsysfreq = '{sys:s}{freq:s}'.format(sys=satsys, freq=freq)
-
-            obs_base, obs_ext = os.path.splitext(amc.dRTK['rnx']['gnss'][satsys]['obs'])
-            obs_sysfrq = '{base:s}_{sysfrq:s}{ext:s}'.format(base=obs_base, ext=obs_ext, sysfrq=satsysfreq)
-
-            # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
-            args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys]['obs']), '-fout', os.path.join(amc.dRTK['rinexDir'], obs_sysfrq), '-obs_types', freq, '-satsys', amc.dRTK['rnx']['gnss'][satsys]['satsys']]
-
-            logger.info('{func:s}: Creating frequency specific RINEX observation {rnx:s}'.format(rnx=colored(obs_sysfrq, 'green'), func=cFuncName))
+            logger.info('{func:s}: Creating observation tabular output {obstab:s}'.format(obstab=colored(dobs_tab[sat_syst], 'green'), func=cFuncName))
 
             # run the program
+            # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
             amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
 
-            # compress the obtained RINEX file using rnx2crz with options -d (delete original) -f (overwrite)
-            obs_sysfreq_cmp = '{obs:s}D.Z'.format(obs=obs_sysfrq[:-1])
-            args4RNX2CRZ = [amc.dRTK['bin']['RNX2CRZ'], '-f', '-d', os.path.join(amc.dRTK['rinexDir'], obs_sysfrq)]
+    # return the created files name
+    return dobs_tab
 
-            logger.info('{func:s}: Compressing frequency specific RINEX observation {rnx:s}'.format(rnx=colored(obs_sysfreq_cmp, 'green'), func=cFuncName))
 
-            # run the program
-            amutils.run_subprocess(sub_proc=args4RNX2CRZ, logger=logger)
-            logger.info('\n')
-            # store its name in dict
-            amc.dRTK['rnx']['gnss'][satsys]['obs-{freq:s}'.format(freq=satsysfreq)] = obs_sysfreq_cmp
+# def create_svs_ascii_plot(satsys: str, rnx_type: str, logger: logging.Logger) -> str:
+#     """
+#     create_svs_ascii_plot creates a ASCII plot of SVs visibility according to RINEX observation file
+#     """
+#     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+#     try:
+#         amutils.mkdir_p(os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker']))
+
+#         prns_visibility = amc.dRTK['rnx']['gnss'][satsys][rnx_type].replace('.', '-') + '.prns'
+
+#         args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-stk_epo', amc.dRTK['interval'], '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], prns_visibility)]
+#     except KeyError:
+#         amutils.mkdir_p(os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss']['M']['marker']))
+
+#         prns_visibility = amc.dRTK['rnx']['gnss']['M'][rnx_type].replace('.', '-') + '.prns'
+
+#         args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-stk_epo', amc.dRTK['interval'], '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss']['M'][rnx_type]), '-fout', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss']['M']['marker'], prns_visibility)]
+
+#     print('args4GFZRNX = {!s}'.format(args4GFZRNX))
+
+#     logger.info('{func:s}: Creating ASCII SVs display {prns:s}'.format(prns=colored(prns_visibility, 'green'), func=cFuncName))
+
+#     # run the program
+#     # gfzrnx -stk_epo 300-finp data/P1710171.20O
+#     amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+
+#     # display the ASCII SVs overview
+#     print('satsys = {!s}'.format(satsys))
+#     try:
+#         print("amc.dRTK['rnx']['gnss'][satsys]['marker'] = {!s}".format(amc.dRTK['rnx']['gnss'][satsys]['marker']))
+#         vis_file = os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], prns_visibility)
+#     except KeyError:
+#         vis_file = os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss']['M']['marker'], prns_visibility)
+
+#     with open(vis_file) as f:
+#         for line in f:
+#             if line.startswith(' ST'):
+#                 logger.info(line[:-1])
+
+#     return prns_visibility
+
+
+# def create_rnxobs_subfreq(logger: logging.Logger):
+#     """
+#     create_rnxobs_subfreq separates per frequency band the RINEX observation file
+#     """
+#     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
+
+#     for _, satsys in enumerate(amc.dRTK['rnx']['gnss']['select']):
+
+#         obs_sysfrq = amc.dRTK['rnx']['gnss'][satsys]['sysfrq']
+
+#         if satsys == 'M':
+#             sub_satsys = [char for char in amc.dRTK['rnx']['gnss'][satsys]['satsys']]
+#             # we will only create RINEX files for the common frequencies between E and G
+#             satfrq_common = list(set(amc.dRTK['rnx']['gnss'][sub_satsys[0]]['sysfrq']) & set(amc.dRTK['rnx']['gnss'][sub_satsys[1]]['sysfrq']))
+#         else:
+#             satfrq_common = amc.dRTK['rnx']['gnss'][satsys]['sysfrq']
+
+#         for _, freq in enumerate(satfrq_common):
+#             satsysfreq = '{sys:s}{freq:s}'.format(sys=satsys, freq=freq)
+
+#             obs_base, obs_ext = os.path.splitext(amc.dRTK['rnx']['gnss'][satsys]['obs'])
+#             obs_sysfrq = '{base:s}_{sysfrq:s}{ext:s}'.format(base=obs_base, ext=obs_ext, sysfrq=satsysfreq)
+
+#             # gfzrnx -finp GALI1340.19O -tab_obs -satsys E  2> /dev/null -fout /tmp/E-ALL.t
+#             args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-f', '-finp', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys]['obs']), '-fout', os.path.join(amc.dRTK['rinexDir'], obs_sysfrq), '-obs_types', freq, '-satsys', amc.dRTK['rnx']['gnss'][satsys]['satsys']]
+
+#             logger.info('{func:s}: Creating frequency specific RINEX observation {rnx:s}'.format(rnx=colored(obs_sysfrq, 'green'), func=cFuncName))
+
+#             # run the program
+#             amutils.run_subprocess(sub_proc=args4GFZRNX, logger=logger)
+
+#             # compress the obtained RINEX file using rnx2crz with options -d (delete original) -f (overwrite)
+#             obs_sysfreq_cmp = '{obs:s}D.Z'.format(obs=obs_sysfrq[:-1])
+#             args4RNX2CRZ = [amc.dRTK['bin']['RNX2CRZ'], '-f', '-d', os.path.join(amc.dRTK['rinexDir'], obs_sysfrq)]
+
+#             logger.info('{func:s}: Compressing frequency specific RINEX observation {rnx:s}'.format(rnx=colored(obs_sysfreq_cmp, 'green'), func=cFuncName))
+
+#             # run the program
+#             amutils.run_subprocess(sub_proc=args4RNX2CRZ, logger=logger)
+#             logger.info('\n')
+#             # store its name in dict
+#             amc.dRTK['rnx']['gnss'][satsys]['obs-{freq:s}'.format(freq=satsysfreq)] = obs_sysfreq_cmp
 
 
 def compress_rinex_obsnav(logger: logging.Logger):
@@ -333,9 +408,9 @@ def compress_rinex_obsnav(logger: logging.Logger):
     # compress also the full observation file
     cFuncName = colored(os.path.basename(__file__), 'yellow') + ' - ' + colored(sys._getframe().f_code.co_name, 'green')
 
-    for _, satsys in enumerate(amc.dRTK['rnx']['gnss']['select']):
-        obs_cmp = '{obs:s}D.Z'.format(obs=amc.dRTK['rnx']['gnss'][satsys]['obs'][:-1])
-        args4RNX2CRZ = [amc.dRTK['bin']['RNX2CRZ'], '-f', '-d', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys]['obs'])]
+    if 'M' in amc.dRTK['rnx']['gnss']['select']:
+        obs_cmp = '{obs:s}D.Z'.format(obs=amc.dRTK['rnx']['gnss']['M']['obs'][:-1])
+        args4RNX2CRZ = [amc.dRTK['bin']['RNX2CRZ'], '-f', '-d', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss']['M']['obs'])]
 
         logger.info('{func:s}: Compressing RINEX observation {rnx:s}'.format(rnx=colored(obs_cmp, 'green'), func=cFuncName))
 
@@ -343,15 +418,65 @@ def compress_rinex_obsnav(logger: logging.Logger):
         amutils.run_subprocess(sub_proc=args4RNX2CRZ, logger=logger)
         logger.info('\n')
         # store its name in dict
-        amc.dRTK['rnx']['gnss'][satsys]['obs'] = obs_cmp
+        amc.dRTK['rnx']['gnss']['M']['obs'] = obs_cmp
 
         # compress the full navigation file
-        nav_cmp = '{nav:s}.Z'.format(nav=amc.dRTK['rnx']['gnss'][satsys]['nav'])
-        args4COMPRESS = [amc.dRTK['bin']['COMPRESS'], '-f', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys]['nav'])]
+        nav_cmp = '{nav:s}.Z'.format(nav=amc.dRTK['rnx']['gnss']['M']['nav'])
+        args4GZIP = [amc.dRTK['bin']['GZIP'], '-f', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss']['M']['nav'])]
 
         logger.info('{func:s}: Compressing RINEX observation {rnx:s}'.format(rnx=colored(nav_cmp, 'green'), func=cFuncName))
 
         # run the program
-        amutils.run_subprocess(sub_proc=args4COMPRESS, logger=logger)
+        amutils.run_subprocess(sub_proc=args4GZIP, logger=logger)
         # store its name in dict
-        amc.dRTK['rnx']['gnss'][satsys]['nav'] = nav_cmp
+        amc.dRTK['rnx']['gnss']['M']['nav'] = nav_cmp
+
+        # gzip obstab files
+        for obstab_GNSS, obstab_fname in amc.dRTK['rnx']['gnss']['M']['obstab'].items():
+
+            args4GZIP = [amc.dRTK['bin']['GZIP'], '-f', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss']['M']['marker'], obstab_fname)]
+
+            logger.info('{func:s}: Compressing observation tabular file {rnx:s}'.format(rnx=colored(obstab_fname, 'green'), func=cFuncName))
+
+            # run the program
+            amutils.run_subprocess(sub_proc=args4GZIP, logger=logger)
+
+            amc.dRTK['rnx']['gnss']['M']['obstab'][obstab_GNSS] = obstab_fname + '.gz'
+
+    else:
+        for _, satsys in enumerate(amc.dRTK['rnx']['gnss']['select']):
+            obs_cmp = '{obs:s}D.Z'.format(obs=amc.dRTK['rnx']['gnss'][satsys]['obs'][:-1])
+            args4RNX2CRZ = [amc.dRTK['bin']['RNX2CRZ'], '-f', '-d', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys]['obs'])]
+
+            logger.info('{func:s}: Compressing RINEX observation {rnx:s}'.format(rnx=colored(obs_cmp, 'green'), func=cFuncName))
+
+            # run the program
+            amutils.run_subprocess(sub_proc=args4RNX2CRZ, logger=logger)
+            logger.info('\n')
+            # store its name in dict
+            amc.dRTK['rnx']['gnss'][satsys]['obs'] = obs_cmp
+
+            # compress the full navigation file
+            nav_cmp = '{nav:s}.Z'.format(nav=amc.dRTK['rnx']['gnss'][satsys]['nav'])
+            args4GZIP = [amc.dRTK['bin']['GZIP'], '-f', os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys]['nav'])]
+
+            logger.info('{func:s}: Compressing RINEX observation {rnx:s}'.format(rnx=colored(nav_cmp, 'green'), func=cFuncName))
+
+            # run the program
+            amutils.run_subprocess(sub_proc=args4GZIP, logger=logger)
+            # store its name in dict
+            amc.dRTK['rnx']['gnss'][satsys]['nav'] = nav_cmp
+
+            # gzip obstab files
+            for obstab_GNSS, obstab_fname in amc.dRTK['rnx']['gnss'][satsys]['obstab'].items():
+
+                args4GZIP = [amc.dRTK['bin']['GZIP'], '-f', os.path.join(amc.dRTK['gfzrnxDir'], amc.dRTK['rnx']['gnss'][satsys]['marker'], obstab_fname)]
+
+                logger.info('{func:s}: Compressing observation tabular file {rnx:s}'.format(rnx=colored(obstab_fname, 'green'), func=cFuncName))
+
+                # run the program
+                amutils.run_subprocess(sub_proc=args4GZIP, logger=logger)
+
+                amc.dRTK['rnx']['gnss'][satsys]['obstab'][obstab_GNSS] = obstab_fname + '.gz'
+
+    pass
