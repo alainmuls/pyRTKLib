@@ -17,11 +17,11 @@ from gfzrnx import gfzrnx_ops
 __author__ = 'amuls'
 
 
-class interval_action(argparse.Action):
-    def __call__(self, parser, namespace, interval, option_string=None):
-        if not 5 <= int(interval) <= 60:
-            raise argparse.ArgumentError(self, "interval must be in 5..60 minutes")
-        setattr(namespace, self.dest, interval)
+# class interval_action(argparse.Action):
+#     def __call__(self, parser, namespace, interval, option_string=None):
+#         if not 5 <= int(interval) <= 60:
+#             raise argparse.ArgumentError(self, "interval must be in 5..60 minutes")
+#         setattr(namespace, self.dest, interval)
 
 
 class logging_action(argparse.Action):
@@ -259,7 +259,7 @@ def main(argv):
     encoder.FLOAT_REPR = lambda o: format(o, '.3f')
 
     # treat command line options
-    rootDir, binFile, binType, rinexDir, crd_cart, interval, logLevels = treatCmdOpts(argv)
+    rootDir, binFile, binType, rinexDir, crd_cart, logLevels = treatCmdOpts(argv)
 
     # create logging for better debugging
     logger, log_name = amc.createLoggers(os.path.basename(__file__), dir=rootDir, logLevels=logLevels)
@@ -271,7 +271,6 @@ def main(argv):
     amc.dRTK['binType'] = binType
     amc.dRTK['rinexDir'] = rinexDir
     amc.dRTK['ant_crds'] = crd_cart
-    amc.dRTK['interval'] = interval * 60
     amc.dRTK['gfzrnxDir'] = os.path.join(rinexDir, 'gfzrnx')
 
     logger.info('{func:s}: arguments processed: amc.dRTK = {drtk!s}'.format(func=cFuncName, drtk=amc.dRTK))

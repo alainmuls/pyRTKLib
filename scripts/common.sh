@@ -63,7 +63,7 @@ GNSSRAWDATA=${RXTURPROOT}'/'${RXTYPE}'_data.t'
 
 # pythonscripts
 PYSBFDAILY=${PYHOMEDIR}/pysbfdaily.py
-GFZRNX_OBSTAB=${PYHOMEDIR}/gfzrnx_obstab.py
+GFZRNX_CONVBIN=${PYHOMEDIR}/gfzrnx_convbin.py
 PYFTPOSNAV=${PYHOMEDIR}/pyftposnav.py
 PYRTKPROC=${PYHOMEDIR}/pyrtkproc.py
 PYRTKPLOT=${PYHOMEDIR}/pyrtkplot.py
@@ -112,7 +112,7 @@ echo
 echo 'PYHOMEDIR = '${PYHOMEDIR}
 echo 'PYSBFDAILY = '${PYSBFDAILY}
 echo 'RXTURPROOT = '${RXTURPROOT}
-echo 'GFZRNX_OBSTAB = '${GFZRNX_OBSTAB}
+echo 'GFZRNX_CONVBIN = '${GFZRNX_CONVBIN}
 
 echo 'PYFTPOSNAV = '${PYFTPOSNAV}
 echo 'PYRTKPROC = '${PYRTKPROC}

@@ -54,12 +54,13 @@ do
 
 	# create logging info text found in ${GNSSRAWDATA} and check whether we have TRUE or FALSE
 	gnss_log_msg=${RXTYPE}','${YY}','${DOY}','${YYDOY}','${DIRRAW}
-	# echo 'gnss_log_msg = '${gnss_log_msg}
+	echo 'gnss_log_msg = '${gnss_log_msg}
+	echo 'GNSSRAWDATA = '${GNSSRAWDATA}
 
 	# check whether a raw daily GNSS file is present to convert to RINEX
 	${GREP} "${gnss_log_msg}" ${GNSSRAWDATA} | ${GREP} true
 	rc=$?
-	# echo ${rc}
+	echo ${rc}
 
 	# process if return code is 0
 	if [[ ${rc} == 0 ]]
@@ -76,9 +77,9 @@ do
 		then
 			MARKER=SEPT
 
-			echo ${NICE} ${GFZRNX_OBSTAB} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ --rinexdir=${DIRRIN} --binary=SBF
+			echo ${NICE} ${GFZRNX_CONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ --rinexdir=${DIRRIN} --binary=SBF
 
-			${NICE} ${GFZRNX_OBSTAB} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
+			${NICE} ${GFZRNX_CONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
 				--rinexdir=${DIRRIN} --binary=SBF
 
 			for i in "${!gnss[@]}"
@@ -103,9 +104,9 @@ do
 		then
 			MARKER=TURP
 
-			echo ${NICE} ${GFZRNX_OBSTAB} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ --rinexdir=${DIRRIN} --binary=SBF
+			echo ${NICE} ${GFZRNX_CONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ --rinexdir=${DIRRIN} --binary=SBF
 
-			${NICE} ${GFZRNX_OBSTAB} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
+			${NICE} ${GFZRNX_CONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
 				--rinexdir=${DIRRIN} --binary=SBF
 
 			# check whether RINEX obs/nav files are created and put in ${GNSSRAWDATA}
