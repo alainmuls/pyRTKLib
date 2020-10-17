@@ -63,12 +63,12 @@ GNSSRAWDATA=${RXTURPROOT}'/'${RXTYPE}'_data.t'
 
 # pythonscripts
 PYSBFDAILY=${PYHOMEDIR}/pysbfdaily.py
-PYCONVBIN=${PYHOMEDIR}/pyconvbin.py
+GFZRNX_OBSTAB=${PYHOMEDIR}/gfzrnx_obstab.py
 PYFTPOSNAV=${PYHOMEDIR}/pyftposnav.py
 PYRTKPROC=${PYHOMEDIR}/pyrtkproc.py
 PYRTKPLOT=${PYHOMEDIR}/pyrtkplot.py
 PYPOS2MAVG=${PYHOMEDIR}/pos2movavg.py
-PYOBSTAB=${PYHOMEDIR}/pyobstab.py
+RNX_OBS_TABULAR=${PYHOMEDIR}/rnx_obs_tabular.py
 
 # galb related scripts
 GLABPROC=${PYHOMEDIR}/glab_processing.py
@@ -112,7 +112,7 @@ echo
 echo 'PYHOMEDIR = '${PYHOMEDIR}
 echo 'PYSBFDAILY = '${PYSBFDAILY}
 echo 'RXTURPROOT = '${RXTURPROOT}
-echo 'PYCONVBIN = '${PYCONVBIN}
+echo 'GFZRNX_OBSTAB = '${GFZRNX_OBSTAB}
 
 echo 'PYFTPOSNAV = '${PYFTPOSNAV}
 echo 'PYRTKPROC = '${PYRTKPROC}

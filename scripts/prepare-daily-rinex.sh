@@ -76,15 +76,15 @@ do
 		then
 			MARKER=SEPT
 
-			echo ${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
+			echo ${NICE} ${GFZRNX_OBSTAB} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
 				--rinexdir=${DIRRIN} --binary=SBF
 
 			for i in "${!gnss[@]}"
 			do
-				obs_name=${gnssMarker[i]}${DOY}0.${YY}O
+				obs_name=${gnssMarker[i]}${DOY}'0.'${YY}'D.Z'
 				if [[ -f ${DIRRIN}'/'${obs_name} ]]
 				then
-					nav_name=${gnssMarker[i]}${DOY}0.${YY}${gnssNavExt[i]}
+					nav_name=${gnssMarker[i]}${DOY}0.${YY}${gnssNavExt[i]}'.gz'
 					obs_size=`${DU} -h ${DIRRIN}/${obs_name} | ${CUT} -f1`
 					nav_size=`${DU} -h ${DIRRIN}/${nav_name} | ${CUT} -f1`
 					new_info_txt=${new_info_txt}','${obs_name}','${obs_size}','${nav_name}','${nav_size}
@@ -101,15 +101,15 @@ do
 		then
 			MARKER=TURP
 
-			echo ${NICE} ${PYCONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
+			echo ${NICE} ${GFZRNX_OBSTAB} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
 				--rinexdir=${DIRRIN} --binary=SBF
 
 			# check whether RINEX obs/nav files are created and put in ${GNSSRAWDATA}
-			obs_name='GPRS'${DOY}0.${YY}O
+			obs_name='GPRS'${DOY}0.${YY}'D.Z'
 
 			if [[ -f ${DIRRIN}'/'${obs_name} ]]
 			then
-				nav_name='GPRS'${DOY}0.${YY}E
+				nav_name='GPRS'${DOY}0.${YY}'P.gz'
 				obs_size=`${DU} -h ${DIRRIN}/${obs_name} | ${CUT} -f1`
 				nav_size=`${DU} -h ${DIRRIN}/${nav_name} | ${CUT} -f1`
 				new_info_txt=${new_info_txt}','${obs_name}','${obs_size}','${nav_name}','${nav_size}

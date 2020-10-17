@@ -74,7 +74,7 @@ do
 			for satsyst in E G
 			do
 				printf '\nProcessing observation statistics for '${RXTYPE}'/'${satsyst}' @ '${YYDOY}'\n'
-				rm${PYOBSTAB} -d ${DIRYYDOY} -g ${satsyst} -m 30
+				${RNX_OBS_TABULAR} -d ${DIRYYDOY} -g ${satsyst} -m 30
 			done
 		elif [ ${RXTYPE} = 'TURP' ]
 		then
@@ -82,7 +82,7 @@ do
 			for satsyst in E
 			do
 				printf '\nProcessing observation statistics for '${RXTYPE}'/'${satsyst}' @ '${YYDOY}'\n'
-				${PYOBSTAB} -d ${DIRYYDOY} -g ${satsyst} -m 30
+				${RNX_OBS_TABULAR} -d ${DIRYYDOY} -g ${satsyst} -m 30
 			done
 		fi
 	else
