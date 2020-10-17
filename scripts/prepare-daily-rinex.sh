@@ -76,7 +76,9 @@ do
 		then
 			MARKER=SEPT
 
-			echo ${NICE} ${GFZRNX_OBSTAB} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
+			echo ${NICE} ${GFZRNX_OBSTAB} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ --rinexdir=${DIRRIN} --binary=SBF
+
+			${NICE} ${GFZRNX_OBSTAB} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
 				--rinexdir=${DIRRIN} --binary=SBF
 
 			for i in "${!gnss[@]}"
@@ -101,7 +103,9 @@ do
 		then
 			MARKER=TURP
 
-			echo ${NICE} ${GFZRNX_OBSTAB} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
+			echo ${NICE} ${GFZRNX_OBSTAB} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ --rinexdir=${DIRRIN} --binary=SBF
+
+			${NICE} ${GFZRNX_OBSTAB} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ \
 				--rinexdir=${DIRRIN} --binary=SBF
 
 			# check whether RINEX obs/nav files are created and put in ${GNSSRAWDATA}

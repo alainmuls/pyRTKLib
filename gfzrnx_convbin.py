@@ -46,11 +46,14 @@ def treatCmdOpts(argv: list):
     parser = argparse.ArgumentParser(description=helpTxt)
     parser.add_argument('-d', '--dir', help='Root directory (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
     parser.add_argument('-f', '--file', help='Binary SBF or UBlox file', required=True, type=str)
+
     parser.add_argument('-b', '--binary', help='Select binary format (default {:s})'.format(colored('SBF', 'green')), required=False, type=str, choices=['SBF', 'UBX'], default='SBF')
+
     parser.add_argument('-r', '--rinexdir', help='Directory for RINEX output (default {:s})'.format(colored('.', 'green')), required=False, type=str, default='.')
+
     parser.add_argument('-c', '--cart', help='cartesian coordinates of antenna (default RMA)', required=False, type=float, nargs=3, default=[4023741.3045, 309110.4584, 4922723.1945])
 
-    parser.add_argument('-i', '--interval', help='interval for ASCII display of SVs ([5..60] minutes)', default=10, type=int, required=False, action=interval_action)
+    # parser.add_argument('-i', '--interval', help='interval for ASCII display of SVs ([5..60] minutes)', default=10, type=int, required=False, action=interval_action)
 
     parser.add_argument('-l', '--logging', help='specify logging level console/file (default {:s})'.format(colored('INFO DEBUG', 'green')), nargs=2, required=False, default=['INFO', 'DEBUG'], action=logging_action)
 
@@ -58,7 +61,7 @@ def treatCmdOpts(argv: list):
     args = parser.parse_args(argv[1:])
 
     # return arguments
-    return args.dir, args.file, args.binary, args.rinexdir, args.cart, args.interval, args.logging
+    return args.dir, args.file, args.binary, args.rinexdir, args.cart, args.logging
 
 
 def checkValidityArgs(logger: logging.Logger) -> bool:
@@ -289,13 +292,15 @@ def main(argv):
     amc.dRTK['bin']['GZIP'] = location.locateProg('gzip', logger)
 
     # convert binary file to rinex
-    logger.info('{func:s}: convert binary file to rinex'.format(func=cFuncName))
     if amc.dRTK['binType'] == 'SBF':
+        logger.info('{func:s}: convert binary file to rinex'.format(func=cFuncName))
         dRnxTmp = sbf2rinex(logger=logger)
+        logger.info('{func:s}: extracting RINEX header info'.format(func=cFuncName))
         gfzrnx_ops.rnxobs_header_info(dTmpRnx=dRnxTmp, logger=logger)
         # gfzrnx_ops.rnxobs_statistics_file(dTmpRnx=dRnxTmp, logger=logger)
+        logger.info('{func:s}: creeate RINEX files in rinex/YYDOY location'.format(func=cFuncName))
         gfzrnx_ops.gnss_rinex_creation(dTmpRnx=dRnxTmp, logger=logger)
-        logger.info('{func:s}: amc.dRTK =\n{json!s}'.format(func=cFuncName, json=json.dumps(amc.dRTK, sort_keys=False, indent=4, default=amutils.DT_convertor)))
+        logger.info('{func:s}: compressing files'.format(func=cFuncName))
         gfzrnx_ops.compress_rinex_obsnav(logger=logger)
     else:
         ubx2rinex(logger=logger)
