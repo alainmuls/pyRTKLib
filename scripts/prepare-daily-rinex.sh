@@ -100,9 +100,9 @@ do
 			# change_line "TEXT_TO_BE_REPLACED" "This line is removed by the admin." yourFile
 			change_line ${info_txt} ${new_info_txt} ${GNSSRAWDATA}
 
-		elif [ ${RXTYPE} = 'TURP' ]
+		elif [ ${RXTYPE} = 'BEGP' ]
 		then
-			MARKER=TURP
+			MARKER=BEGP
 
 			echo ${NICE} ${GFZRNX_CONVBIN} --dir=${DIRRAW} --file=${MARKER}${DOY}0.${YY}_ --rinexdir=${DIRRIN} --binary=SBF
 
