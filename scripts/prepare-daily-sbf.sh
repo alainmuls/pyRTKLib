@@ -76,6 +76,7 @@ do
 		if ${GREP} --quiet ${gnss_log_msg} ${GNSSRAWDATA}
 		then
 			${SED} --quiet "s|^${gnss_log_msg}*|${gnss_log_msg}${gnss_log_msg_bool}|g" ${GNSSRAWDATA}
+			# echo change_line ${gnss_log_msg} ${gnss_log_msg}${gnss_log_msg_bool} ${GNSSRAWDATA}
 			change_line ${gnss_log_msg} ${gnss_log_msg}${gnss_log_msg_bool} ${GNSSRAWDATA}
 		else
 			echo ${gnss_log_msg}${gnss_log_msg_bool} >> ${GNSSRAWDATA}

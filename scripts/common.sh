@@ -41,6 +41,7 @@ function change_line {
 
     # echo ${OLD_LINE_PATTERN}
     # echo ${NEW_LINE}
+    # echo ${FILE}
 
     local NEW=$(echo "${NEW_LINE}" | escape_slashes)
 
