@@ -176,7 +176,7 @@ def gnss_rinex_creation(dTmpRnx: dict, logger: logging.Logger):
 
                 rnxobs_file = os.path.join(amc.dRTK['rinexDir'], amc.dRTK['rnx']['gnss'][satsys][rnx_type])
 
-                args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-f', '-fout', rnxobs_file, '-crux', crux_file]
+                args4GFZRNX = [amc.dRTK['bin']['GFZRNX'], '-finp', os.path.join(out_dir, amc.dRTK['rnx']['gnss'][satsys][rnx_type]), '-f', '-fout', rnxobs_file, '-crux', crux_file, '-hded']
 
                 # create the RINEX OBSfile for this satsys in final dir for NAV and temporay dir for OBS
                 args4GFZRNX = [amc.dRTK['bin']['GFZRNX'],
