@@ -131,7 +131,7 @@ def plotUTMOffset(dRtk: dict, dfPos: pd.DataFrame, dfCrd: pd.DataFrame, dCrdLim:
 
         # set dimensions of y-axis
         axis.set_ylim([dCrdLim['min'], dCrdLim['max']])
-        axis.set_ylabel('{crd:s} [m]'.format(crd=crd, fontsize='large'), color=colors[i])
+        axis.set_ylabel('{crd:s} [m]'.format(crd=crd), fontsize='large', color=colors[i])
 
         # # annotate each subplot with its reference position
         annotatetxt = markerAnnotation(crd, stdDev2Plot[i])
