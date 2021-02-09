@@ -180,7 +180,7 @@ def main(argv):
         amc.dRTK['xlsName'] = os.path.join(amc.dRTK['rootDir'], '{pos:s}.xlsx'.format(pos=amc.dRTK['campaign']))
 
     # create logging for better debugging
-    logger = amc.createLoggers(baseName=os.path.basename(__file__), dir=amc.dRTK['posDir'], logLevels=logLevels)
+    logger, logname = amc.createLoggers(baseName=os.path.basename(__file__), dir=amc.dRTK['posDir'], logLevels=logLevels)
 
     # change to selected directory if exists
     if not os.path.exists(amc.dRTK['posDir']):
@@ -188,7 +188,9 @@ def main(argv):
         sys.exit(amc.E_DIR_NOT_EXIST)
     else:
         os.chdir(amc.dRTK['posDir'])
-        logger.info('{func:s}: changed to dir {dir:s}'.format(func=cFuncName, dir=colored(amc.dRTK['posDir'], 'green')))
+        print(amc.dRTK['posDir'])
+        print(type(amc.dRTK['posDir']))
+        print('{func:s}: changed to dir {dir!s}'.format(func=cFuncName, dir=colored(amc.dRTK['posDir'], 'green')))
 
     # check wether pos and stat file are present, else exit
     if not os.access(os.path.join(amc.dRTK['posDir'], amc.dRTK['posFile']), os.R_OK):
