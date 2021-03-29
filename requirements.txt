@@ -21,7 +21,7 @@ pandas==0.24.2
 pudb==2019.1
 pycodestyle==2.5.0
 pyflakes==2.1.1
-Pygments==2.6.1
+Pygments==2.7.4
 pylint==2.4.4
 pyparsing==2.4.0
 pyproj==2.2.0
