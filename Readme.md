@@ -60,7 +60,7 @@ Processing is split up in 5 steps:
     + based on a common template, ensuring similar processing for all GNSSs, the `RINEX` observation and navigation files are processed using `rnx2rtkp` program from the `RTKLib` library. Two output files are created in a `rtkp`/`GNSS` subdirectory:
         * `<file-name>.pos` containing date-time, position and (co-)variance information. The processing mode and number of satellites used are also reported,
         * `<file-name>.pos.stat` containing various information about the satellites, the pseudo-range residuals, receiver clock and velocity.
-- __`pyrtkplot.sh`__
+- __`pyrtkplot.py`__
     + using the `<file-name>.pos` and `<file-name>.pos.stat` files, plots are created.
 
 Each script uses pythons logging facility and creates in the directory from which it is called a `<script-name>.log` file which can be used for later inspection. The default logging levels are:
